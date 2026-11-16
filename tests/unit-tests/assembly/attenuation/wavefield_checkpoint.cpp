@@ -6,7 +6,6 @@
 #include "specfem/io/wavefield/writer.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <boost/filesystem.hpp>
-#include <cstdlib>
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
@@ -21,10 +20,8 @@ using AttenuationType =
 constexpr int checkpoint_step = 1;
 
 std::string temp_directory(const std::string &suffix) {
-  return (std::getenv("BUILD_DIR")
-              ? std::string(std::getenv("BUILD_DIR"))
-              : boost::filesystem::current_path().string()) +
-         "/tests/unit-tests/temp_wavefield_attenuation_" + suffix;
+  return boost::filesystem::current_path().string() +
+         "/temp_wavefield_attenuation_" + suffix;
 }
 
 // Distinct function of the logical indices; `salt` separates datasets.

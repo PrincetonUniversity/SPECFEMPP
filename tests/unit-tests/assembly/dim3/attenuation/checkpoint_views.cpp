@@ -10,7 +10,6 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <cstdlib>
 #include <map>
 #include <set>
 #include <string>
@@ -104,10 +103,8 @@ TEST(AttenuationCheckpointViews, BaseViewsRoundTripThroughNpy) {
   namespace impl = attenuation_checkpoint_views_test_impl;
   const impl::Medium medium = impl::make_medium();
 
-  const std::string dir =
-      (std::getenv("BUILD_DIR") ? std::string(std::getenv("BUILD_DIR"))
-                                : boost::filesystem::current_path().string()) +
-      "/tests/unit-tests/temp_attenuation_checkpoint_views";
+  const std::string dir = boost::filesystem::current_path().string() +
+                          "/temp_attenuation_checkpoint_views";
   boost::filesystem::remove_all(dir);
 
   int salt = 0;

@@ -8,7 +8,6 @@
 #include "specfem/tag_dispatch.hpp"
 #include <boost/filesystem.hpp>
 #include <cmath>
-#include <cstdlib>
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
@@ -454,10 +453,7 @@ TEST_F(Assembly2D, kernels_io_layout) {
     auto assembly = std::get<5>(parameters);
 
     const std::string temp_io_directory =
-        (std::getenv("BUILD_DIR")
-             ? std::string(std::getenv("BUILD_DIR"))
-             : boost::filesystem::current_path().string()) +
-        "/tests/unit-tests/temp_kernels_io";
+        boost::filesystem::current_path().string() + "/temp_kernels_io";
     boost::filesystem::remove_all(temp_io_directory);
     boost::filesystem::create_directories(temp_io_directory);
 

@@ -30,10 +30,7 @@ TEST_F(Assembly2D, PropertiesXdmfReferencesResolve) {
     }
 
     const std::string output_directory =
-        (std::getenv("BUILD_DIR")
-             ? std::string(std::getenv("BUILD_DIR"))
-             : boost::filesystem::current_path().string()) +
-        "/tests/unit-tests/temp_xdmf_io";
+        boost::filesystem::current_path().string() + "/temp_xdmf_io";
     boost::filesystem::create_directories(output_directory);
 
     specfem::io::property_writer<specfem::io_backends::HDF5<specfem::io::write>>

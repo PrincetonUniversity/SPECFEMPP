@@ -27,7 +27,6 @@
 #include "specfem/setup.hpp"
 #include <any>
 #include <boost/filesystem.hpp>
-#include <cstdlib>
 #include <gtest/gtest.h>
 #include <initializer_list>
 #include <string>
@@ -364,9 +363,8 @@ TEST_P(Assembly3DTest, KernelsIOLayout) {
   assembly.kernels = { assembly.element_types };
 
   const std::string temp_io_directory =
-      (std::getenv("BUILD_DIR") ? std::string(std::getenv("BUILD_DIR"))
-                                : boost::filesystem::current_path().string()) +
-      "/tests/unit-tests/temp_kernels_io_3d_" + GetParam();
+      boost::filesystem::current_path().string() + "/temp_kernels_io_3d_" +
+      GetParam();
   boost::filesystem::remove_all(temp_io_directory);
   boost::filesystem::create_directories(temp_io_directory);
 

@@ -32,7 +32,7 @@ option(SPECFEM_BUILD_MESHFEM3D_GLOBE "Build the SPECFEM3D_GLOBE meshfem3D execut
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
-option(SPECFEMPP_CONFIGURE_TESTS "Configure test files used to generate data for unit tesats" OFF)
+option(SPECFEMPP_CONFIGURE_TESTS "Configure test files used to generate data for unit tests" OFF)
 set(SPECFEMPP_UNITY_BUILD_BATCH_SIZE 8 CACHE STRING "Set the batch size for unity builds (only used if SPECFEM_ENABLE_UNITY_BUILD is ON)")
 
 if (SPECFEM_ENABLE_MPI)
