@@ -268,3 +268,28 @@ job and should not be excluded by ``-LE TRILINOS``.
 Results are published to Jenkins as JUnit XML (``ctest --output-junit``) and archived as
 build artifacts, so individual test failures are visible in the Jenkins UI rather than
 only in the console log.
+
+Injection plugin checks
++++++++++++++++++++++++
+
+This is defined in :repo-file:`.jenkins/plugin_checks.gvy`. It runs the
+end-to-end wavefield-injection tests in
+:repo-file:`tests/integration-tests/injection/README.md`: ``specfem 3d`` with
+the plane-wave example plugin on a fully absorbing box, compared bit for bit
+with a run without injection, against the analytic plane wave, and across 1, 2
+and 4 MPI ranks.
+
+Each configuration builds SPECFEM++, installs the plugin SDK
+(``cmake --install <build> --component plugin_sdk``), builds
+``examples/plugins/plane_wave`` against it, then reconfigures SPECFEM++ with
+``-DSPECFEM_INJECTION_TEST_PLUGIN=<.../libplane_wave.so>``. That option
+registers the tests, labelled ``injection_e2e``; without it they are skipped,
+which is why no other job runs them.
+
+The configurations are the unit-test matrix (serial and OpenMP hosts, with and
+without CUDA on an A100) plus one MPI build, whose run covers the serial cases
+and the 2- and 4-rank cases.
+
+The plugin examples are also built and tested on Github Actions against an
+installed SDK, without SPECFEM++ itself, by
+:repo-file:`.github/workflows/plugin.yaml`.
