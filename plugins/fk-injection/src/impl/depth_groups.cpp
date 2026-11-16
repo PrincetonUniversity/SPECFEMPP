@@ -22,7 +22,6 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
                                    double p, double tolerance) {
   const int n = points.size();
 
-  // Coordinates and medium Views are host-resident; read them directly.
   const bool has_medium = (!points.medium.empty());
 
   // --- Per-point requested medium ---
