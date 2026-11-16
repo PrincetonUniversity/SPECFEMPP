@@ -44,11 +44,32 @@ struct FkSetup {
 };
 
 /**
+ * @brief Time for the fluid block's reverberation to decay to 1e-4.
+ *
+ * A wave trapped between the free surface and the fluid's base loses a factor
+ * \f$|R|\f$ per round trip \f$\tau = 2\sum_i H_i q_i\f$, where \f$R\f$ is the
+ * fluid-to-solid P reflection coefficient at ray parameter \f$p\f$. The decay
+ * time is \f$\tau \ln(10^{-4}) / \ln|R|\f$. An estimate: reflections between
+ * fluid layers and reverberations in solid layers are ignored.
+ *
+ * @param model Layered velocity model.
+ * @param p     Horizontal ray parameter (s/m).
+ * @return Decay time in s; 0 without a fluid or if the wave is evanescent in
+ *         it.
+ * @throws std::runtime_error if the fluid's base reflects totally.
+ */
+double fluid_reverberation_time(const fk_injection::LayeredModel &model,
+                                double p);
+
+/**
  * @brief Build the shared frequency-domain setup for an FK synthesis.
  *
  * Sizes the working arrays to cover the time window plus the group delay span,
- * then fills the angular-frequency and Gaussian-apodization vectors, the
- * half-space eigenmatrix, and the incident amplitudes.
+ * and in the exact convention to at least the delay span plus
+ * @c fluid_reverberation_time, so the reverberation decays within one FFT
+ * period instead of wrapping onto the run. Then fills the angular-frequency and
+ * Gaussian-apodization vectors, the half-space eigenmatrix, and the incident
+ * amplitudes.
  *
  * @param model            Layered velocity model.
  * @param wave             Incident plane wave.

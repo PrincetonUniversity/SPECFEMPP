@@ -4,6 +4,57 @@
 #include "impl/layer_operators.hpp"
 
 #include <cmath>
+#include <complex>
+#include <stdexcept>
+
+double fk_injection::impl::fluid_reverberation_time(
+    const fk_injection::LayeredModel &model, double p) {
+  static constexpr double tolerance = 1.0e-4;
+  const auto &fluid_layers = model.fluid_layers();
+  if (fluid_layers.empty())
+    return 0.0;
+
+  const auto vertical_slowness = [p](double velocity) {
+    return std::sqrt(
+        std::complex<double>(1.0 / (velocity * velocity) - p * p, 0.0));
+  };
+
+  double round_trip = 0.0;
+  for (const auto &layer : fluid_layers) {
+    const double velocity = static_cast<double>(layer.p_velocity);
+    // Evanescent in the fluid: nothing propagates to reverberate.
+    if (p * velocity >= 1.0)
+      return 0.0;
+    round_trip += 2.0 * static_cast<double>(layer.thickness) *
+                  vertical_slowness(velocity).real();
+  }
+
+  // Fluid-to-solid P reflection with impedances rho / q (Brekhovskikh); the
+  // free surface reflects with -1, so |R| is the loss per round trip.
+  const fk_injection::AcousticLayer &fluid = fluid_layers.back();
+  const fk_injection::ElasticIsotropicLayer &solid =
+      model.elastic_layers().front();
+  const double density = static_cast<double>(solid.density);
+  const double s_velocity = static_cast<double>(solid.s_velocity);
+  const double cos_2 = 1.0 - 2.0 * s_velocity * s_velocity * p * p;
+  const std::complex<double> sin_2 =
+      2.0 * s_velocity * s_velocity * p * vertical_slowness(s_velocity);
+  const std::complex<double> solid_impedance =
+      density / vertical_slowness(static_cast<double>(solid.p_velocity)) *
+          cos_2 * cos_2 +
+      density / vertical_slowness(s_velocity) * sin_2 * sin_2;
+  const std::complex<double> fluid_impedance =
+      static_cast<double>(fluid.density) /
+      vertical_slowness(static_cast<double>(fluid.p_velocity));
+  const double reflection = std::abs((solid_impedance - fluid_impedance) /
+                                     (solid_impedance + fluid_impedance));
+  if (!(reflection < 1.0))
+    throw std::runtime_error(
+        "fk_injection: the fluid layers reflect the incident wave totally, so "
+        "their reverberation never decays");
+
+  return round_trip * std::log(tolerance) / std::log(reflection);
+}
 
 fk_injection::impl::FkSetup
 fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
@@ -15,7 +66,15 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   fk_injection::impl::FkSetup setup;
 
   const double span = groups.time_delay_max - groups.time_delay_min;
-  setup.sizes = fk_injection::compute_fk_sizes(window, span);
+  // The series repeat with the FFT period, so a reverberation that outlasts it
+  // wraps onto the start of the run. SPECFEM3D's window has no such floor.
+  const double reverberation =
+      convention == fk_injection::ReferenceConvention::exact
+          ? fk_injection::impl::fluid_reverberation_time(model, p)
+          : 0.0;
+  const double minimum_window =
+      reverberation > 0.0 ? span + reverberation : 0.0;
+  setup.sizes = fk_injection::compute_fk_sizes(window, span, minimum_window);
   setup.fft_power = setup.sizes.interpolation_power;
   setup.p = p;
   setup.phi = static_cast<double>(wave.azimuth_phi);
@@ -26,7 +85,12 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
 
   // Positive-frequency samples (including DC): nf_stored + 1.
   const int nf2 = setup.sizes.number_of_stored_frequencies + 1;
-  const double df = static_cast<double>(setup.sizes.frequency_step);
+  // The inverse FFT assumes 1 / (N dt_min); SPECFEM3D's grid uses N - 1.
+  const double df =
+      convention == fk_injection::ReferenceConvention::specfem3d
+          ? static_cast<double>(setup.sizes.frequency_step)
+          : 1.0 / (static_cast<double>(setup.sizes.number_of_fft_samples) *
+                   setup.dt_min);
   const double half_duration = static_cast<double>(wave.gaussian_half_duration);
 
   setup.omega.resize(nf2);

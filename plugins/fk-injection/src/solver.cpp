@@ -68,6 +68,28 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
     }
   }
 
+  // The series are periodic in the FFT length, so FK times outside one period
+  // would silently read another part of the field.
+  const double half_period =
+      0.5 * static_cast<double>(setup.sizes.number_of_fft_samples);
+  const double origin_samples =
+      static_cast<double>(wave.origin_time) / setup.dt_min;
+  const double first_sample =
+      origin_samples - groups.time_delay_max / setup.dt_min;
+  const double last_sample =
+      origin_samples + static_cast<double>(window.nstep - 1) / resampling -
+      groups.time_delay_min / setup.dt_min;
+  if (first_sample < -half_period || last_sample >= half_period) {
+    std::ostringstream message;
+    message << "solve: the run needs FK times from "
+            << first_sample * setup.dt_min << " to "
+            << last_sample * setup.dt_min << " s, outside the FFT period of "
+            << 2.0 * half_period * setup.dt_min
+            << " s centered on 0; move origin-time closer to the run or "
+               "increase the injection time-window length";
+    throw std::runtime_error(message.str());
+  }
+
   const fk_injection::impl::InterfaceStates states =
       fk_injection::impl::solve_layer_stack(model, setup);
   const fk_injection::impl::DepthSeries series =

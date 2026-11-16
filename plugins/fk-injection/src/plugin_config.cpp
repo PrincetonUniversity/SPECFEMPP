@@ -154,12 +154,17 @@ fk_injection::plugin_config_impl::parse_layers(const YAML::Node &root) {
 fk_injection::PluginConfig
 fk_injection::plugin_config_impl::read_model_file(const YAML::Node &root) {
   try {
-    auto [model, wave, window] =
+    auto [model, wave, window, has_origin] =
         fk_injection::read_fk_model_file(root["model-file"].as<std::string>());
     if (wave.origin_time != 0)
       throw std::runtime_error("a non-zero ORIGIN_TIME is not supported; set "
                                "incidence.origin-time, the simulation time the "
                                "wavefront crosses the origin");
+    const YAML::Node incidence = root["incidence"];
+    if (!has_origin && !(incidence && incidence.IsMap() && incidence["origin"]))
+      throw std::runtime_error("no ORIGIN_WAVEFRONT, and the plugin does not "
+                               "derive one as SPECFEM3D does; add it or set "
+                               "incidence.origin");
     return fk_injection::PluginConfig{ .model = std::move(model),
                                        .mesh_frame_wave = wave,
                                        .frequency_max = window.frequency_max,
@@ -320,8 +325,8 @@ fk_injection::parse_plugin_config(const std::string &text) {
     impl::parse_time_window(impl::require_map(root, "time-window", ""),
                             has_layers, config);
 
-  // The half-duration Tg and frequency-max are linked by Tg = 1/frequency-max,
-  // as in the model file reader. Precedence: YAML > model file > derived.
+  // Without a half-duration, Tg = 1/frequency-max, as in SPECFEM3D. A model
+  // file gives only frequency-max, so an override of it changes Tg too.
   if (!half_duration_set && wave.gaussian_half_duration <= 0 &&
       config.frequency_max > 0)
     wave.gaussian_half_duration =
