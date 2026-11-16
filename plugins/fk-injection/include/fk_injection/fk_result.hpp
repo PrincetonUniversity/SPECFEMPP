@@ -14,8 +14,8 @@ inline constexpr int number_of_sample_components = 7;
 inline constexpr int sample_kinematic_offset = 0;
 /// @brief First of 3 components: traction on the point's normal.
 inline constexpr int sample_traction_offset = 3;
-/// @brief Single component: pressure series (0 on elastic points).
-inline constexpr int sample_pressure_offset = 6;
+/// @brief Single component: potential rate (0 on elastic points).
+inline constexpr int sample_potential_rate_offset = 6;
 
 /**
  * @brief What @c FkResult stores for one evaluation point.
@@ -90,7 +90,7 @@ public:
    * Fills @p out, row-major (point, component, step-in-window), for SEM steps
    * @c [first_step, first_step + number_of_steps). The @c sample_*_offset
    * constants name the components: kinematic (cos_phi*S0, sin_phi*S0, S1),
-   * traction (0 on acoustic points) and pressure (0 on elastic points).
+   * traction (0 on acoustic points) and potential rate (0 on elastic points).
    *
    * @param first_step      First SEM step in the window.
    * @param number_of_steps Window length in SEM steps.

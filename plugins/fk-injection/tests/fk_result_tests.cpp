@@ -175,11 +175,11 @@ TEST(FkResult, SampleTractionWeights) {
                     out[fk_result_tests_impl::out_index(p, 5, k_check, N)]),
                 3.0, 1.0e-3)
         << "comp5 (tz) failed at point=" << p;
-    // comp6: pressure = 0 for elastic points
+    // comp6: potential rate = 0 for elastic points
     EXPECT_NEAR(static_cast<double>(
                     out[fk_result_tests_impl::out_index(p, 6, k_check, N)]),
                 0.0, 1.0e-6)
-        << "comp6 (pressure) should be 0 for elastic point=" << p;
+        << "comp6 (potential rate) should be 0 for elastic point=" << p;
   }
 }
 
@@ -271,8 +271,8 @@ TEST(FkResult, SampleReadsEachPointsGroup) {
 }
 
 // 6. SampleAcousticPoint
-//    An acoustic point has zero traction and pressure = S2 = 3; the kinematic
-//    components are recovered as on an elastic point.
+//    An acoustic point has zero traction and potential rate = S2 = 3; the
+//    kinematic components are recovered as on an elastic point.
 TEST(FkResult, SampleAcousticPoint) {
   const int ncoef = 64;
   const int N = 3;
@@ -304,7 +304,7 @@ TEST(FkResult, SampleAcousticPoint) {
         << "traction component " << component;
   }
   EXPECT_NEAR(static_cast<double>(out[fk_result_tests_impl::out_index(
-                  0, fk_injection::sample_pressure_offset, 1, N)]),
+                  0, fk_injection::sample_potential_rate_offset, 1, N)]),
               3.0, 1.0e-3);
 }
 

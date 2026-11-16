@@ -173,16 +173,16 @@ void fk_injection::FkResult::sample(int first_step, int number_of_steps,
       point_out[(sample_traction_offset + 2) * number_of_steps] =
           static_cast<type_real>(tz);
 
-      double pressure = 0.0;
+      double chi_dot = 0.0;
       if (is_acoustic) {
-        pressure = cubic::evaluate<type_real>(
+        chi_dot = cubic::evaluate<type_real>(
             coefficients +
                 coefficient_index(point.group,
-                                  fk_injection::impl::series_sigma_zz, 0),
+                                  fk_injection::impl::series_potential_rate, 0),
             coefficient_count, abscissa);
       }
-      point_out[sample_pressure_offset * number_of_steps] =
-          static_cast<type_real>(pressure);
+      point_out[sample_potential_rate_offset * number_of_steps] =
+          static_cast<type_real>(chi_dot);
     }
   }
 }

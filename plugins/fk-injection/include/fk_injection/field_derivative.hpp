@@ -13,7 +13,7 @@ namespace fk_injection {
  * Stacey)
  * - @c acceleration : \f$-\omega^2\,u = (i\omega)^2 u\f$ (needed by Method 2)
  *
- * The traction and pressure components are independent of this choice.
+ * The traction and potential-rate components are independent of this choice.
  */
 enum class field_derivative { displacement, velocity, acceleration };
 
