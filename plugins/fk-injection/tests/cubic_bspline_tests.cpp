@@ -1,4 +1,4 @@
-#include "specfem/fk_plugin/utilities/cubic_bspline.hpp"
+#include "fk_injection/utilities/cubic_bspline.hpp"
 #include <gtest/gtest.h>
 
 #include <cmath>
@@ -11,13 +11,11 @@
 TEST(CubicBspline, BasisKnownValues) {
   constexpr double kTol = 1.0e-14;
 
-  const double b0 = specfem::fk_plugin::cubic_bspline::cubic_bspline_basis(0.0);
-  const double b1 = specfem::fk_plugin::cubic_bspline::cubic_bspline_basis(1.0);
-  const double bm1 =
-      specfem::fk_plugin::cubic_bspline::cubic_bspline_basis(-1.0);
-  const double b2 = specfem::fk_plugin::cubic_bspline::cubic_bspline_basis(2.0);
-  const double bm2 =
-      specfem::fk_plugin::cubic_bspline::cubic_bspline_basis(-2.0);
+  const double b0 = fk_injection::cubic_bspline::cubic_bspline_basis(0.0);
+  const double b1 = fk_injection::cubic_bspline::cubic_bspline_basis(1.0);
+  const double bm1 = fk_injection::cubic_bspline::cubic_bspline_basis(-1.0);
+  const double b2 = fk_injection::cubic_bspline::cubic_bspline_basis(2.0);
+  const double bm2 = fk_injection::cubic_bspline::cubic_bspline_basis(-2.0);
 
   EXPECT_NEAR(b0, 2.0 / 3.0, kTol) << "B3(0) should be 2/3";
   EXPECT_NEAR(b1, 1.0 / 6.0, kTol) << "B3(1) should be 1/6";
@@ -48,12 +46,12 @@ TEST(CubicBspline, InteriorRoundTrip) {
   }
 
   std::vector<double> coeff(kN);
-  specfem::fk_plugin::cubic_bspline::compute_coefficients(signal.data(), kN,
-                                                          coeff.data());
+  fk_injection::cubic_bspline::compute_coefficients(signal.data(), kN,
+                                                    coeff.data());
 
   double max_err = 0.0;
   for (int m = 12; m < kN - 12; ++m) {
-    double interp = specfem::fk_plugin::cubic_bspline::evaluate(
+    double interp = fk_injection::cubic_bspline::evaluate(
         coeff.data(), kN, static_cast<double>(m));
     double e = std::fabs(interp - signal[m]);
     if (e > max_err)
@@ -75,12 +73,12 @@ TEST(CubicBspline, ConstantSignal) {
 
   std::vector<double> signal(kN, kConst);
   std::vector<double> coeff(kN);
-  specfem::fk_plugin::cubic_bspline::compute_coefficients(signal.data(), kN,
-                                                          coeff.data());
+  fk_injection::cubic_bspline::compute_coefficients(signal.data(), kN,
+                                                    coeff.data());
 
   double max_err = 0.0;
   for (int m = 8; m < kN - 8; ++m) {
-    double interp = specfem::fk_plugin::cubic_bspline::evaluate(
+    double interp = fk_injection::cubic_bspline::evaluate(
         coeff.data(), kN, static_cast<double>(m));
     double e = std::fabs(interp - kConst);
     if (e > max_err)
@@ -111,8 +109,8 @@ TEST(CubicBspline, EvaluateFloatCoefficientsMatchesDouble) {
   }
 
   std::vector<double> coeff_dbl(kN);
-  specfem::fk_plugin::cubic_bspline::compute_coefficients(signal.data(), kN,
-                                                          coeff_dbl.data());
+  fk_injection::cubic_bspline::compute_coefficients(signal.data(), kN,
+                                                    coeff_dbl.data());
 
   // Narrow-cast to float.
   std::vector<float> coeff_flt(kN);
@@ -125,9 +123,9 @@ TEST(CubicBspline, EvaluateFloatCoefficientsMatchesDouble) {
   constexpr double abscissae[5] = { 10.3, 15.7, 20.1, 25.5, 30.9 };
   for (const double t : abscissae) {
     const double val_dbl =
-        specfem::fk_plugin::cubic_bspline::evaluate(coeff_dbl.data(), kN, t);
+        fk_injection::cubic_bspline::evaluate(coeff_dbl.data(), kN, t);
     const double val_flt =
-        specfem::fk_plugin::cubic_bspline::evaluate(coeff_flt.data(), kN, t);
+        fk_injection::cubic_bspline::evaluate(coeff_flt.data(), kN, t);
     const double denom =
         (std::fabs(val_dbl) > kAbsFloor) ? std::fabs(val_dbl) : kAbsFloor;
     const double rel_err = std::fabs(val_flt - val_dbl) / denom;

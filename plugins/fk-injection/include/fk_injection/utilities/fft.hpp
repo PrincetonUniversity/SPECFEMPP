@@ -8,8 +8,7 @@
 #include <span>
 #include <stdexcept>
 
-namespace specfem {
-namespace fk_plugin {
+namespace fk_injection {
 namespace fft {
 
 /**
@@ -45,10 +44,10 @@ inline void irfft(std::span<const std::complex<double>> a,
   const std::size_t n = out.size();
   if (n == 0) {
     throw std::invalid_argument(
-        "specfem::fk_plugin::fft::irfft: output length must be positive");
+        "fk_injection::fft::irfft: output length must be positive");
   }
   if (a.size() < n / 2 + 1) {
-    throw std::invalid_argument("specfem::fk_plugin::fft::irfft: spectrum "
+    throw std::invalid_argument("fk_injection::fft::irfft: spectrum "
                                 "needs at least n/2 + 1 bins for n samples");
   }
 
@@ -63,5 +62,4 @@ inline void irfft(std::span<const std::complex<double>> a,
 }
 
 } // namespace fft
-} // namespace fk_plugin
-} // namespace specfem
+} // namespace fk_injection

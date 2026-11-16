@@ -1,4 +1,4 @@
-#include "specfem/fk_plugin/utilities/fft.hpp"
+#include "fk_injection/utilities/fft.hpp"
 #include <gtest/gtest.h>
 #include <pocketfft_hdronly.h>
 
@@ -24,7 +24,7 @@ std::vector<double> fk_inverse(std::vector<std::complex<double>> spectrum,
   spectrum[length / 2] = std::complex<double>(0.0, 0.0);
 
   std::vector<double> out(length);
-  specfem::fk_plugin::fft::irfft(spectrum, out);
+  fk_injection::fft::irfft(spectrum, out);
   for (double &sample : out) {
     sample /= dt;
   }
@@ -213,7 +213,7 @@ TEST(Fft, IrfftUsesNyquistRealPart) {
   a[kLength / 2] = std::complex<double>(2.0, 3.0);
 
   std::vector<double> out(kLength);
-  specfem::fk_plugin::fft::irfft(a, out);
+  fk_injection::fft::irfft(a, out);
 
   for (int m = 0; m < kLength; ++m) {
     const double sign = (m % 2 == 0) ? 1.0 : -1.0;
@@ -229,14 +229,14 @@ TEST(Fft, IrfftUsesNyquistRealPart) {
 namespace fft_tests_impl {
 
 // Forward scale that pairs with each irfft norm, as in numpy.fft.rfft.
-double forward_factor(const specfem::fk_plugin::fft::norm normalization,
+double forward_factor(const fk_injection::fft::norm normalization,
                       const int length) {
   switch (normalization) {
-  case specfem::fk_plugin::fft::norm::backward:
+  case fk_injection::fft::norm::backward:
     return 1.0;
-  case specfem::fk_plugin::fft::norm::ortho:
+  case fk_injection::fft::norm::ortho:
     return 1.0 / std::sqrt(static_cast<double>(length));
-  case specfem::fk_plugin::fft::norm::forward:
+  case fk_injection::fft::norm::forward:
     return 1.0 / static_cast<double>(length);
   }
   return 0.0;
@@ -246,10 +246,10 @@ double forward_factor(const specfem::fk_plugin::fft::norm normalization,
 
 TEST(Fft, IrfftRoundTripAllNorms) {
   constexpr double kTol = 1.0e-12;
-  constexpr specfem::fk_plugin::fft::norm norms[] = {
-    specfem::fk_plugin::fft::norm::backward,
-    specfem::fk_plugin::fft::norm::ortho,
-    specfem::fk_plugin::fft::norm::forward,
+  constexpr fk_injection::fft::norm norms[] = {
+    fk_injection::fft::norm::backward,
+    fk_injection::fft::norm::ortho,
+    fk_injection::fft::norm::forward,
   };
 
   for (const int length : { 7, 10, 16 }) {
@@ -266,7 +266,7 @@ TEST(Fft, IrfftRoundTripAllNorms) {
           a.data(), fft_tests_impl::forward_factor(normalization, length));
 
       std::vector<double> out(length);
-      specfem::fk_plugin::fft::irfft(a, out, normalization);
+      fk_injection::fft::irfft(a, out, normalization);
 
       for (int m = 0; m < length; ++m) {
         EXPECT_NEAR(out[m], r[m], kTol)
@@ -284,11 +284,11 @@ TEST(Fft, IrfftRoundTripAllNorms) {
 TEST(Fft, IrfftRejectsShortSpectrum) {
   std::vector<std::complex<double>> a(4);
   std::vector<double> out(8); // needs 5 bins
-  EXPECT_THROW(specfem::fk_plugin::fft::irfft(a, out), std::invalid_argument);
+  EXPECT_THROW(fk_injection::fft::irfft(a, out), std::invalid_argument);
 }
 
 TEST(Fft, IrfftRejectsEmptyOutput) {
   std::vector<std::complex<double>> a(4);
   std::vector<double> out;
-  EXPECT_THROW(specfem::fk_plugin::fft::irfft(a, out), std::invalid_argument);
+  EXPECT_THROW(fk_injection::fft::irfft(a, out), std::invalid_argument);
 }

@@ -1,13 +1,12 @@
 // Entry point of the FK injection plugin module. Skeleton: serves nothing yet.
 
-#include "specfem/fk_plugin.hpp"
+#include "fk_injection/fk_injection.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
 
 #include <string>
 #include <vector>
 
-namespace specfem {
-namespace fk_plugin {
+namespace fk_injection {
 
 /**
  * @brief FK incident-field provider (skeleton).
@@ -44,8 +43,6 @@ public:
   }
 };
 
-} // namespace fk_plugin
-} // namespace specfem
+} // namespace fk_injection
 
-SPECFEM_DEFINE_INJECTION_PLUGIN("fk", "0.0.1",
-                                specfem::fk_plugin::FkInjectionPlugin)
+SPECFEM_DEFINE_INJECTION_PLUGIN("fk", "0.0.1", fk_injection::FkInjectionPlugin)

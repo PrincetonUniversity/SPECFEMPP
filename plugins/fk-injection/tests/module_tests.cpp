@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace specfem::fk_plugin_test {
+namespace fk_injection_test {
 
 specfem_simulation_info make_info() {
   specfem_simulation_info info{};
@@ -26,10 +26,10 @@ specfem_communicator make_communicator() {
   return communicator;
 }
 
-} // namespace specfem::fk_plugin_test
+} // namespace fk_injection_test
 
 TEST(FkPluginModule, SkeletonLifecycleThroughAbi) {
-  void *library = dlopen(FK_PLUGIN_MODULE, RTLD_NOW | RTLD_LOCAL);
+  void *library = dlopen(FK_INJECTION_MODULE, RTLD_NOW | RTLD_LOCAL);
   ASSERT_NE(library, nullptr) << dlerror();
   const auto entry = reinterpret_cast<specfem_injection_plugin_entry>(
       dlsym(library, SPECFEM_INJECTION_PLUGIN_ENTRY_NAME));
@@ -38,8 +38,8 @@ TEST(FkPluginModule, SkeletonLifecycleThroughAbi) {
   EXPECT_EQ(table.abi_version, SPECFEM_INJECTION_ABI_VERSION);
   EXPECT_EQ(std::string(table.name), "fk");
 
-  const auto info = specfem::fk_plugin_test::make_info();
-  const auto communicator = specfem::fk_plugin_test::make_communicator();
+  const auto info = fk_injection_test::make_info();
+  const auto communicator = fk_injection_test::make_communicator();
 
   void *self = table.create("unused.yaml", &info, &communicator);
   ASSERT_NE(self, nullptr) << table.last_error(nullptr);

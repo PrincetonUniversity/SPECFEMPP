@@ -6,15 +6,13 @@
 #include <concepts>
 #include <cstddef>
 
-namespace specfem {
-namespace fk_plugin_impl {
+namespace fk_injection {
+namespace impl {
 
 // Provides extents and layouts; std once C++23 is required.
 namespace mdspan_namespace = Kokkos;
 
-} // namespace fk_plugin_impl
-
-namespace fk_plugin {
+} // namespace impl
 
 /**
  * @brief Stack-allocated multi-dimensional array with a compile-time layout.
@@ -26,8 +24,7 @@ namespace fk_plugin {
  * @tparam Layout Memory layout; row-major by default.
  */
 template <typename T, typename Extents,
-          typename Layout =
-              specfem::fk_plugin_impl::mdspan_namespace::layout_right>
+          typename Layout = fk_injection::impl::mdspan_namespace::layout_right>
 class RegisterArray {
 private:
   using mapping = typename Layout::template mapping<Extents>;
@@ -111,7 +108,7 @@ private:
 template <std::size_t N>
 using ComplexMatrix = RegisterArray<
     std::complex<double>,
-    specfem::fk_plugin_impl::mdspan_namespace::extents<std::size_t, N, N>>;
+    fk_injection::impl::mdspan_namespace::extents<std::size_t, N, N>>;
 
 /**
  * @brief Length-N complex vector.
@@ -121,7 +118,7 @@ using ComplexMatrix = RegisterArray<
 template <std::size_t N>
 using ComplexVector = RegisterArray<
     std::complex<double>,
-    specfem::fk_plugin_impl::mdspan_namespace::extents<std::size_t, N>>;
+    fk_injection::impl::mdspan_namespace::extents<std::size_t, N>>;
 
 /**
  * @brief Matrix–matrix product.
@@ -178,5 +175,4 @@ ComplexMatrix<N> &operator*=(ComplexMatrix<N> &matrix,
   return matrix;
 }
 
-} // namespace fk_plugin
-} // namespace specfem
+} // namespace fk_injection
