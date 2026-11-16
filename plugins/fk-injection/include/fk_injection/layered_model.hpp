@@ -49,6 +49,7 @@ struct LayerLocation {
                                 ///< m (<= 0 at/below the half-space top)
   bool at_free_surface = false; ///< acoustic layer 0 with depth within
                                 ///< tolerance of 0
+  double depth = 0;             ///< depth that was located, m
 };
 
 /**

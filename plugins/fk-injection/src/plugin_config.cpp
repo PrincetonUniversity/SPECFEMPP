@@ -154,7 +154,7 @@ fk_injection::plugin_config_impl::parse_layers(const YAML::Node &root) {
 fk_injection::PluginConfig
 fk_injection::plugin_config_impl::read_model_file(const YAML::Node &root) {
   try {
-    auto [model, wave, window, has_origin] =
+    auto [model, wave, window, frequency_max, has_origin] =
         fk_injection::read_fk_model_file(root["model-file"].as<std::string>());
     if (wave.origin_time != 0)
       throw std::runtime_error("a non-zero ORIGIN_TIME is not supported; set "
@@ -167,7 +167,7 @@ fk_injection::plugin_config_impl::read_model_file(const YAML::Node &root) {
                                "incidence.origin");
     return fk_injection::PluginConfig{ .model = std::move(model),
                                        .mesh_frame_wave = wave,
-                                       .frequency_max = window.frequency_max,
+                                       .frequency_max = frequency_max,
                                        .frequency_sampling =
                                            window.frequency_sampling,
                                        .time_window_length =
@@ -269,7 +269,6 @@ fk_injection::PluginConfig::time_window(const type_real dt,
   fk_injection::TimeWindow window;
   window.dt = dt;
   window.nstep = nstep;
-  window.frequency_max = frequency_max;
   window.frequency_sampling = frequency_sampling;
   window.time_window_length = time_window_length;
   return window;

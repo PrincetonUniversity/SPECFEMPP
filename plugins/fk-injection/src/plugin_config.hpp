@@ -3,7 +3,7 @@
 #include "fk_injection/config.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/solver.hpp"
+#include "fk_injection/reference_convention.hpp"
 #include "fk_injection/time_window.hpp"
 
 #include <optional>
@@ -14,7 +14,7 @@ namespace fk_injection {
 /** @brief Contents of the plugin's configuration file. */
 struct PluginConfig {
   LayeredModel model; ///< Layered velocity model
-  /// Wave as configured, origin in the mesh frame; @c solve takes
+  /// Wave as configured, origin in the mesh frame; the response takes
   /// @c incident_wave instead
   IncidentWave mesh_frame_wave = {};
   /// Simulation time the wavefront crosses the origin; empty for the first step
@@ -24,7 +24,8 @@ struct PluginConfig {
   type_real time_window_length = 0; ///< FK time-window length in s
   double material_tolerance =
       1e-3; ///< Relative tolerance of the material check
-  ReferenceConvention convention = ReferenceConvention::exact; ///< See @c solve
+  ReferenceConvention convention =
+      ReferenceConvention::exact; ///< See @c ReferenceConvention
 
   /**
    * @brief The time window of a simulation.
@@ -35,7 +36,7 @@ struct PluginConfig {
   TimeWindow time_window(type_real dt, int nstep) const;
 
   /**
-   * @brief The incident wave in the frame @c solve works in.
+   * @brief The incident wave in the frame @c PlaneWaveResponse works in.
    *
    * @c IncidentWave::origin_time is the FK time at step 0, so it is
    * \f$ t_0 - t_\text{origin} \f$. The FK frame has the model top at z = 0, so

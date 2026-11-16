@@ -154,9 +154,12 @@ The incident SV bottom vector differs in both modes: see
 
 | File | Contents |
 |---|---|
-| `include/fk_injection/` | The FK solve, depending on the SDK's medium enum and pocketfft only |
+| `include/fk_injection/` | Model, incident wave, time window and math utilities, depending on the SDK's medium enum and pocketfft only |
+| `src/plane_wave_response.*` | The model's response to the plane wave, sized from the mesh box |
+| `src/series_table.*` | One depth-only series per (medium, depth) the points need |
+| `src/field_sampler.*` | The field at points, from their series row and delay |
 | `src/plugin_config.*` | Reading `fk.yaml` |
 | `src/fk_injection_plugin.*` | The plugin class: `supports`, `setup`, `fill` |
 | `src/plugin_entry.cpp` | `SPECFEM_DEFINE_INJECTION_PLUGIN` |
-| `src/impl/` | Layer propagators, depth series, spline sampling |
+| `src/impl/` | Layer propagators and depth spectra |
 | `tests/` | Unit tests, and the module driven through the ABI with dlopen |

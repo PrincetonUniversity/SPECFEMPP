@@ -221,7 +221,7 @@ TEST(FkPluginConfig, InlineLayersParse) {
   const auto window = config.time_window(0.05f, 256);
   EXPECT_NEAR(window.dt, 0.05, 1e-6);
   EXPECT_EQ(window.nstep, 256);
-  EXPECT_NEAR(window.frequency_max, 1.0, 1e-6);
+  EXPECT_NEAR(config.frequency_max, 1.0, 1e-6);
   EXPECT_NEAR(window.frequency_sampling, 10.0, 1e-6);
   EXPECT_NEAR(window.time_window_length, 128.0, 1e-6);
 
@@ -428,7 +428,7 @@ time-window: { frequency-max: 0.2, frequency-sampling: 10.0, length: 180.0 }
   EXPECT_NEAR(wave.gaussian_half_duration, 5.0, 1e-5);
 
   const auto window = config.time_window(0.3f, 600);
-  EXPECT_NEAR(window.frequency_max, 0.2, 1e-6);
+  EXPECT_NEAR(config.frequency_max, 0.2, 1e-6);
   EXPECT_NEAR(window.frequency_sampling, 10.0, 1e-6);
   EXPECT_NEAR(window.time_window_length, 180.0, 1e-4);
 }

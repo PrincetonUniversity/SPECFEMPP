@@ -1,8 +1,10 @@
 #include "fk_injection_plugin.hpp"
-#include "fk_injection/solver.hpp"
+#include "plane_wave_response.hpp"
+#include "series_table.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <span>
 #include <sstream>
 #include <stdexcept>
@@ -19,9 +21,8 @@ fk_injection::FkInjectionPlugin::FkInjectionPlugin(
     : config_(config), wave_(config.incident_wave(info.t0(), info.bounds()[5])),
       window_(config.time_window(static_cast<type_real>(info.dt()),
                                  info.number_of_steps())),
-      zmax_(info.bounds()[5]),
-      horizontal_bounds_{ info.bounds()[0], info.bounds()[1], info.bounds()[2],
-                          info.bounds()[3] } {}
+      zmax_(info.bounds()[5]), box_{ info.bounds()[0], info.bounds()[1],
+                                     info.bounds()[2], info.bounds()[3] } {}
 
 bool fk_injection::FkInjectionPlugin::supports(
     const specfem::plugin::Medium medium,
@@ -44,58 +45,57 @@ bool fk_injection::FkInjectionPlugin::supports(
 void fk_injection::FkInjectionPlugin::setup(
     const specfem::plugin::Points &points) {
   groups_.clear();
-  fk_injection::EvalPoints eval_points;
-  eval_points.horizontal_bounds = horizontal_bounds_;
+  std::vector<std::vector<fk_injection::FieldPoint>> group_points;
+  std::vector<fk_injection::SeriesKey> keys;
   for (const auto &group : points.groups()) {
-    Group copy;
-    copy.first_point = eval_points.size();
-    copy.slots = group.slots();
-    if (!copy.slots.empty()) {
-      copy.count = group.size();
-      for (std::int64_t p = 0; p < group.size(); ++p) {
-        const std::int64_t i = group.begin() + p;
-        const double depth = zmax_ - points.z(i);
-        const Material material = point_material(group, p);
-        check_material(points, i, group.medium(), depth, material);
+    auto &field_points = group_points.emplace_back();
+    if (group.slots().empty())
+      continue;
+    for (std::int64_t p = 0; p < group.size(); ++p) {
+      const std::int64_t i = group.begin() + p;
+      const double depth = zmax_ - points.z(i);
+      const Material material = point_material(group, p);
+      check_material(points, i, group.medium(), depth, material);
 
-        eval_points.x.push_back(static_cast<type_real>(points.x(i)));
-        eval_points.y.push_back(static_cast<type_real>(points.y(i)));
-        eval_points.z.push_back(static_cast<type_real>(depth));
-        eval_points.normal_x.push_back(static_cast<type_real>(points.nx(i)));
-        eval_points.normal_y.push_back(static_cast<type_real>(points.ny(i)));
-        eval_points.normal_z.push_back(static_cast<type_real>(points.nz(i)));
-        eval_points.medium.push_back(group.medium());
-
-        // The stress series use sigma_rr = xi1 sigma_zz - 4 xim dx, as in
-        // SPECFEM3D. They read 0 on fluid points, which have no stress.
-        double xi1 = 0;
-        double xim = 0;
-        double bulk = 0;
-        if (group.medium() == specfem::plugin::Medium::elastic) {
-          const double xi =
-              (material.vs * material.vs) / (material.vp * material.vp);
-          const double mu = material.rho * material.vs * material.vs;
-          const double lambda =
-              material.rho * material.vp * material.vp - 2.0 * mu;
-          xi1 = 1.0 - 2.0 * xi;
-          xim = (1.0 - xi) * mu;
-          bulk = lambda / (2.0 * (lambda + mu));
-        }
-        eval_points.lame_ratio_xi1.push_back(static_cast<type_real>(xi1));
-        eval_points.lame_ratio_xim.push_back(static_cast<type_real>(xim));
-        eval_points.lame_ratio_bulk.push_back(static_cast<type_real>(bulk));
+      fk_injection::FieldPoint point;
+      point.x = static_cast<type_real>(points.x(i));
+      point.y = static_cast<type_real>(points.y(i));
+      point.depth = static_cast<type_real>(depth);
+      point.medium = group.medium();
+      point.normal_x = static_cast<type_real>(points.nx(i));
+      point.normal_y = static_cast<type_real>(points.ny(i));
+      point.normal_z = static_cast<type_real>(points.nz(i));
+      // The stress series use sigma_rr = xi1 sigma_zz - 4 xim dx, as in
+      // SPECFEM3D. Fluid points have no stress and keep 0.
+      if (group.medium() == specfem::plugin::Medium::elastic) {
+        const double xi =
+            (material.vs * material.vs) / (material.vp * material.vp);
+        const double mu = material.rho * material.vs * material.vs;
+        const double lambda =
+            material.rho * material.vp * material.vp - 2.0 * mu;
+        point.xi1 = static_cast<type_real>(1.0 - 2.0 * xi);
+        point.xim = static_cast<type_real>((1.0 - xi) * mu);
+        point.bulk = static_cast<type_real>(lambda / (2.0 * (lambda + mu)));
       }
+      field_points.push_back(point);
+      keys.push_back({ point.medium, point.depth });
     }
-    groups_.push_back(std::move(copy));
   }
 
-  // A rank without points has nothing to solve, and solve needs at least one.
-  if (eval_points.size() > 0)
-    result_ = fk_injection::solve(config_.model, wave_, window_, eval_points,
-                                  fk_injection::field_derivative::velocity,
-                                  config_.convention);
-  scratch_.resize(static_cast<std::size_t>(eval_points.size()) *
-                  fk_injection::number_of_sample_components);
+  const fk_injection::PlaneWaveResponse response(config_.model, wave_, window_,
+                                                 box_, config_.convention);
+  const auto series = std::make_shared<const fk_injection::SeriesTable>(
+      fk_injection::SeriesTable::synthesize(response, keys));
+
+  std::size_t largest_group = 0;
+  const auto &sdk_groups = points.groups();
+  for (std::size_t g = 0; g < group_points.size(); ++g) {
+    largest_group = std::max(largest_group, group_points[g].size());
+    groups_.push_back(
+        { fk_injection::FieldSampler(response, series, group_points[g]),
+          sdk_groups[g].slots() });
+  }
+  scratch_.resize(largest_group * fk_injection::number_of_sample_components);
 }
 
 fk_injection::FkInjectionPlugin::Material
@@ -201,18 +201,24 @@ void fk_injection::FkInjectionPlugin::fill(
   // One step at a time, so the scratch stays at points x components whatever
   // the window size.
   const int nsteps = buffers.front().number_of_steps();
-  for (int s = 0; s < nsteps; ++s) {
-    result_.sample(first_step + s, 1, std::span<type_real>(scratch_));
-    for (std::size_t g = 0; g < groups_.size(); ++g) {
-      const Group &group = groups_[g];
+  for (std::size_t g = 0; g < groups_.size(); ++g) {
+    const Group &group = groups_[g];
+    const int count = group.sampler.number_of_points();
+    if (count == 0)
+      continue;
+    const std::span<type_real> step_values(
+        scratch_.data(), static_cast<std::size_t>(count) *
+                             fk_injection::number_of_sample_components);
+    for (int s = 0; s < nsteps; ++s) {
+      group.sampler.sample(first_step + s, 1, step_values);
       for (const auto &slot : group.slots) {
         const int offset = sample_offset(slot.quantity);
-        for (std::int64_t p = 0; p < group.count; ++p) {
-          const std::int64_t row = (group.first_point + p) *
-                                   fk_injection::number_of_sample_components;
+        for (int p = 0; p < count; ++p) {
+          const std::size_t row = static_cast<std::size_t>(p) *
+                                  fk_injection::number_of_sample_components;
           for (int c = 0; c < slot.count; ++c)
             buffers[g].set(p, slot.offset + c, s,
-                           static_cast<double>(scratch_[row + offset + c]));
+                           static_cast<double>(step_values[row + offset + c]));
         }
       }
     }

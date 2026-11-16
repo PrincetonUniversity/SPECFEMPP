@@ -24,16 +24,14 @@ FetchContent_MakeAvailable(pocketfft)
 
 add_library(fk_injection_impl STATIC
   src/fk_injection_plugin.cpp
-  src/fk_result.cpp
-  src/impl/depth_groups.cpp
+  src/field_sampler.cpp
   src/impl/depth_series.cpp
-  src/impl/driver.cpp
-  src/impl/fk_setup.cpp
   src/impl/layer_stack.cpp
   src/layered_model.cpp
   src/model_file_reader.cpp
+  src/plane_wave_response.cpp
   src/plugin_config.cpp
-  src/solver.cpp
+  src/series_table.cpp
   src/time_window.cpp
 )
 set_target_properties(fk_injection_impl PROPERTIES
@@ -53,7 +51,7 @@ target_include_directories(fk_injection_impl SYSTEM PUBLIC
 # its symbols from clashing with the copy inside the executable.
 target_link_libraries(fk_injection_impl PUBLIC specfem::plugin_sdk Kokkos::kokkos
                                         PRIVATE yaml-cpp::yaml-cpp)
-# Transforms run serially; parallelism, if any, is over depth groups.
+# Transforms run serially; parallelism, if any, is over sampled points.
 target_compile_definitions(fk_injection_impl PUBLIC
   POCKETFFT_NO_MULTITHREADING
 )

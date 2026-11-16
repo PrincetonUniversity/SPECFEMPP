@@ -11,9 +11,8 @@ namespace fk_injection {
  * @c compute_fk_sizes() uses to determine the working-array sizes.
  */
 struct TimeWindow {
-  type_real dt = 0;            ///< Simulation time step in s
-  int nstep = 0;               ///< Total number of simulation time steps
-  type_real frequency_max = 0; ///< Maximum frequency of interest in Hz
+  type_real dt = 0; ///< Simulation time step in s
+  int nstep = 0;    ///< Total number of simulation time steps
   type_real frequency_sampling =
       0; ///< Nyquist-like sampling frequency in Hz (\f$F_\text{ech}\f$)
   type_real time_window_length =
@@ -41,9 +40,6 @@ struct FkSizes {
       0; ///< \f$\Delta f\f$ in Hz (\f$= 1/((N_\text{FFT}-1)\Delta
          ///< t_\text{min})\f$; SPECFEM3D's grid, which stretches times by a
          ///< factor \f$N/(N-1)\f$ and is used only to reproduce it)
-  type_real effective_time_window =
-      0; ///< Effective FK time window \f$T_\text{FK} = \Delta
-         ///< t_\text{min}(N_\text{FFT}-1)\f$ in s
 };
 
 /**
