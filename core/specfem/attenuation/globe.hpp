@@ -112,13 +112,15 @@ template <int N_SLS> struct AttenuationObjective {
 };
 
 /**
- * @brief Fit strain relaxation times with globe's
- * attenuation_invert_by_simplex.
+ * @brief The simplex search behind every Q fit, with Q used as given.
  *
- * Uses 100 log-spaced frequencies, the initial guess
- * \f$\tau_\sigma(1+2/Q)\f$ and specfem::optimization::NelderMeadSimplex with
- * globe's single-precision tolerances and simplex steps, all in double
- * precision regardless of type_real.
+ * Globe's attenuation_invert_by_simplex: 100 log-spaced frequencies, the
+ * initial guess \f$\tau_\sigma(1+2/Q)\f$ and
+ * specfem::optimization::NelderMeadSimplex with globe's single-precision
+ * tolerances and simplex steps, all in double precision regardless of
+ * type_real. This is the only Q search in the code: compute_tau_eps() clips Q
+ * and calls it, and the 1/L-normalized
+ * specfem::attenuation::compute_tau_eps() converts its result.
  *
  * @note Deliberately stricter than SPECFEM3D_GLOBE. Globe's fminsearch only
  * reports failure when the evaluation count exceeds its budget; its iteration
@@ -130,13 +132,38 @@ template <int N_SLS> struct AttenuationObjective {
  *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
+ * @param Q Target Q, positive and finite; not clipped
+ * @param tau_sigma Stress relaxation times from compute_tau_sigma()
+ * @param band Attenuation band
+ * @return Strain relaxation times \f$\tau_\epsilon\f$ of the unnormalized
+ * (\f$1-N+\sum\f$) model, in double precision
+ * @throws std::runtime_error if the simplex stops on its iteration or
+ * evaluation budget before meeting its tolerances, including cases globe
+ * would accept
+ * @throws std::invalid_argument if Q is not positive and finite
+ */
+template <int N_SLS, typename T>
+Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+search_tau_eps(double Q,
+               const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                  Kokkos::HostSpace> &tau_sigma,
+               const specfem::utilities::Band<T> &band);
+
+/**
+ * @brief Fit strain relaxation times with globe's
+ * attenuation_invert_by_simplex.
+ *
+ * Clips Q with clip_quality_factor() and runs search_tau_eps(), whose
+ * stricter-than-globe convergence rule it inherits.
+ *
+ * @tparam N_SLS Number of standard linear solids (> 1)
+ * @tparam T Unit of the band (frequency or period)
  * @param Q Target Q, limited by clip_quality_factor()
  * @param tau_sigma Stress relaxation times from compute_tau_sigma()
  * @param band Attenuation band
  * @return Strain relaxation times \f$\tau_\epsilon\f$
- * @throws std::runtime_error if the simplex stops on its iteration or
- * evaluation budget before meeting its tolerances, including cases globe
- * would accept
+ * @throws std::runtime_error if the fit does not converge (see
+ * search_tau_eps())
  * @throws std::invalid_argument if Q is NaN
  */
 template <int N_SLS, typename T>

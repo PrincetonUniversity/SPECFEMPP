@@ -22,7 +22,9 @@ Formulations
 
 2D uses the routines in ``specfem::attenuation``: a 1/L-normalized Maxwell
 model, ``one_minus_sum_beta = sum(tau_epsilon / tau_sigma)`` and a 1/L
-dispersion factor, fitted with ``NelderMeadSimplex``.
+dispersion factor. Its ``tau_epsilon`` comes from the same search as 3D,
+``specfem::attenuation::globe::search_tau_eps``, converted to the 1/L
+normalization.
 
 All 3D meshes, globe and non-globe, use ``specfem::attenuation::globe``
 (see :doc:`globe`), which follows SPECFEM3D_GLOBE: an unnormalized Maxwell model
