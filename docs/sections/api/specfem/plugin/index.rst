@@ -10,6 +10,19 @@ it from a plugin project with ``find_package(SpecfemPluginSDK)`` and
 
 Plugins can be built and loaded on Linux and macOS only.
 
+Example: analytic plane wave
+----------------------------
+
+``examples/plugins/plane_wave/`` is a complete plugin, built against the
+installed SDK alone: an analytic P or SV plane wave in a homogeneous elastic
+whole space. It reads a YAML configuration (with its own statically linked
+yaml-cpp), checks every point's material at setup, and fills displacement,
+velocity, acceleration and traction. Its README lists the configuration and
+the wave conventions, and its tests check the field against finite
+differences. The ``Injection plugins`` CI workflow
+(``.github/workflows/plugin.yaml``) builds and tests it against the installed
+SDK.
+
 .. doxygennamespace:: specfem::plugin
     :desc-only:
 
