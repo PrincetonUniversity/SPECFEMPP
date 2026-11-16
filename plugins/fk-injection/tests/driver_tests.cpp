@@ -397,7 +397,6 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
   wave.take_off_theta = static_cast<type_real>(20.0 * 3.14159265 / 180.0);
-  wave.origin_time = 5;
   wave.gaussian_half_duration = 2;
   // The half-space top, so a point at x = y = 0 has no delay.
   wave.origin_z = static_cast<type_real>(-model.halfspace_top_depth());
@@ -618,6 +617,55 @@ TEST(FkDriver, DelayedArrivalMatchesPlaneWaveTiming) {
                     static_cast<double>(window.dt),
                 eta * (-depths[point] - driver_tests_impl::origin_z), 6.0)
         << "depth " << depths[point];
+  }
+}
+
+// origin_time is the FK time at step 0, so origin_time = -k dt delays the field
+// by exactly k steps, whether or not k dt is a multiple of dt_min, and nothing
+// wraps around into the steps before the arrival.
+TEST(FkDriver, OriginTimeDelaysTheField) {
+  const fk_injection::LayeredModel model(
+      {}, { driver_tests_impl::homogeneous_layer(0) });
+  // N_P = 3, so 80 steps is 26 2/3 resampled samples.
+  const auto window = driver_tests_impl::long_window(2.0);
+  const auto points = make_eval_points({ 50005.0, 20000.0 });
+  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+
+  const driver_tests_impl::SampledField reference(
+      fk_injection::solve(model, driver_tests_impl::gaussian_p_wave(), window,
+                          points, fk_injection::field_derivative::velocity),
+      window.nstep);
+
+  for (const int delay_steps : { 80, 400 }) {
+    auto wave = driver_tests_impl::gaussian_p_wave();
+    wave.origin_time =
+        static_cast<type_real>(-delay_steps * static_cast<double>(window.dt));
+    const driver_tests_impl::SampledField delayed(
+        fk_injection::solve(model, wave, window, points,
+                            fk_injection::field_derivative::velocity),
+        window.nstep);
+
+    for (int point = 0; point < 2; ++point) {
+      double peak = 0.0;
+      double difference = 0.0;
+      for (int step = 0; step + delay_steps < window.nstep; ++step) {
+        const double value = reference(point, velocity_z, step);
+        peak = std::max(peak, std::fabs(value));
+        difference = std::max(
+            difference,
+            std::fabs(delayed(point, velocity_z, step + delay_steps) - value));
+      }
+      ASSERT_GT(peak, 0.0);
+      EXPECT_LT(difference / peak, 5.0e-3)
+          << "delay " << delay_steps << ", point " << point;
+
+      double before_arrival = 0.0;
+      for (int step = 0; step < delay_steps; ++step)
+        before_arrival = std::max(before_arrival,
+                                  std::fabs(delayed(point, velocity_z, step)));
+      EXPECT_LT(before_arrival / peak, 5.0e-3)
+          << "delay " << delay_steps << ", point " << point;
+    }
   }
 }
 

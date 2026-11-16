@@ -10,7 +10,8 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
                             const fk_injection::IncidentWave &wave,
                             const fk_injection::TimeWindow &window, double p,
                             const fk_injection::impl::DepthGroups &groups,
-                            fk_injection::field_derivative derivative) {
+                            fk_injection::field_derivative derivative,
+                            fk_injection::ReferenceConvention convention) {
   fk_injection::impl::FkSetup setup;
 
   const double span = groups.time_delay_max - groups.time_delay_min;
@@ -36,15 +37,21 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
     setup.apodization[i] = std::exp(-x * x);
   }
 
-  // t0 / delay bookkeeping. nn =
-  // int(origin_time / dt_min) (truncation toward zero); pad keeps per-point
-  // sample abscissae non-negative; the stored series is left-rotated by nn -
-  // pad.
-  const int nn =
-      static_cast<int>(static_cast<double>(wave.origin_time) / setup.dt_min);
+  // t0 / delay bookkeeping. pad keeps per-point sample abscissae non-negative;
+  // the stored series is left-rotated by nn - pad. Flooring leaves a fraction
+  // in [0, 1) for the abscissa, so the abscissae stay non-negative too.
+  const double origin_samples =
+      static_cast<double>(wave.origin_time) / setup.dt_min;
+  const bool truncate =
+      convention == fk_injection::ReferenceConvention::specfem3d;
+  const int nn = static_cast<int>(truncate ? std::trunc(origin_samples)
+                                           : std::floor(origin_samples));
   setup.pad_samples =
       static_cast<int>(std::ceil(groups.time_delay_max / setup.dt_min));
   setup.shift_samples = nn - setup.pad_samples;
+  setup.abscissa_pad = static_cast<double>(setup.pad_samples);
+  if (!truncate)
+    setup.abscissa_pad += origin_samples - static_cast<double>(nn);
 
   const fk_injection::ElasticIsotropicLayer &halfspace =
       model.elastic_layers().back();

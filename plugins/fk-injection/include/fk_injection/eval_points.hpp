@@ -2,6 +2,8 @@
 
 #include "fk_injection/config.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
+#include <array>
+#include <optional>
 #include <vector>
 
 namespace fk_injection {
@@ -43,6 +45,13 @@ struct EvalPoints {
    *         explicit value to be recovered on the fluid side.
    */
   std::vector<specfem::plugin::Medium> medium{};
+
+  /** @brief Horizontal box (xmin, xmax, ymin, ymax) holding the points of every
+   *         rank. The FFT length and leading pad follow the delays and change
+   *         the field slightly, so ranks must size from the same delays. Empty
+   *         means sizing from these points alone.
+   */
+  std::optional<std::array<double, 4>> horizontal_bounds = std::nullopt;
 
   /**
    * @brief Return the number of evaluation points.

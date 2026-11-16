@@ -51,16 +51,27 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   double time_delay_min = 0.0;
   double time_delay_max = 0.0;
 
+  const auto delay_at = [&](const double x, const double y) {
+    return p * ((x - x0) * std::cos(phi) + (y - y0) * std::sin(phi)) +
+           eta_p * (z_ref - z0);
+  };
+
   if (n > 0) {
     for (int i = 0; i < n; ++i) {
-      const double xi = static_cast<double>(points.x[i]);
-      const double yi = static_cast<double>(points.y[i]);
-      time_delay[i] =
-          p * ((xi - x0) * std::cos(phi) + (yi - y0) * std::sin(phi)) +
-          eta_p * (z_ref - z0);
+      time_delay[i] = delay_at(static_cast<double>(points.x[i]),
+                               static_cast<double>(points.y[i]));
     }
     time_delay_min = *std::min_element(time_delay.begin(), time_delay.end());
     time_delay_max = *std::max_element(time_delay.begin(), time_delay.end());
+    if (points.horizontal_bounds) {
+      const auto &[xmin, xmax, ymin, ymax] = *points.horizontal_bounds;
+      for (const double x : { xmin, xmax }) {
+        for (const double y : { ymin, ymax }) {
+          time_delay_min = std::min(time_delay_min, delay_at(x, y));
+          time_delay_max = std::max(time_delay_max, delay_at(x, y));
+        }
+      }
+    }
   }
 
   // --- Resolve each point's medium ---

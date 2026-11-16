@@ -19,16 +19,16 @@ namespace fk_injection::impl {
  * Single source of the per-point offset so the window-coverage check and the
  * stored @c PointSample::offset cannot drift apart.
  *
- * @param pad_samples  Leading pad in resampled-grid samples.
+ * @param abscissa_pad Leading pad in resampled-grid samples.
  * @param time_delay   Per-point plane-wave delay tau in s.
  * @param delay_stretch Delay scaling (1 in production; N/(N-1) for the
  *                      SPECFEM3D-reference reproduction).
  * @param dt_min       Resampled-grid time step in s.
  * @return Abscissa offset in resampled-grid samples.
  */
-inline double point_abscissa_offset(double pad_samples, double time_delay,
+inline double point_abscissa_offset(double abscissa_pad, double time_delay,
                                     double delay_stretch, double dt_min) {
-  return pad_samples - time_delay * delay_stretch / dt_min;
+  return abscissa_pad - time_delay * delay_stretch / dt_min;
 }
 
 /**

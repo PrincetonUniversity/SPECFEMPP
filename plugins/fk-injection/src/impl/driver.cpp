@@ -28,8 +28,7 @@ fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
     fk_injection::PointSample &sample = samples[i];
     sample.group = groups.point_group[i];
     sample.offset = fk_injection::impl::point_abscissa_offset(
-        static_cast<double>(setup.pad_samples), groups.time_delay[i],
-        delay_stretch, setup.dt_min);
+        setup.abscissa_pad, groups.time_delay[i], delay_stretch, setup.dt_min);
     sample.medium = groups.groups[sample.group].medium;
     if (have_lame) {
       sample.xi1 = points.lame_ratio_xi1[i];
