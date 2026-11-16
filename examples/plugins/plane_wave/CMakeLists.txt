@@ -7,7 +7,7 @@
 #   cmake -S . -B build -DCMAKE_PREFIX_PATH=<sdk>
 #   cmake --build build && ctest --test-dir build
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.24)
 project(specfem_plane_wave_plugin LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
