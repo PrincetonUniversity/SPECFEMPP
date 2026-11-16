@@ -1,0 +1,8 @@
+# ~47 MB of generated databases: produced by Snakefile or by the
+# ctest fixture-setup step, never committed. Anchored so provenance/DATA
+# (the committed inputs) is not ignored.
+/DATABASES_MPI/
+/OUTPUT_FILES/
+/DATA/
+/.snakemake/
+/executable_checked.txt

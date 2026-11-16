@@ -159,9 +159,11 @@ public:
 /**
  * @brief Communication group for face-shared MPI interfaces.
  *
- * A face interface is a 2D ngll × ngll grid of GLL points. The `theta` index
- * encodes the discrete 90° rotation between the two partitions' coordinate
- * systems: theta=0 (identity), 1 (90° CW), 2 (180°), 3 (270° CW).
+ * A face interface is a 2D ngll × ngll grid of GLL points. Two glued grids
+ * differ by one of the 8 symmetries of a square, stored as a `mirror` flag
+ * (the grids have the same handedness about their outward normals, so one must
+ * be reflected) and a `theta` index for the 90° rotation applied after it:
+ * theta=0 (identity), 1, 2 (180°), 3.
  *
  * @see communication_group
  */
@@ -172,6 +174,9 @@ public:
   ThetaViewType theta; /**< Discrete rotation index ∈ [0,3] aligning face
                           coordinate systems across the MPI boundary */
   ThetaViewType::host_mirror_type h_theta; /**< Host mirror for theta */
+  Kokkos::View<unsigned char *, Kokkos::HostSpace>
+      h_mirror; /**< 1 if the face grid axes are swapped before the theta
+                     rotation, 0 otherwise (host only: used while packing) */
 
   face_communication_group() = default;
   face_communication_group(
@@ -239,6 +244,7 @@ private:
   void send_unpacking_indices(
       Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
       Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
+      Kokkos::View<unsigned char *, Kokkos::HostSpace> mirror,
       Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
       Kokkos::View<int **, Kokkos::HostSpace> edge_index_mapping,
       Kokkos::View<bool *, Kokkos::HostSpace> edge_reflect,
