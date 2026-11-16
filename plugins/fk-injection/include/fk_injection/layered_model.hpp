@@ -131,6 +131,12 @@ public:
    */
   double fluid_thickness() const;
 
+  /**
+   * @brief Depth of the half-space top below the model top.
+   * @return Total thickness of the fluid and finite elastic layers (m).
+   */
+  double halfspace_top_depth() const;
+
 private:
   void validate() const;
 

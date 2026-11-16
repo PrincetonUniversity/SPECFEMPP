@@ -5,6 +5,7 @@
 #include "impl/layer_operators.hpp"
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 
@@ -217,4 +218,49 @@ TEST(LayerOperators, AcousticFromSolid) {
   // P/k == -d == (-7,-8).
   EXPECT_NEAR(result.pressure_over_k.real(), -7.0, kTol);
   EXPECT_NEAR(result.pressure_over_k.imag(), -8.0, kTol);
+}
+
+// ============================================================================
+// ElasticPropagatorMatchesEigensolution
+//
+// The columns of E are the layer's four plane-wave modes, and a mode m
+// propagated up by h grows by G_m(h), so T(h) E = E G(h). Both sides come from
+// independent code: the closed-form propagator and the eigenmatrix.
+// ============================================================================
+TEST(LayerOperators, ElasticPropagatorMatchesEigensolution) {
+  fk_injection::ElasticIsotropicLayer layer;
+  layer.density = static_cast<fk_injection::type_real>(2700.0);
+  layer.p_velocity = static_cast<fk_injection::type_real>(6000.0);
+  layer.s_velocity = static_cast<fk_injection::type_real>(3464.0);
+
+  const double p = 1.0e-4;
+  const double height = 1500.0;
+  const std::complex<double> omega(6.0, 0.0);
+
+  const auto propagator =
+      fk_injection::impl::layer_propagator(layer, omega, height, p);
+  const auto eigenmatrix =
+      fk_injection::impl::elastic_halfspace_eigenmatrix(layer, p);
+  const auto slowness = fk_injection::impl::vertical_slowness(layer, p);
+  const std::complex<double> growth[4] = {
+    std::exp(omega * slowness[1] * height),
+    std::exp(-omega * slowness[1] * height),
+    std::exp(omega * slowness[0] * height),
+    std::exp(-omega * slowness[0] * height),
+  };
+
+  const auto left = propagator * eigenmatrix;
+  double scale = 0.0;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      scale = std::max(scale, std::abs(eigenmatrix(i, j)));
+    }
+  }
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      EXPECT_LT(std::abs(left(i, j) - eigenmatrix(i, j) * growth[j]),
+                1.0e-9 * scale)
+          << "entry (" << i << ", " << j << ")";
+    }
+  }
 }
