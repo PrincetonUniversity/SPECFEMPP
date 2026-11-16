@@ -20,7 +20,14 @@ set(_layout_diagnostics
     "constant coordinate"
     "overflow"
     "overflow"
-    "overflow")
+    "overflow"
+
+    "layout broadcast"
+    "uniqueness not certified"
+    "uniqueness not certified"
+    "uniqueness not certified"
+    "uniqueness not certified"
+    "layout broadcast")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)

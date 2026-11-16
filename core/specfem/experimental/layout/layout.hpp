@@ -276,6 +276,108 @@ minimum_strides(const T &tree) {
   }
 }
 
+// Runtime checks run during constant evaluation and in debug builds only, so
+// release builds compile them out entirely.
+[[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr bool checks_enabled() {
+  if (std::is_constant_evaluated()) {
+    return true;
+  }
+#ifdef NDEBUG
+  return false;
+#else
+  return true;
+#endif
+}
+
+template <typename T> struct LeafCount {
+  static constexpr std::size_t value = 1;
+};
+template <typename... Values> struct LeafCount<Tuple<Values...>> {
+  static constexpr std::size_t value =
+      (std::size_t{ 0 } + ... + LeafCount<Values>::value);
+};
+
+struct Leaf {
+  std::size_t extent = 0;
+  std::size_t stride = 0;
+};
+
+// Fixed-capacity leaf list usable in constant evaluation and device code.
+template <std::size_t Capacity> struct Leaves {
+  Leaf leaf[Capacity == 0 ? 1 : Capacity]{};
+  std::size_t size = 0;
+};
+
+// Collect leaves with extent at least two; singletons cannot collide.
+template <typename Shape, typename Stride, std::size_t Capacity>
+KOKKOS_INLINE_FUNCTION constexpr void collect_leaves(const Shape &shape,
+                                                     const Stride &stride,
+                                                     Leaves<Capacity> &leaves) {
+  if constexpr (TupleTraits<Shape>::is_tuple) {
+    [&]<std::size_t... I>(std::index_sequence<I...>) {
+      (collect_leaves(tuple_get<I>(shape), tuple_get<I>(stride), leaves), ...);
+    }(tuple_indices<Shape>);
+  } else {
+    const auto extent = integer(shape);
+    if (extent > 1) {
+      leaves.leaf[leaves.size] = Leaf{ extent, integer(stride) };
+      ++leaves.size;
+    }
+  }
+}
+
+enum class Uniqueness { certified, broadcast, overlap };
+
+// Sufficient injectivity proof over the rectangular envelope. After sorting
+// leaves by stride, each stride must exceed the largest offset reachable by
+// the leaves before it. Two distinct coordinates then differ at a highest
+// sorted leaf whose stride exceeds every lower contribution, so their offsets
+// differ. Some injective layouts, such as (2, 3) : (3, 2), are rejected.
+template <typename Shape, typename Stride>
+[[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr Uniqueness
+certify(const Shape &shape, const Stride &stride) {
+  if (has_zero(shape)) {
+    return Uniqueness::certified;
+  }
+  Leaves<LeafCount<Shape>::value> leaves{};
+  collect_leaves(shape, stride, leaves);
+  for (std::size_t i = 1; i < leaves.size; ++i) {
+    const Leaf current = leaves.leaf[i];
+    std::size_t j = i;
+    for (; j > 0 && leaves.leaf[j - 1].stride > current.stride; --j) {
+      leaves.leaf[j] = leaves.leaf[j - 1];
+    }
+    leaves.leaf[j] = current;
+  }
+  std::size_t covered = 0;
+  for (std::size_t i = 0; i < leaves.size; ++i) {
+    const Leaf leaf = leaves.leaf[i];
+    if (leaf.stride == 0) {
+      return Uniqueness::broadcast;
+    }
+    if (leaf.stride <= covered) {
+      return Uniqueness::overlap;
+    }
+    covered = add(covered, multiply(leaf.extent - 1, leaf.stride));
+  }
+  return Uniqueness::certified;
+}
+
+template <typename Shape, typename Stride>
+KOKKOS_INLINE_FUNCTION constexpr void require_unique(const Shape &shape,
+                                                     const Stride &stride) {
+  const auto uniqueness = certify(shape, stride);
+  require(uniqueness != Uniqueness::broadcast,
+          "layout broadcast: zero stride on a nonsingleton leaf");
+  require(uniqueness != Uniqueness::overlap,
+          "layout uniqueness not certified: stride separation failed");
+}
+
+// Selects the layout constructor that skips uniqueness certification.
+struct DeriveTag {};
+
+struct LayoutAccess;
+
 } // namespace specfem::experimental::layout_impl
 /** @endcond */
 
@@ -284,8 +386,19 @@ namespace specfem::experimental::layout {
 /**
  * @brief Recursive shape/stride mapping independent of backing storage.
  *
- * Inputs must describe an injective mapping. Uniqueness certification is added
- * separately. Runtime preconditions are checked only without NDEBUG.
+ * Construction certifies that distinct valid coordinates map to distinct
+ * element offsets. Leaves with extent one are ignored. The remaining leaves,
+ * sorted by stride, must each have a stride larger than the largest offset
+ * reachable by the leaves before it. This rule is sufficient, not necessary:
+ * it rejects some injective layouts, such as shape (2, 3) with strides (3, 2),
+ * and it never accepts a broadcast or an overlap. Empty domains have no valid
+ * coordinate and are always certified. Unused padding between offsets is
+ * allowed.
+ *
+ * Fully static, default-enabled descriptors that fail certification do not
+ * compile. Other descriptors are checked during constant evaluation and in
+ * builds without NDEBUG, on host and device. In release builds an uncertified
+ * descriptor is a precondition violation with undefined behavior.
  * @tparam Shape Recursive tuple of nonnegative integral extents.
  * @tparam Strides Matching recursive tuple of nonnegative element strides.
  */
@@ -298,40 +411,33 @@ template <typename Shape, typename Strides> class Layout {
 
 public:
   /**
-   * @brief Construct an enabled root mapping with static span diagnostics.
+   * @brief Construct an enabled root mapping with static diagnostics.
+   *
+   * Fully static descriptors that overflow, broadcast, or fail uniqueness
+   * certification do not compile.
    * @param shape Recursive extents.
    * @param strides Corresponding element strides.
    */
   KOKKOS_INLINE_FUNCTION constexpr Layout(Shape shape, Strides strides)
-      : Layout(shape, strides, true) {}
+      : Layout(layout_impl::DeriveTag{}, shape, strides, true) {
+    check_root_descriptor();
+  }
 
   /**
    * @brief Construct a root mapping with a rectangular logical domain.
    *
-   * Type-known span overflow fails compilation whatever the value of enabled,
-   * because no runtime flag can make such a layout valid.
+   * Type-known span overflow and uniqueness failures do not compile, whatever
+   * the value of enabled, because no runtime flag can make such a layout
+   * valid. Other nonempty domains are certified unique during constant
+   * evaluation and in builds without NDEBUG.
    * @param shape Recursive extents.
    * @param strides Corresponding element strides.
    * @param enabled False makes the logical domain empty, including rank zero.
    */
   KOKKOS_INLINE_FUNCTION constexpr Layout(Shape shape, Strides strides,
                                           bool enabled)
-      : shape_(shape), strides_(strides), enabled_(enabled) {
-    layout_impl::validate_leaves(shape_);
-    layout_impl::validate_leaves(strides_);
-    if constexpr (layout_impl::StaticTree<Shape>::value) {
-      [[maybe_unused]] constexpr auto size = layout_impl::product(Shape{});
-      [[maybe_unused]] constexpr auto minimum_span =
-          layout_impl::span(Shape{}, layout_impl::minimum_strides(Strides{}));
-    }
-    if (std::is_constant_evaluated()) {
-      [[maybe_unused]] const auto checked_envelope_size = envelope_size();
-      [[maybe_unused]] const auto checked_span_size = required_span_size();
-    }
-#ifndef NDEBUG
-    [[maybe_unused]] const auto checked_envelope_size = envelope_size();
-    [[maybe_unused]] const auto checked_span_size = required_span_size();
-#endif
+      : Layout(layout_impl::DeriveTag{}, shape, strides, enabled) {
+    check_root_descriptor();
   }
 
   /** @brief Number of top-level modes. @return Coordinate rank. */
@@ -431,6 +537,55 @@ public:
   }
 
 private:
+  friend struct layout_impl::LayoutAccess;
+
+  // Transformations construct derived layouts here. Leaf, envelope, and span
+  // checks still run, but uniqueness is inherited from the parent instead of
+  // re-certified: the envelope of a tiled slice can overlap where its
+  // inherited validity cannot.
+  KOKKOS_INLINE_FUNCTION constexpr Layout(layout_impl::DeriveTag, Shape shape,
+                                          Strides strides, bool enabled)
+      : shape_(shape), strides_(strides), enabled_(enabled) {
+    layout_impl::validate_leaves(shape_);
+    layout_impl::validate_leaves(strides_);
+    if constexpr (layout_impl::StaticTree<Shape>::value) {
+      [[maybe_unused]] constexpr auto size = layout_impl::product(Shape{});
+    }
+    if (layout_impl::checks_enabled()) {
+      [[maybe_unused]] const auto checked_envelope_size = envelope_size();
+      [[maybe_unused]] const auto checked_span_size = required_span_size();
+    }
+  }
+
+  // Certify root layouts during constant evaluation and in debug builds.
+  KOKKOS_INLINE_FUNCTION constexpr void check_unique() const {
+    if (layout_impl::checks_enabled() && !empty()) {
+      layout_impl::require_unique(shape_, strides_);
+    }
+  }
+
+  // Checks shared by every public root constructor. Span overflow and
+  // uniqueness that depend only on the types fail compilation, whatever the
+  // enabled flag, because no runtime value can make such a layout valid.
+  // Other descriptors are certified at runtime by check_unique.
+  KOKKOS_INLINE_FUNCTION constexpr void check_root_descriptor() const {
+    if constexpr (layout_impl::StaticTree<Shape>::value) {
+      [[maybe_unused]] constexpr auto minimum_span =
+          layout_impl::span(Shape{}, layout_impl::minimum_strides(Strides{}));
+    }
+    if constexpr (layout_impl::StaticTree<Shape>::value &&
+                  layout_impl::StaticTree<Strides>::value) {
+      constexpr auto uniqueness = layout_impl::certify(Shape{}, Strides{});
+      static_assert(uniqueness != layout_impl::Uniqueness::broadcast,
+                    "layout broadcast: zero stride on a nonsingleton leaf");
+      static_assert(
+          uniqueness != layout_impl::Uniqueness::overlap,
+          "layout uniqueness not certified: stride separation failed");
+    } else {
+      check_unique();
+    }
+  }
+
   Shape shape_{};
   Strides strides_{};
   bool enabled_ = true;
@@ -442,7 +597,8 @@ private:
  * @tparam Strides Matching recursive stride tuple.
  * @param shape Extents, with first-leaf-fastest scalar interpretation.
  * @param strides Element strides, including any padding.
- * @return Enabled mapping with type-known span diagnostics.
+ * @return Enabled mapping, certified unique. Type-known span and uniqueness
+ * failures do not compile.
  */
 template <typename Shape, typename Strides>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
@@ -457,8 +613,8 @@ make_layout(Shape shape, Strides strides) {
  * @param shape Extents, with first-leaf-fastest scalar interpretation.
  * @param strides Element strides, including any padding.
  * @param enabled False disables the domain and its backing span requirements.
- * @return Mapping with type-known span diagnostics, whose runtime span checks
- * respect enabled.
+ * @return Mapping with type-known span and uniqueness diagnostics, whose
+ * runtime span and uniqueness checks apply only when enabled.
  */
 template <typename Shape, typename Strides>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
@@ -467,3 +623,22 @@ make_layout(Shape shape, Strides strides, bool enabled) {
 }
 
 } // namespace specfem::experimental::layout
+
+/** @cond */
+namespace specfem::experimental::layout_impl {
+
+// The only construction path that skips uniqueness certification. A caller
+// must guarantee that every valid derived coordinate corresponds to exactly one
+// valid parent coordinate with the same offset, so the parent's certificate
+// carries over.
+struct LayoutAccess {
+  template <typename Shape, typename Strides>
+  [[nodiscard]] KOKKOS_INLINE_FUNCTION static constexpr auto
+  derive(Shape shape, Strides strides, bool enabled) {
+    return specfem::experimental::layout::Layout<Shape, Strides>(
+        DeriveTag{}, shape, strides, enabled);
+  }
+};
+
+} // namespace specfem::experimental::layout_impl
+/** @endcond */

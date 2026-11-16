@@ -1,3 +1,4 @@
+#include "specfem/datatype/domain_view.hpp"
 #include "specfem/experimental/layout/layout.hpp"
 #include "specfem/experimental/layout/view.hpp"
 #include <Kokkos_Core.hpp>
@@ -31,7 +32,68 @@ struct Base {
 struct Derived : Base {
   int extra = 0;
 };
+
+// Write each element's linear index through a certified GPU domain tile
+// layout over (elements, 5, 5), in a release-mode kernel.
+template <std::size_t TileSize>
+void write_domain_tile(int *pointer, std::size_t elements);
+
+template <std::size_t TileSize> void expect_domain_tile_writes();
 } // namespace specfem::testing::hierarchical_layout_impl
+
+template <std::size_t TileSize>
+void specfem::testing::hierarchical_layout_impl::write_domain_tile(
+    int *pointer, std::size_t elements) {
+  const std::size_t tiles = elements / TileSize + (elements % TileSize != 0);
+  Kokkos::parallel_for(
+      "hierarchical_layout_domain_tile", elements * 25,
+      KOKKOS_LAMBDA(std::size_t point) {
+        const auto layout = hl::make_layout(
+            hl::make_tuple(hl::make_tuple(hl::c<TileSize>, tiles), hl::c<5>,
+                           hl::c<5>),
+            hl::make_tuple(
+                hl::make_tuple(hl::c<std::size_t{ 1 }>, TileSize * 25),
+                hl::c<TileSize>, hl::c<TileSize * 5>));
+        const auto view = hl::make_view(pointer, tiles * TileSize * 25, layout);
+        const std::size_t ispec = point % elements;
+        const std::size_t iz = (point / elements) % 5;
+        const std::size_t ix = point / (elements * 5);
+        view(hl::make_tuple(ispec, iz, ix)) =
+            static_cast<int>(ispec * 25 + iz * 5 + ix);
+      });
+  Kokkos::fence();
+}
+
+template <std::size_t TileSize>
+void specfem::testing::hierarchical_layout_impl::expect_domain_tile_writes() {
+  const std::size_t elements = TileSize + 1;
+  using extents_type = Kokkos::dextents<std::size_t, 3>;
+  const typename specfem::datatype::DomainViewMapping<
+      specfem::element::dimension_tag::dim2,
+      TileSize>::template mapping<extents_type>
+      production(extents_type{ elements, 5, 5 });
+  Kokkos::View<int *> data("domain_tile", production.required_span_size());
+  Kokkos::deep_copy(data, -1);
+  write_domain_tile<TileSize>(data.data(), elements);
+  const auto result =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, data);
+  std::set<std::size_t> written;
+  for (std::size_t ispec = 0; ispec < elements; ++ispec) {
+    for (std::size_t iz = 0; iz < 5; ++iz) {
+      for (std::size_t ix = 0; ix < 5; ++ix) {
+        const std::size_t offset = production(ispec, iz, ix);
+        EXPECT_EQ(result(offset), static_cast<int>(ispec * 25 + iz * 5 + ix));
+        written.insert(offset);
+      }
+    }
+  }
+  // Padded lanes of the last tile stay untouched.
+  for (std::size_t i = 0; i < result.extent(0); ++i) {
+    if (!written.contains(i)) {
+      EXPECT_EQ(result(i), -1);
+    }
+  }
+}
 
 template <typename Node, std::size_t... I>
 KOKKOS_INLINE_FUNCTION constexpr std::size_t
@@ -87,6 +149,11 @@ void specfem::testing::hierarchical_layout_impl::write_device_storage(
           view(scalar) = -3;
         }
       });
+}
+
+TEST(HierarchicalLayout, DomainTileWritesMatchProductionMapping) {
+  specfem::testing::hierarchical_layout_impl::expect_domain_tile_writes<32>();
+  specfem::testing::hierarchical_layout_impl::expect_domain_tile_writes<64>();
 }
 
 TEST(HierarchicalLayout, MixedRecursiveMetadata) {
