@@ -28,6 +28,9 @@ if(UNIX)
 
   # Injection plugin loader tests (core/specfem/injection)
   include(${CMAKE_CURRENT_SOURCE_DIR}/injection/loader/loader.cmake)
+
+  # FK injection plugin tests (plugin/fk-injection)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/plugin/fk-injection/tests fk-injection)
 endif()
 
 # Injection provider session tests use a statically registered mock plugin, so
