@@ -142,25 +142,23 @@ void run_program_3d(
   // --------------------------------------------------------------
   //                   CFL Condition Check
   // --------------------------------------------------------------
+  // suggested_time_step is the element-wise CFL bound
+  // (COURANT_NUMBER_SUGGESTED * min_e h_e / v_e), so dt is checked against it.
   {
-    const type_real cfl =
-        dt * assembly.info.v.max / assembly.info.gll_distance.min;
     specfem::Logger::info([&](std::ostringstream &oss) {
       oss << "CFL Condition Check:\n"
           << "-------------------------------\n"
-          << " CFL number: ............. " << cfl << "\n"
-          << " Maximum CFL (Cmax): ..... "
-          << specfem::constants::COURANT_NUMBER_SUGGESTED << "\n";
+          << " dt: ..................... " << dt << "\n"
+          << " Suggested dt (CFL): ..... " << assembly.info.suggested_time_step
+          << "\n"
+          << " dt / suggested dt: ...... "
+          << dt / assembly.info.suggested_time_step << "\n";
     });
-    if (cfl > specfem::constants::COURANT_NUMBER_SUGGESTED) {
+    if (dt > assembly.info.suggested_time_step) {
       std::ostringstream msg;
       msg << "CFL condition violated!\n"
-          << "  CFL = " << cfl
-          << " > Cmax = " << specfem::constants::COURANT_NUMBER_SUGGESTED
-          << "\n"
-          << "  Current dt = " << dt << "\n"
-          << "  Suggested dt (satisfies CFL): "
-          << assembly.info.suggested_time_step << "\n"
+          << "  dt = " << dt
+          << " > suggested dt = " << assembly.info.suggested_time_step << "\n"
           << "  Please update the 'dt' parameter in your configuration.";
       specfem_abort(msg.str(), 30);
     }

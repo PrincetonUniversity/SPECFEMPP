@@ -1,0 +1,45 @@
+parameters:
+
+  header:
+    title: Bolivia 1994 deep earthquake, single-chunk isotropic PREM
+    description: |
+      Model : 1D isotropic PREM, one 90 degree chunk
+      Physics : no ellipticity, topography, oceans, gravity, rotation or attenuation
+      Boundary conditions : reflecting chunk sides
+      Sources : Bolivia 060994A CMT solution (647 km depth)
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.1
+          nstep: 18000
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: sac
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 10
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/DATABASES_MPI/proc000000_specfempp_database.bin"
+
+  sources:
+    CMTSOLUTION: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/CMTSOLUTION"

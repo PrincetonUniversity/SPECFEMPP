@@ -1,5 +1,7 @@
 #pragma once
 
+#include "specfem/globe/database_format.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -36,7 +38,7 @@ class PlanetConstants {
 public:
   /** @brief Current database schema emitted for a selected planet. */
   [[nodiscard]] static constexpr int current_schema_version(Planet) {
-    return 2;
+    return specfem::globe::planet_schema_version;
   }
 
   /**
