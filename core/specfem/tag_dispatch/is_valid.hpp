@@ -383,9 +383,12 @@ constexpr bool is_valid_edge(EdgeTuple t) {
   if (i != I::elastic_acoustic && i != I::acoustic_elastic)
     return false;
 
-  // dim3: only none
+  // dim3: weakly conforming interfaces only on untagged elements. Nonconforming
+  // interfaces need every boundary tag: a face is classified by the tag of the
+  // element it belongs to, and the conjugate kernel looks up its data by the
+  // acoustic element's tag.
   if (d == D::dim3)
-    return b == B::none;
+    return c == C::nonconforming || b == B::none;
 
   // dim2: boundary rules depend on interface direction
   if (i == I::elastic_acoustic)
