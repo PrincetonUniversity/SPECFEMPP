@@ -9,18 +9,20 @@
 namespace specfem::point {
 
 /**
- * @brief Template accessor for face node location in coupled local coordinates.
+ * @brief Coupling data of one host node of a nonconforming interface pair.
  *
- * @tparam DimensionTag
- * @tparam NGLL number of quadrature points, used only for the interpolants
- * @tparam InterfaceTag
- * @tparam BoundaryTag
- * @tparam FluxSchemeTag
- * @tparam MemorySpace
- * @tparam MemoryTraits
+ * Holds the integration factor and normal at the host node, and the 1D
+ * Lagrange polynomials of the guest face evaluated at the node's location on
+ * that face. The guest shape function \f$ (k_i, k_j) \f$ takes the value
+ * `interpolants(k_i, 0) * interpolants(k_j, 1)` at the node.
+ *
+ * @tparam DimensionTag Spatial dimension
+ * @tparam NGLL Number of GLL points per axis of the guest face
+ * @tparam InterfaceTag Interface medium type tag
+ * @tparam BoundaryTag Boundary condition tag
+ * @tparam FluxSchemeTag Flux scheme tag
  */
-template <specfem::element::dimension_tag DimensionTag,
-          int NGLL /*Only for interpolants*/,
+template <specfem::element::dimension_tag DimensionTag, int NGLL,
           specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
@@ -37,7 +39,7 @@ struct nonconforming_interface<specfem::element::dimension_tag::dim3, NGLL,
           specfem::element::dimension_tag::dim3, false /*UseSIMD*/> {
 
 public:
-  /// Spatial dimension (2D for this specialization)
+  /// Spatial dimension (3D for this specialization)
   static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
   /// Interface medium type tag
   static constexpr auto interface_tag = InterfaceTag;
@@ -49,47 +51,31 @@ public:
   static constexpr auto connection_tag =
       specfem::element_connections::type::nonconforming;
 
+  /// Spatial dimension
   static constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
-  vector_type<type_real, ndim - 1> coupled_coordinates;
-  scalar_type<type_real> face_factor;
-  vector_type<type_real, ndim> face_normal;
+  /// Number of GLL points per axis of the guest face
+  static constexpr int ngll = NGLL;
 
-  // ========================= START TEMPORARY =========================
+  /// Integration factor at the node
+  scalar_type<type_real> face_factor;
+  /// Face normal at the node
+  vector_type<type_real, ndim> face_normal;
+  /// Guest-face 1D Lagrange polynomials at the node: (igll, axis)
   tensor_type<type_real, NGLL, ndim - 1> interpolants;
 
   /**
-   * @brief Populates the interpolants.
+   * @brief Constructs the point from its stored values.
+   *
+   * @param face_factor Integration factor at the node
+   * @param face_normal Face normal at the node
+   * @param interpolants Guest-face 1D Lagrange polynomials at the node
    */
-  template <typename LagrangeInterpolantType>
-  KOKKOS_INLINE_FUNCTION void
-  set_interpolants(const LagrangeInterpolantType &lagrange_interpolant) {
-    // populate interpolants array.
-    for (int igll = 0; igll < NGLL; igll++) {
-      for (int idim = 0; idim < ndim - 1; idim++) {
-        interpolants(igll, idim) =
-            lagrange_interpolant(igll, coupled_coordinates(idim));
-      }
-    }
-  }
-  template <typename LagrangeInterpolantType>
   KOKKOS_INLINE_FUNCTION nonconforming_interface(
-      const vector_type<type_real, ndim - 1> &coupled_coordinates,
       const scalar_type<type_real> &face_factor,
       const vector_type<type_real, ndim> &face_normal,
-      const LagrangeInterpolantType &lagrange_interpolant)
-      : coupled_coordinates(coupled_coordinates), face_factor(face_factor),
-        face_normal(face_normal) {
-    set_interpolants(lagrange_interpolant);
-  }
-
-  // =========================  END TEMPORARY  =========================
-
-  KOKKOS_INLINE_FUNCTION nonconforming_interface(
-      const vector_type<type_real, ndim - 1> &coupled_coordinates,
-      const scalar_type<type_real> &face_factor,
-      const vector_type<type_real, ndim> &face_normal)
-      : coupled_coordinates(coupled_coordinates), face_factor(face_factor),
-        face_normal(face_normal) {}
+      const tensor_type<type_real, NGLL, ndim - 1> &interpolants)
+      : face_factor(face_factor), face_normal(face_normal),
+        interpolants(interpolants) {}
 
   /**
    * @brief Default constructor.

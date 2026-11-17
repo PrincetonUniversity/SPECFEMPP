@@ -2,199 +2,63 @@
 
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/execution.hpp"
 
 #include "specfem/datatype.hpp"
 
 #include <Kokkos_Core.hpp>
-#include <cmath>
 #include <type_traits>
 
 namespace specfem::algorithms {
 
-template <typename XiViewType> struct LagrangeInterpolant {
-
-  XiViewType xi_view; ///< View of knots (coordinates for each quadrature point)
-  int ngll;
-
-  KOKKOS_FUNCTION LagrangeInterpolant(XiViewType xi)
-      : xi_view(xi), ngll(xi.extent(0)) {}
-
-  KOKKOS_INLINE_FUNCTION
-  type_real operator()(const int &lagrange_index,
-                       const type_real &coordinate) const {
-    // can we code-share with core/specfem/quadrature/gll/lagrange_poly.cpp?
-
-    type_real val = 1;
-    for (int i = 0; i < ngll; i++) {
-      if (i != lagrange_index) {
-        val *=
-            (coordinate - xi_view(i)) / (xi_view(lagrange_index) - xi_view(i));
-      }
-    }
-    return val;
-  }
-};
-
 namespace transfer_interpolate_impl {
 
-template <typename FaceFunctionType, typename PointVectorType,
-          typename LagrangeInterpolatorType>
-KOKKOS_INLINE_FUNCTION void
-interpolate_point(const int &ielem, const type_real &face_coord1,
-                  const type_real &face_coord2,
-                  const FaceFunctionType &face_function,
-                  PointVectorType &result,
-                  const LagrangeInterpolatorType &lagrange_interpolator) {
-  constexpr int ncomp = PointVectorType::components;
-
-  for (int icomp = 0; icomp < ncomp; icomp++) {
-    result(icomp) = 0;
-  }
-
-  if (!std::isnan(face_coord1)) {
-    // to compute interpolants once: precompute second axis
-    type_real coeffs_axis2[FaceFunctionType::ngll];
-    for (int ipoint_axis2 = 0; ipoint_axis2 < FaceFunctionType::ngll;
-         ipoint_axis2++) {
-      coeffs_axis2[ipoint_axis2] =
-          lagrange_interpolator(ipoint_axis2, face_coord2);
-    }
-
-    // interpolate on tensor-product element
-    for (int ipoint_axis1 = 0; ipoint_axis1 < FaceFunctionType::ngll;
-         ipoint_axis1++) {
-      const type_real coeff_axis1 =
-          lagrange_interpolator(ipoint_axis1, face_coord1);
-      for (int ipoint_axis2 = 0; ipoint_axis2 < FaceFunctionType::ngll;
-           ipoint_axis2++) {
-        const type_real transfer_coeff =
-            coeff_axis1 * coeffs_axis2[ipoint_axis2];
-
-        for (int icomp = 0; icomp < ncomp; icomp++) {
-          result(icomp) +=
-              face_function(ielem, ipoint_axis1, ipoint_axis2, icomp) *
-              transfer_coeff;
-        }
-      }
-    }
-  }
-}
-
-template <typename LagrangeInterpolatorType, typename FaceFunctionType,
+/**
+ * @brief Interpolates a face function at one point from precomputed 1D
+ * interpolants.
+ *
+ * Computes \f$ \sum_{k_i, k_j} f(k_i, k_j) \ell_{k_i}(\xi) \ell_{k_j}(\eta)
+ * \f$, with `interpolants(k, 0)` \f$ = \ell_k(\xi) \f$ and
+ * `interpolants(k, 1)` \f$ = \ell_k(\eta) \f$. Zero interpolants give a zero
+ * result.
+ *
+ * @tparam InterpolantsType Accessor indexable as `(igll, axis)`
+ * @tparam FaceFunctionType Chunk-face field with `ngll` points per axis
+ * @tparam PointVectorType Point vector receiving the result
+ * @param ielem Face index within the chunk
+ * @param interpolants 1D interpolants of the face at the point
+ * @param face_function Field on the face
+ * @param result Interpolated value, one entry per component
+ */
+template <typename InterpolantsType, typename FaceFunctionType,
           typename PointVectorType>
-KOKKOS_INLINE_FUNCTION void interpolate_point(
-    const int &ielem, const LagrangeInterpolatorType &interpolants,
-    const FaceFunctionType &face_function, PointVectorType &result) {
+KOKKOS_INLINE_FUNCTION void
+interpolate_point(const int &ielem, const InterpolantsType &interpolants,
+                  const FaceFunctionType &face_function,
+                  PointVectorType &result) {
   constexpr int ncomp = PointVectorType::components;
 
   for (int icomp = 0; icomp < ncomp; icomp++) {
     result(icomp) = 0;
   }
 
-  if (!std::isnan(interpolants(0, 0))) {
-    // to compute interpolants once: precompute second axis
-    type_real coeffs_axis2[FaceFunctionType::ngll];
+  // interpolate on tensor-product element
+  for (int ipoint_axis1 = 0; ipoint_axis1 < FaceFunctionType::ngll;
+       ipoint_axis1++) {
+    const type_real coeff_axis1 = interpolants(ipoint_axis1, 0);
     for (int ipoint_axis2 = 0; ipoint_axis2 < FaceFunctionType::ngll;
          ipoint_axis2++) {
-      coeffs_axis2[ipoint_axis2] = interpolants(ipoint_axis2, 1);
-    }
+      const type_real transfer_coeff =
+          coeff_axis1 * interpolants(ipoint_axis2, 1);
 
-    // interpolate on tensor-product element
-    for (int ipoint_axis1 = 0; ipoint_axis1 < FaceFunctionType::ngll;
-         ipoint_axis1++) {
-      const type_real coeff_axis1 = interpolants(ipoint_axis1, 0);
-      for (int ipoint_axis2 = 0; ipoint_axis2 < FaceFunctionType::ngll;
-           ipoint_axis2++) {
-        const type_real transfer_coeff =
-            coeff_axis1 * coeffs_axis2[ipoint_axis2];
-
-        for (int icomp = 0; icomp < ncomp; icomp++) {
-          result(icomp) +=
-              face_function(ielem, ipoint_axis1, ipoint_axis2, icomp) *
-              transfer_coeff;
-        }
+      for (int icomp = 0; icomp < ncomp; icomp++) {
+        result(icomp) +=
+            face_function(ielem, ipoint_axis1, ipoint_axis2, icomp) *
+            transfer_coeff;
       }
     }
   }
 }
 } // namespace transfer_interpolate_impl
-
-template <typename IndexType, typename TransferFunctionType,
-          typename FaceFunctionType, typename IntersectionReturnCallback>
-KOKKOS_INLINE_FUNCTION
-    std::enable_if_t<specfem::data_access::is_chunk_edge<IndexType>::value,
-                     void>
-    transfer_interpolate(const IndexType &chunk_face_index,
-                         const TransferFunctionType &transfer_function,
-                         const FaceFunctionType &edge_function,
-                         const IntersectionReturnCallback &callback) {
-  static_assert(specfem::data_access::is_chunk_edge<FaceFunctionType>::value,
-                "EdgeFunctionType must be a chunk_edge data type.");
-
-  // TODO future consideration: use load_on_device for coupled field here.
-  // We would want it to be a specialization, since we want to transfer more
-  // things than just fields is there a better way of recovering global index?
-  const auto &team = chunk_face_index.get_policy_index();
-  const int &num_edges = chunk_face_index.nedges();
-
-  using VectorPointViewType = specfem::datatype::VectorPointViewType<
-      type_real, FaceFunctionType::components, FaceFunctionType::using_simd>;
-
-  constexpr int ncomp = FaceFunctionType::components;
-
-  specfem::execution::for_each_level(
-      specfem::execution::TeamThreadMDRangeIterator(
-          team, num_edges, TransferFunctionType::n_quad_element),
-      [&](const auto &index) {
-        // TODO
-      });
-}
-
-template <typename IndexType, typename TransferFunctionType,
-          typename FaceFunctionType, typename IntersectionReturnCallback,
-          typename LagrangeInterpolatorType>
-KOKKOS_INLINE_FUNCTION std::enable_if_t<
-    specfem::data_access::is_chunk_face<FaceFunctionType>::value &&
-        specfem::data_access::is_chunk_face<IndexType>::value,
-    void>
-transfer_interpolate(const IndexType &chunk_face_index,
-                     const TransferFunctionType &transfer_function,
-                     const FaceFunctionType &face_function,
-                     const IntersectionReturnCallback &callback,
-                     const LagrangeInterpolatorType &lagrange_interpolator) {
-
-  // TODO future consideration: use load_on_device for coupled field here.
-  // We would want it to be a specialization, since we want to transfer more
-  // things than just fields is there a better way of recovering global index?
-  const auto &team = chunk_face_index.get_policy_index();
-  const int &num_faces = chunk_face_index.chunk_size;
-
-  using VectorPointViewType = specfem::datatype::VectorPointViewType<
-      type_real, FaceFunctionType::components, FaceFunctionType::using_simd>;
-
-  specfem::execution::for_each_level(
-      specfem::execution::TeamThreadMDRangeIterator(
-          team, num_faces, TransferFunctionType::n_quad_element,
-          TransferFunctionType::n_quad_element),
-      [&](const auto &index) {
-        const int &ielem = index(0);
-        const int &iquad1 = index(1);
-        const int &iquad2 = index(2);
-
-        const type_real &face_coord1 =
-            transfer_function(ielem, iquad1, iquad2, 0);
-        const type_real &face_coord2 =
-            transfer_function(ielem, iquad1, iquad2, 1);
-
-        VectorPointViewType intersection_point_view;
-        transfer_interpolate_impl::interpolate_point(
-            ielem, face_coord1, face_coord2, face_function,
-            intersection_point_view, lagrange_interpolator);
-
-        callback(index, intersection_point_view);
-      });
-}
 
 template <typename IndexType, typename TransferFunctionType,
           typename FaceFunctionType, typename PointwiseReturnType>
