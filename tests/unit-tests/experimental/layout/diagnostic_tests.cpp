@@ -4,7 +4,7 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
-#include "specfem/experimental/layout/view.hpp"
+#include "specfem/experimental/layout/transform.hpp"
 #include <gtest/gtest.h>
 #include <limits>
 
@@ -102,4 +102,26 @@ TEST(HierarchicalLayoutDebug, RejectsOverflowButAcceptsEmptyEnvelope) {
                                      hl::make_tuple(maximum, maximum, maximum));
   EXPECT_TRUE(empty.empty());
   EXPECT_EQ(empty.required_span_size(), 0);
+}
+
+TEST(HierarchicalLayoutDebug, TransformCoordinates) {
+  const auto parent = hl::make_layout(hl::make_tuple(2, hl::make_tuple(3, 2)),
+                                      hl::make_tuple(1, hl::make_tuple(4, 16)));
+  const auto p = hl::permute<hl::ModePath<1>, 1, 0>(parent);
+  const auto g = hl::group<hl::ModePath<>, 0, 2>(p);
+  EXPECT_EQ(g.offset(hl::make_tuple(11)), 25);
+  EXPECT_FALSE(g.valid(hl::make_tuple(-1)));
+  EXPECT_FALSE(g.valid(hl::make_tuple(12)));
+  EXPECT_FALSE(p.valid(hl::make_tuple(0, hl::make_tuple(2, 0))));
+  EXPECT_DEATH(static_cast<void>(g.offset(hl::make_tuple(-1))),
+               "transformed coordinate");
+  EXPECT_DEATH(static_cast<void>(g.offset(hl::make_tuple(12))),
+               "transformed coordinate");
+  EXPECT_DEATH(
+      static_cast<void>(p.offset(hl::make_tuple(0, hl::make_tuple(2, 0)))),
+      "transformed coordinate");
+  const auto empty = hl::group<hl::ModePath<>, 0, 1>(
+      hl::make_layout(hl::make_tuple(0), hl::make_tuple(1)));
+  EXPECT_DEATH(static_cast<void>(empty.offset(hl::make_tuple(0))),
+               "transformed coordinate");
 }
