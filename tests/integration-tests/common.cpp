@@ -22,7 +22,7 @@ specfem::integration_tests::load_cases(const std::vector<std::string> &sections,
   const YAML::Node root = YAML::LoadFile("configurations/tests.yaml");
   std::vector<Case> cases;
   for (const auto &section : sections) {
-    for (const auto &entry : root[section]) {
+    for (const auto &entry : root[section]["3d"]) {
       if (entry.second.as<int>() != nproc)
         continue;
       Case c;
@@ -104,6 +104,9 @@ void specfem::integration_tests::expect_matches_reference_traces(
     const std::vector<Station> &stations,
     const std::vector<specfem::enums::wavefield> &seismogram_types,
     const type_real dt, const double tolerance) {
+  ASSERT_FALSE(stations.empty())
+      << "Cannot compare seismograms: the station list is empty";
+
   specfem::io::impl::ChannelGenerator channel_generator(dt);
 
   for (const auto &station : stations) {

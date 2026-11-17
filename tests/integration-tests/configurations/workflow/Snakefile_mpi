@@ -13,7 +13,9 @@ configfile: "../tests.yaml"
 
 # tests3d maps each multi-process test directory name -> its MPI process count.
 tests3d = {
-    name: nproc for name, nproc in config["explicit_solver"].items() if nproc > 1
+    name: nproc
+    for name, nproc in config["explicit_solver"]["3d"].items()
+    if nproc > 1
 }
 
 rule all:

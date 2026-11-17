@@ -1,7 +1,8 @@
 # Index of the 3D simulations run by tests/integration-tests/runner.cpp:
 #     <case name>: <number of MPI processes>
 #
-# Each section is a directory under dim3/ holding the cases. The value is the
+# Cases are grouped by section, then dimension (currently 3d). Each section
+# is a directory under dim3/ holding the cases. The value is the
 # single source of truth for a case's process count. It drives:
 #   - Snakemake (workflow/Snakefile builds the cases with 1 process,
 #     workflow/Snakefile_mpi the others),
@@ -10,26 +11,28 @@
 # It must equal NPROC_XI * NPROC_ETA in the case's Mesh_Par_file and the nproc
 # in its config.yaml. One "name: <int>" entry per line.
 explicit_solver:
-  HomogeneousHalfspaceSmallNoABCForceSource: 1
-  HomogeneousHalfspaceSmallNoABCForceSourceLong: 1
-  HomogeneousHalfspaceSmallNoABCForceSourceAttenuation: 1
-  HomogeneousHalfSpaceAcousticForceSource: 1
-  HomogeneousAcousticFreeSurfaceForceSource3D: 1
-  AcousticElasticForce: 1
-  HomogeneousHalfspaceSmallNoABCMomentTensor: 1
-  HomogeneousHalfSpaceStacey: 1
-  HomogeneousHalfSpaceAcousticStacey: 1
-  HomogeneousIsotropicCosseratDomain: 1
-  MPIHomogeneousHalfspaceSmallNoABCForceSource: 4
-  MPIHomogeneousHalfSpaceStacey: 4
-  MPIAcousticElasticForce: 4
+  3d:
+    HomogeneousHalfspaceSmallNoABCForceSource: 1
+    HomogeneousHalfspaceSmallNoABCForceSourceLong: 1
+    HomogeneousHalfspaceSmallNoABCForceSourceAttenuation: 1
+    HomogeneousHalfSpaceAcousticForceSource: 1
+    HomogeneousAcousticFreeSurfaceForceSource3D: 1
+    AcousticElasticForce: 1
+    HomogeneousHalfspaceSmallNoABCMomentTensor: 1
+    HomogeneousHalfSpaceStacey: 1
+    HomogeneousHalfSpaceAcousticStacey: 1
+    HomogeneousIsotropicCosseratDomain: 1
+    MPIHomogeneousHalfspaceSmallNoABCForceSource: 4
+    MPIHomogeneousHalfSpaceStacey: 4
+    MPIAcousticElasticForce: 4
 
 # Cases that need the plane-wave example plugin (SPECFEM_INJECTION_TEST_PLUGIN); they
 # are registered only when it is set. See dim3/injection/README.md.
 injection:
-  zero_field: 1
-  p_wave: 1
-  sv_wave: 1
-  p_wave_mpi2: 2
-  p_wave_mpi4: 4
-  sv_wave_mpi4: 4
+  3d:
+    zero_field: 1
+    p_wave: 1
+    sv_wave: 1
+    p_wave_mpi2: 2
+    p_wave_mpi4: 4
+    sv_wave_mpi4: 4

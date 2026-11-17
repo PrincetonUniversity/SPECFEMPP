@@ -2,9 +2,9 @@
 // the seismograms they write with reference traces.
 //
 // The cases are listed in configurations/tests.yaml as `<name>: <nproc>`, in
-// sections that are directories of configurations/dim3. SPECFEM_TEST_SECTION
-// and SPECFEM_TEST_NPROC select the cases of this executable: the section and
-// the MPI size it is launched with.
+// each section under a 3d key. Sections are directories of configurations/dim3.
+// SPECFEM_TEST_SECTION and SPECFEM_TEST_NPROC select the section and MPI size
+// of this executable.
 //
 // A case whose config.yaml has an `injection` entry also runs with the
 // plane-wave plugin SPECFEM_INJECTION_TEST_PLUGIN; the comparison is named by

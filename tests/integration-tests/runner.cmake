@@ -14,18 +14,24 @@ set(_tests_yaml ${CMAKE_CURRENT_SOURCE_DIR}/configurations/tests.yaml)
 # Re-run CMake configure when the yaml changes so new cases and sizes are picked up.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_tests_yaml})
 
-# Lines are either "<section>:" or "  <case>: <nproc>". The case names are what
+# Entries are nested as <section> -> <dimension> -> <case>: <nproc>. Only 3d
+# cases are registered by this runner. The case names are what
 # makes each case its own CTest entry for the MPI executables (PARAM_CASES below);
 # registering the TEST_P alone would collapse every case at a given size into one
 # entry, so a failure could not be attributed or re-run.
 file(STRINGS ${_tests_yaml} _tests_yaml_lines)
 set(_runner_sections "")
 set(_section "")
+set(_dimension "")
 foreach(_line IN LISTS _tests_yaml_lines)
   if(_line MATCHES "^([A-Za-z0-9_]+):[ \t]*$")
     set(_section "${CMAKE_MATCH_1}")
+    set(_dimension "")
     list(APPEND _runner_sections ${_section})
-  elseif(_line MATCHES "^[ \t]+([A-Za-z0-9_]+)[ \t]*:[ \t]*([0-9]+)[ \t]*$")
+  elseif(_line MATCHES "^  ([A-Za-z0-9_]+):[ \t]*$")
+    set(_dimension "${CMAKE_MATCH_1}")
+  elseif(_dimension STREQUAL "3d" AND
+         _line MATCHES "^    ([A-Za-z0-9_]+)[ \t]*:[ \t]*([0-9]+)[ \t]*$")
     list(APPEND _runner_nprocs_${_section} ${CMAKE_MATCH_2})
     list(APPEND _runner_cases_${_section}_${CMAKE_MATCH_2} ${CMAKE_MATCH_1})
   endif()
