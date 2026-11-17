@@ -11,7 +11,7 @@
 #   LAUNCHER         srun (default) or salloc (MPI: ctest launches the ranks)
 #   LD_LIBRARY_PATH_PREPEND  optional, applied after the modules are loaded
 # CC, CXX and FC are honoured if set.
-
+#
 set -eo pipefail # no -u: the Lmod module function reads unset variables
 
 action="${1:?usage: cell.sh build|test|clean|print}"
