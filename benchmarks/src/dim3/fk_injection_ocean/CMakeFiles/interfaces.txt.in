@@ -1,0 +1,31 @@
+# number of interfaces
+ 3
+#
+# We describe each interface below, structured as a 2D-grid, with several parameters :
+# number of points along XI and ETA, minimal XI ETA coordinates
+# and spacing between points which must be constant.
+# Then the records contain the Z coordinates of the NXI x NETA points.
+#
+# interface number 1 (crust-mantle boundary, Z = -11000 m)
+# SUPPRESS_UTM_PROJECTION  NXI  NETA  LONG_MIN  LAT_MIN  SPACING_XI  SPACING_ETA
+ .true. 2 2 -5000.0 -5000.0 10000.0 10000.0
+ @CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/interface1.txt
+#
+# interface number 2 (sea floor, Z = -4000 m)
+# SUPPRESS_UTM_PROJECTION  NXI  NETA  LONG_MIN  LAT_MIN  SPACING_XI  SPACING_ETA
+ .true. 2 2 -5000.0 -5000.0 10000.0 10000.0
+ @CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/interface2.txt
+#
+# interface number 3 (sea surface, top of the mesh, Z = 0 m)
+# SUPPRESS_UTM_PROJECTION  NXI  NETA  LONG_MIN  LAT_MIN  SPACING_XI  SPACING_ETA
+ .true. 2 2 -5000.0 -5000.0 10000.0 10000.0
+ @CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/interface3.txt
+#
+# for each layer, we give the number of spectral elements in the vertical direction
+#
+# layer number 1 (mantle, NZ 1-14)
+ 14
+# layer number 2 (crust, NZ 15-24)
+ 10
+# layer number 3 (ocean, NZ 25-30)
+ 6
