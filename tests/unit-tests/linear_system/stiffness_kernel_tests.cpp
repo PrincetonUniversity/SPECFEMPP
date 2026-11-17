@@ -75,7 +75,7 @@ using PointFieldDerivativesType = specfem::point::field_derivatives<PointTags>;
 // Same fixture as element_stiffness_tests.cpp.
 std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
   const std::string test_path =
-      "displacement_tests/Newmark/serial/dim3/" + test_name;
+      "configurations/dim3/explicit_solver/" + test_name;
 
   specfem::runtime_configuration::setup setup(test_path +
                                               "/specfem_config.yaml");

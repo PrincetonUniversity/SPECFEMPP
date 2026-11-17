@@ -6,7 +6,7 @@
 # core counts in tests_mpi.yaml (the single source of truth): one executable is
 # built per distinct value. Adding a test at a new size needs only a yaml edit.
 set(_tests_mpi_yaml
-  ${CMAKE_CURRENT_SOURCE_DIR}/displacement_tests/Newmark/mpi/dim3/tests_mpi.yaml)
+  ${CMAKE_CURRENT_SOURCE_DIR}/configurations/dim3/explicit_solver/tests_mpi.yaml)
 # Re-run CMake configure when the yaml changes so new sizes are picked up.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_tests_mpi_yaml})
 # Match "  <name>: <int>" lines under tests3d: and collect the distinct integers,

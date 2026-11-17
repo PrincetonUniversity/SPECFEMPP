@@ -48,12 +48,12 @@ struct TestCase {
 };
 
 // `test_name` names a fixture under this suite's data tree,
-// displacement_tests/ImplicitNewmark/serial/dim3/ (mirroring the
-// Newmark/serial/dim3 layout); paths are relative to TEST_OUTPUT_DIR.
+// configurations/dim3/implicit_newmark/ (mirroring the
+// explicit_solver layout); paths are relative to TEST_OUTPUT_DIR.
 TestCase build_case_3d(const std::string &test_name,
                        const std::string &config_name = "specfem_config.yaml") {
   const std::string test_path =
-      "displacement_tests/ImplicitNewmark/serial/dim3/" + test_name;
+      "configurations/dim3/implicit_newmark/" + test_name;
   specfem::runtime_configuration::setup setup(test_path + "/" + config_name);
 
   const auto database_filename = setup.get_databases();

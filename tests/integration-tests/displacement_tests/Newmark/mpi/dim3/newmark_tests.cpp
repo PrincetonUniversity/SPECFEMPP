@@ -38,7 +38,7 @@ struct TestConfig3D {
     TestConfig3D config;
 
     // Create the test path by concatenating the base path with the test name
-    std::string test_path = "displacement_tests/Newmark/mpi/dim3/" + test_name;
+    std::string test_path = "configurations/dim3/explicit_solver/" + test_name;
 
     // Load config.yaml from the test directory
     std::string config_file = test_path + "/config.yaml";
@@ -351,7 +351,7 @@ TEST_P(NewmarkMPI, 3D) {
 // exists).
 std::vector<std::string> GetTestDirectories() {
   const std::string tests_filename =
-      "displacement_tests/Newmark/mpi/dim3/tests_mpi.yaml";
+      "configurations/dim3/explicit_solver/tests_mpi.yaml";
   return parse_3D_test_directories(tests_filename, SPECFEM_MPI_TEST_NPROC);
 }
 
