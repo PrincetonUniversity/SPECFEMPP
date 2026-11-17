@@ -274,7 +274,7 @@ Injection plugin checks
 
 This is defined in :repo-file:`.jenkins/plugin_checks.gvy`. It runs the
 end-to-end wavefield-injection tests in
-:repo-file:`tests/integration-tests/injection/README.md`: ``specfem 3d`` with
+:repo-file:`tests/integration-tests/configurations/dim3/injection/README.md`: ``specfem 3d`` with
 the plane-wave example plugin on a fully absorbing box, compared bit for bit
 with a run without injection, against the analytic plane wave, and across 1, 2
 and 4 MPI ranks.
