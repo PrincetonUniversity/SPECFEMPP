@@ -7,8 +7,6 @@ include_directories(.)
 include(${CMAKE_CURRENT_SOURCE_DIR}/serial.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/runner.cmake)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/injection/injection.cmake)
-
 # Data directories the tests read, relative to their working directory
 specfem_add_test_data(
   configurations

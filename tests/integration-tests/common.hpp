@@ -41,8 +41,13 @@ struct CaseConfig {
   double tolerance = 0;
   /// Parameter file of the simulation
   std::string specfem_config;
-  /// Directory of the reference seismograms
+  /// Directory of the reference seismograms; empty if the case has none
   std::string traces;
+  /// How the seismograms are checked: fortran | analytic | serial |
+  /// no-injection
+  std::string compare = "fortran";
+  /// Configuration of the injection plugin; empty if the case has no injection
+  std::string plugin_config;
 
   static CaseConfig load(const Case &c);
 };
@@ -51,6 +56,9 @@ struct CaseConfig {
 struct Station {
   std::string network;
   std::string name;
+
+  /// `NETWORK.STATION`
+  std::string full_name() const { return network + "." + name; }
 };
 
 /// Stations of a STATIONS file, in file order
@@ -95,5 +103,46 @@ void expect_matches_reference_traces(
     const std::vector<specfem::enums::wavefield> &seismogram_types,
     const type_real dt, const double tolerance);
 
+/**
+ * @brief Expect the velocity seismograms written to @p simulated to follow the
+ * traces in @p reference.
+ *
+ * For every station and every component that is not negligible, the relative
+ * L2 error must be within @p tolerance and the cross-correlation lag below a
+ * quarter of @p dt.
+ */
+void expect_matches_reference_curves(const std::filesystem::path &simulated,
+                                     const std::filesystem::path &reference,
+                                     const std::vector<Station> &stations,
+                                     const type_real dt, const double tolerance,
+                                     const std::string &name);
+
+/**
+ * @brief Expect the velocity seismograms of two runs to be bit-identical, and
+ * not zero.
+ */
+void expect_bitwise_equal(const std::filesystem::path &with,
+                          const std::filesystem::path &without,
+                          const std::vector<Station> &stations);
+
 } // namespace integration_tests
+
+namespace integration_tests_impl {
+
+/// Euclidean norm
+double norm(const std::vector<double> &v);
+
+/// Lag of @p simulated behind @p reference, from the peak of their
+/// cross-correlation refined by a parabola through its three samples
+double lag(const std::vector<double> &simulated,
+           const std::vector<double> &reference, const double dt);
+
+/// Read `<station>.S3.?X<component>.semv` from a directory; the band code
+/// depends on dt, so it is matched rather than spelled out.
+specfem::integration_tests::Trace
+find_velocity_trace(const std::filesystem::path &directory,
+                    const specfem::integration_tests::Station &station,
+                    const char component);
+
+} // namespace integration_tests_impl
 } // namespace specfem
