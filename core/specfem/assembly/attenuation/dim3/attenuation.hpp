@@ -77,7 +77,8 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
   specfem::units::Hertz fc; ///< Band-center frequency for modulus scaling
   specfem::utilities::Band<specfem::units::Hertz> band; ///< Attenuation band
   Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-      tau_sigma; ///< Stress relaxation times
+      tau_sigma;                ///< Stress relaxation times
+  bool bulk_attenuation = true; ///< Attenuate kappa as well as mu
 
   // Runge-Kutta attenuation factors (one coefficient per SLS mechanism)
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
@@ -137,7 +138,8 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-          &tau_sigma);
+          &tau_sigma,
+      const bool bulk_attenuation);
 
   /**
    * @brief Compile-time check whether (MediumTag, PropertyTag) has an

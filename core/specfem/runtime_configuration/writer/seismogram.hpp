@@ -41,24 +41,20 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX,
-   * .BXZ for P-SV waves)
-   * @param electromagnetic_wave Type of electromagnetic wavefield
    * @param dt Time interval between subsequent timesteps
    * @param nsteps_between_samples Number of timesteps between seismogram
    * samples (seismogram sampling frequency). The solver start time (t0) is
    * obtained at write time from the receivers iterator.
-   * @param utm_mesh When true, 3-D elastic seismogram channels use the
-   * geographic E/N/Z convention instead of Cartesian X/Y/Z
+   * @param frame Geographic (UTM or globe) frame: 3-D elastic channels
+   * are labelled E/N/Z; cartesian: X/Y/Z
    * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * writer object
    */
   std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer(
-      const specfem::enums::elastic_wave wave_type,
-      const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const type_real dt, const type_real t0, const int nsteps_between_samples,
       std::optional<specfem::datetime::type> starttime = std::nullopt,
-      const bool utm_mesh = false) const;
+      const specfem::enums::coordinate_frame frame =
+          specfem::enums::coordinate_frame::cartesian) const;
 
   /**
    * @brief Whether to gather all seismogram data to rank 0 and write only from

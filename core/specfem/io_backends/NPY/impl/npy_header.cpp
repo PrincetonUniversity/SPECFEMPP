@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <complex>
 #include <cstdint>
 #include <regex>
@@ -51,7 +52,8 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
                             bool fortran_order) {
   NPYString dict;
   dict += "{'descr': '";
-  dict += []() {
+  // Byte strings have no byte order; NumPy marks them '|' (not applicable).
+  dict += (type_char == 'S') ? '|' : []() {
     int x = 1;
     return (((char *)&x)[0]) ? '<' : '>';
   }();
@@ -85,26 +87,7 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
   return header;
 }
 
-/**
- * @brief Parse a NumPy .npy file header
- *
- * This function extracts metadata from a NumPy .npy file header, including word
- * size, array shape, and array ordering information.
- *
- * @param file File stream to the .npy file, positioned at the start of the
- * header
- * @param byte_size Output parameter that will contain the size of each element
- * in bytes
- * @param shape Output vector that will contain the dimensions of the array
- * @param fortran_order Output parameter that will indicate whether the array
- * uses Fortran-style ordering
- * @throws std::runtime_error If the header cannot be properly parsed
- *
- * @note Modified from cnpy library (MIT License)
- * https://github.com/rogersce/cnpy
- */
-std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
-                                     const size_t type_size) {
+NPYHeader read_npy_header(std::ifstream &file, const char type_char) {
   char buffer[11];
   file.read(buffer, 11 * sizeof(char));
   // Read the header into a string
@@ -163,11 +146,50 @@ std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
   std::string str_ws = header.substr(loc1 + 2);
   loc2 = str_ws.find("'");
   size_t byte_size = atoi(str_ws.substr(0, loc2).c_str());
-  if (byte_size != type_size) {
+
+  return { shape, byte_size };
+}
+
+std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
+                                     const size_t type_size) {
+  const NPYHeader header = read_npy_header(file, type_char);
+  if (header.item_size != type_size) {
     throw std::runtime_error("parse_npy_header: byte size mismatch");
   }
+  return header.shape;
+}
 
-  return shape;
+size_t string_record_width(const std::string *data, const size_t count) {
+  size_t width = 1;
+  for (size_t i = 0; i < count; ++i) {
+    width = std::max(width, data[i].size());
+  }
+  return width;
+}
+
+std::vector<char> pack_string_records(const std::string *data,
+                                      const size_t count, const size_t width) {
+  std::vector<char> records(count * width, '\0');
+  for (size_t i = 0; i < count; ++i) {
+    if (data[i].size() > width) {
+      throw std::runtime_error(
+          "pack_string_records: string longer than record width");
+    }
+    std::copy(data[i].begin(), data[i].end(), records.begin() + i * width);
+  }
+  return records;
+}
+
+void unpack_string_records(const std::vector<char> &records, const size_t count,
+                           const size_t width, std::string *data) {
+  for (size_t i = 0; i < count; ++i) {
+    const char *record = records.data() + i * width;
+    size_t length = 0;
+    while (length < width && record[length] != '\0') {
+      ++length;
+    }
+    data[i].assign(record, length);
+  }
 }
 
 } // namespace specfem::io_backends::impl::NPY

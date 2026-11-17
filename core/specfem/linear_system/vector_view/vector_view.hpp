@@ -117,6 +117,7 @@ private:
  * b  = f;
  * b += diag(mass) * (c0 * u + c1 * v + c2 * a);
  * b += damping * (c3 * u + c4 * v + c5 * a);
+ * b -= stiffness * u_pred;
  * a_new = c0 * (u_new - u - dt * v) - c2 * a;
  * const type_real residual = norm2(b - system * u_new);
  * @endcode
@@ -178,6 +179,13 @@ public:
 
   /// Accumulate another vector
   VectorView &operator+=(const VectorView &other);
+
+  /// Subtract an expression
+  template <VectorOperand Operand>
+  VectorView &operator-=(const Operand &operand);
+
+  /// Subtract another vector
+  VectorView &operator-=(const VectorView &other);
 
 private:
   const VectorSpace *space_;         ///< Borrowed space
@@ -321,20 +329,25 @@ void emit(specfem::linear_system::vector_type &target,
           bool &overwrite, const specfem::linear_system::VectorSpace &space) {
   using scalar_type = specfem::linear_system::scalar_type;
 
-  std::size_t i = 0;
-  while (i + 1 < N) {
-    target.update(
-        expression.terms[i].alpha, *expression.terms[i].vector,
-        expression.terms[i + 1].alpha, *expression.terms[i + 1].vector,
-        overwrite ? static_cast<scalar_type>(0) : static_cast<scalar_type>(1));
-    overwrite = false;
-    i += 2;
-  }
-  if (i < N) {
-    target.update(expression.terms[i].alpha, *expression.terms[i].vector,
-                  overwrite ? static_cast<scalar_type>(0)
-                            : static_cast<scalar_type>(1));
-    overwrite = false;
+  // Guarded so nvcc does not warn on the always-false `i < N` when an
+  // operator-only expression has N == 0
+  if constexpr (N > 0) {
+    std::size_t i = 0;
+    while (i + 1 < N) {
+      target.update(expression.terms[i].alpha, *expression.terms[i].vector,
+                    expression.terms[i + 1].alpha,
+                    *expression.terms[i + 1].vector,
+                    overwrite ? static_cast<scalar_type>(0)
+                              : static_cast<scalar_type>(1));
+      overwrite = false;
+      i += 2;
+    }
+    if (i < N) {
+      target.update(expression.terms[i].alpha, *expression.terms[i].vector,
+                    overwrite ? static_cast<scalar_type>(0)
+                              : static_cast<scalar_type>(1));
+      overwrite = false;
+    }
   }
 
   std::apply(
@@ -503,6 +516,15 @@ VectorView &VectorView::operator+=(const Operand &operand) {
 
 inline VectorView &VectorView::operator+=(const VectorView &other) {
   return *this += specfem::linear_system_impl::as_expression(other);
+}
+
+template <VectorOperand Operand>
+VectorView &VectorView::operator-=(const Operand &operand) {
+  return *this += -operand;
+}
+
+inline VectorView &VectorView::operator-=(const VectorView &other) {
+  return *this += -other;
 }
 
 /**

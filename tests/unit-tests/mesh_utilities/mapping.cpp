@@ -169,7 +169,7 @@ create_coordinate_arrays(const std::vector<point_2d> &reordered_points,
     }
   }
 
-  int ngllxz = ngll * ngll;
+  [[maybe_unused]] int ngllxz = ngll * ngll;
 
   // assembly should reduce number of unique global nodes if there are shared
   // nodes. nspec = 1 means no sharing, so nglob should equal nspec*ngllxz
@@ -365,7 +365,7 @@ create_coordinate_arrays(const std::vector<point_3d> &reordered_points,
     }
   }
 
-  int ngllxyz = ngll * ngll * ngll;
+  [[maybe_unused]] int ngllxyz = ngll * ngll * ngll;
   // nodes. nspec = 1 means no sharing, so nglob should equal nspec*ngllxyz
   if (nspec > 1) {
     assert(nglob < (nspec * ngllxyz));

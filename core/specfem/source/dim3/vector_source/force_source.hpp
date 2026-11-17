@@ -3,12 +3,14 @@
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
+#include "specfem/source/force_vector.hpp"
 #include "specfem/source_time_functions.hpp"
 
 #include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <variant>
 
 namespace specfem {
 namespace sources {
@@ -18,6 +20,11 @@ namespace sources {
  * This class implements a collocated force source in 3D that applies forces
  * in the x, y, and z directions at a specific location in the simulation
  * domain.
+ *
+ * The force may be supplied directly in the global Cartesian frame, or in the
+ * local geocentric @f$ (\theta,\phi,r) @f$ frame (FORCESOLUTION, whose
+ * East/North/Up direction is reordered by the reader), in which case assembly
+ * replaces it with its rotation into the Cartesian mesh frame.
  *
  * @par Usage Example
  * @code
@@ -51,6 +58,12 @@ template <>
 class force<specfem::element::dimension_tag::dim3>
     : public vector_source<specfem::element::dimension_tag::dim3> {
 
+  using CartesianForce = specfem::sources::ForceVector<
+      specfem::coordinate_systems::CartesianFrame>;
+  using GeocentricForce = specfem::sources::ForceVector<
+      specfem::coordinate_systems::GeocentricFrame>;
+  using ForceVariant = std::variant<GeocentricForce, CartesianForce>;
+
 public:
   /**
    * @brief Default source constructor
@@ -66,9 +79,10 @@ public:
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
         const specfem::simulation::field_type wavefield_type)
-      : vector_source(Node, nsteps, dt), fx(Node["fx"].as<type_real>()),
-        fy(Node["fy"].as<type_real>()), fz(Node["fz"].as<type_real>()),
-        wavefield_type(wavefield_type) {};
+      : force_(CartesianForce{ Node["fx"].as<type_real>(),
+                               Node["fy"].as<type_real>(),
+                               Node["fz"].as<type_real>() }),
+        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
 
   /**
    * @brief Construct a new collocated force object
@@ -84,9 +98,8 @@ public:
       type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : wavefield_type(wavefield_type),
-        vector_source(x, y, z, std::move(source_time_function)), fx(fx), fy(fy),
-        fz(fz) {};
+      : force_(CartesianForce{ fx, fy, fz }), wavefield_type(wavefield_type),
+        vector_source(x, y, z, std::move(source_time_function)) {};
 
   /**
    * @brief Construct a new collocated force object from generic coordinates
@@ -105,9 +118,33 @@ public:
       type_real fx, type_real fy, type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : wavefield_type(wavefield_type),
-        vector_source(std::move(coordinates), std::move(source_time_function)),
-        fx(fx), fy(fy), fz(fz) {};
+      : force_(CartesianForce{ fx, fy, fz }), wavefield_type(wavefield_type),
+        vector_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
+   * @brief Construct a collocated force given in the local geocentric frame.
+   *
+   * The force is stored unresolved: the local frame that rotates it into the
+   * Cartesian mesh basis is only known once the source location is placed, so
+   * @ref get_force_vector throws until the assembly-time resolution calls
+   * @ref set_cartesian_components. Used by the FORCESOLUTION reader.
+   *
+   * @param coordinates Generic coordinate object
+   * @param geocentric Force in the local geocentric (theta, phi, r) frame
+   * @param source_time_function Pointer to source time function
+   * @param wavefield_type Type of wavefield
+   */
+  force(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      const GeocentricForce &geocentric,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : force_(geocentric), wavefield_type(wavefield_type),
+        vector_source(std::move(coordinates), std::move(source_time_function)) {
+        };
 
   /**
    * @brief User output
@@ -119,6 +156,28 @@ public:
   specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
+
+  /**
+   * @brief Install the Cartesian force rotated from the geocentric one.
+   *
+   * Called at assembly once the source location fixes the local frame. The
+   * geocentric force is replaced.
+   *
+   * @param cartesian Force in the global Cartesian frame
+   */
+  void set_cartesian_components(const CartesianForce &cartesian) {
+    force_ = cartesian;
+  }
+
+  /**
+   * @brief The force in its current frame.
+   *
+   * Holds the geocentric force until assembly resolves it, the Cartesian force
+   * afterwards. Not named `force()`, which would clash with the class name.
+   *
+   * @return Reference to the held force variant
+   */
+  const ForceVariant &force_value() const { return force_; }
 
   /**
    * @brief Get the forcing function
@@ -134,7 +193,7 @@ public:
   /**
    * @brief Get the force vector
    *
-   * Returns the 3D force vector for this source:
+   * Returns the (resolved) 3D Cartesian force vector for this source:
    *
    * \f[
    * \mathbf{f}_{3D} = \begin{cases}
@@ -169,9 +228,7 @@ public:
 
 public:
 private:
-  type_real fx;                                   ///< Force in x-direction
-  type_real fy;                                   ///< Force in y-direction
-  type_real fz;                                   ///< Force in z-direction
+  ForceVariant force_; ///< Geocentric or Cartesian force
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

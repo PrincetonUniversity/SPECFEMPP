@@ -152,12 +152,11 @@ def get_parser():
     return parser
 
 
-def run2D():
+def run():
     from gmsh2meshfem.dim2 import Exporter as Exporter2D
     # from gmsh2meshfem.dim3 import Exporter as Exporter3D
 
     args = get_parser().parse_args()
-    print(args)
 
     if args.dimension.lower() == "2d":
         builder = topo_import.builder_from_topo_file2d(
@@ -198,8 +197,12 @@ def run2D():
             materialtype_strcode=args.materialtype_strcode,
             depth_block_m=depth_block_m,
         )
-        model = builder.create_model()
+
+        ## not yet implemented:
+        # model = builder.create_model()
+
+        builder.create_model_gmsh_bypass(args.output_folder)
 
 
 if __name__ == "__main__":
-    run2D()
+    run()

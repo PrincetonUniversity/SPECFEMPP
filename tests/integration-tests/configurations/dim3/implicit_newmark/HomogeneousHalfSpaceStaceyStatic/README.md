@@ -1,8 +1,13 @@
 # Homogeneous halfspace, Heaviside force, Stacey ABC (static-solver fixture)
 
-Fixture for the implicit static-solver test
-(`ImplicitNewmark3D.RecreatesExplicitSteadyStateWithLargeSteps` in
-`../../../dim3/implicit_newmark_tests.cpp`): a Heaviside step force drives
+Fixture for the implicit static-solver test. The test that used it
+(`ImplicitNewmark3D.RecreatesExplicitSteadyStateWithLargeSteps`) was
+removed: comparing against a live run of SPECFEM++'s own explicit solver
+could only freeze current behaviour, not detect a regression shared by both
+solvers. The fixture is kept for its replacement, which will compare against
+a genuine reference solution.
+
+As originally used: a Heaviside step force drives
 the domain to steady state, once with the explicit solver at `dt = 0.035`
 for 600 steps (`specfem_config.yaml`) and once with the implicit solver at
 `dt = 0.7` for 30 steps (`specfem_config_implicit.yaml`), both to the same

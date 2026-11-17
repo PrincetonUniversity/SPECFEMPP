@@ -1,5 +1,9 @@
 #pragma once
 
+#include <complex>
+#include <string>
+#include <type_traits>
+
 namespace specfem::io_backends::impl::NPY {
 /**
  * @brief Maps C++ types to NumPy type characters
@@ -13,6 +17,7 @@ namespace specfem::io_backends::impl::NPY {
  * - 'b' for boolean
  * - 'c' for complex types (std::complex<float>, std::complex<double>,
  * std::complex<long double>)
+ * - 'S' for std::string (stored as null-padded byte strings)
  * - '?' for unknown types
  *
  * @param t Reference to a std::type_info object representing the type to map
@@ -48,6 +53,9 @@ template <typename value_type> char map_type() {
                 std::is_same_v<value_type, std::complex<double> > ||
                 std::is_same_v<value_type, std::complex<long double> >)
     return 'c';
+
+  if constexpr (std::is_same_v<value_type, std::string>)
+    return 'S';
 
   return '?';
 }

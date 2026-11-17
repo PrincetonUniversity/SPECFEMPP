@@ -68,6 +68,10 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
       sources.push_back(std::make_shared<specfem::sources::moment_tensor<
                             specfem::element::dimension_tag::dim3>>(
           moment_tensor_source, nsteps, dt, wavefield_type));
+    } else if (YAML::Node spin_tensor_source = N["spin-tensor"]) {
+      sources.push_back(std::make_shared<specfem::sources::spin_tensor<
+                            specfem::element::dimension_tag::dim3>>(
+          spin_tensor_source, nsteps, dt, wavefield_type));
     } else if (YAML::Node adjoint_node = N["adjoint-source"]) {
       if (!adjoint_node["station_name"] || !adjoint_node["network_name"]) {
         throw std::runtime_error(

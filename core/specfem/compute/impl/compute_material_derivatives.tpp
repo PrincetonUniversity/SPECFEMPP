@@ -45,7 +45,7 @@ void specfem::compute::impl::compute_material_derivatives(
     return;
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
@@ -58,8 +58,7 @@ void specfem::compute::impl::compute_material_derivatives(
       dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::displacement<
-      specfem::parallel_configuration::chunk_size, NGLL, dimension_tag,
-      medium_tag, using_simd>;
+      ParallelConfig::chunk_size, NGLL, dimension_tag, medium_tag, using_simd>;
 
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
       NGLL, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,

@@ -16,5 +16,6 @@
     compute_strain/index
     compute_stress/index
     compute_wavefield
+    elasticity_tensor
     cosserat_coupled_stress/index
     cosserat_stress/index

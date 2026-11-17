@@ -13,15 +13,12 @@ namespace property_impl {
  * @brief Allocate a plain row-major host view shaped like a leading-dimension
  *        sub-block [count][ngll...] of @p view.
  *
- * Property and attenuation-model views are chunk-tiled domain views: their
- * flat storage interleaves elements in SIMD-width tiles, padded to a full
- * tile at the tail. The I/O backends serialize a view's flat storage
- * linearly, so writing a domain view directly would (a) truncate real values
- * interleaved into the padded tail whenever the element count is not a
- * multiple of the tile width, and (b) produce a file whose payload order
- * depends on the build's SIMD width. Every dataset is therefore staged
- * through a plain LayoutRight view, making the file hold the logical
- * row-major values independent of tiling.
+ * Property and attenuation-model views use LayoutLeft on CPU and tiled
+ * storage on GPU. The I/O backends serialize flat storage linearly, so
+ * writing either layout directly would change the logical row-major file
+ * order; tiled storage can also contain padding. Every dataset is therefore
+ * staged through a plain LayoutRight view, making the file hold the logical
+ * row-major values independent of the execution backend.
  *
  * @tparam ViewType Domain view type (rank 3 or 4)
  * @param view View whose trailing (GLL) extents are replicated

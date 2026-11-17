@@ -76,6 +76,20 @@ TEST(StationInfoTests, EmptyTypes) {
   EXPECT_EQ(seismo_iterator.size(), 0);
 }
 
+TEST(StationInfoTests, MediumRoundTrips) {
+  const std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement
+  };
+
+  const specfem::assembly::receivers_impl::StationInfo sh_station(
+      "NET", "STA01", 0, types, specfem::element::medium_tag::elastic_sh);
+  EXPECT_EQ(sh_station.medium, specfem::element::medium_tag::elastic_sh);
+
+  const specfem::assembly::receivers_impl::StationInfo default_station(
+      "NET", "STA02", 0, types);
+  EXPECT_EQ(default_station.medium, specfem::element::medium_tag::elastic_psv);
+}
+
 // Test StationIterator
 TEST(StationIteratorTests, DefaultConstructor) {
   StationIterator iterator;

@@ -40,3 +40,18 @@ Unity builds enabled by default (batch size 8). See `CMakePresets.json` for avai
 ## Key dependencies
 
 Kokkos, CLI11, yaml-cpp, GoogleTest, Boost (optional), HDF5/ADIOS2 (optional), VTK (optional)
+
+## Coding-agent configuration
+
+Shared agent configuration lives in `.agents/` and is used by both Claude Code and Codex:
+
+- `AGENTS.md` -- This file (Codex reads it directly; `CLAUDE.md` is a symlink to it).
+- `.agents/rules/` -- Detailed conventions. Read the relevant file before working in that area:
+  `cpp-style.md`, `namespaces.md`, `kokkos-patterns.md`, `testing.md`, `cmake-build.md`,
+  `documentation.md`. Claude Code loads them via the `.claude/rules` symlink.
+- `.agents/skills/<name>/SKILL.md` -- Reusable workflows (`review-pr`, `fix-pr-feedback`,
+  `audit-changes`, `review-conventions`, `write-docs`, `profile-hotspot`). Codex discovers
+  them in `.agents/skills/` (invoke with `$<name>`); Claude Code discovers them via the
+  `.claude/skills` symlink (invoke with `/<name>`). Each `SKILL.md` needs `name` (matching
+  its directory) and `description` frontmatter. Edit skills in `.agents/skills/`, never
+  through the symlink path, and do not add `.claude/commands/` (superseded by skills).

@@ -31,6 +31,8 @@ struct MockStationInfo {
   std::string station_name;
   int partition_index;
   std::vector<specfem::enums::wavefield> types;
+  specfem::element::medium_tag medium =
+      specfem::element::medium_tag::elastic_psv;
 
   const std::vector<specfem::enums::wavefield> &get_seismogram_types() const {
     return types;
@@ -307,7 +309,8 @@ TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
   };
 
   // UTM-projected mesh -> geographic E/N/Z channels (X->E, Y->N, Z->Z).
-  specfem::io::impl::ChannelGenerator utm_gen(dt, 1, /*utm_mesh=*/true);
+  specfem::io::impl::ChannelGenerator utm_gen(
+      dt, 1, /*frame=*/specfem::enums::coordinate_frame::geographic);
   const auto utm_files =
       utm_gen.get_station_filenames<specfem::element::dimension_tag::dim3>(
           station, specfem::enums::wavefield::displacement);
@@ -317,7 +320,8 @@ TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
   EXPECT_EQ(utm_files, expected_utm);
 
   // Cartesian mesh -> X/Y/Z channels.
-  specfem::io::impl::ChannelGenerator cart_gen(dt, 1, /*utm_mesh=*/false);
+  specfem::io::impl::ChannelGenerator cart_gen(
+      dt, 1, /*frame=*/specfem::enums::coordinate_frame::cartesian);
   const auto cart_files =
       cart_gen.get_station_filenames<specfem::element::dimension_tag::dim3>(
           station, specfem::enums::wavefield::displacement);
@@ -325,4 +329,48 @@ TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
                                                    "SY.STA01.S3.BXY.semd",
                                                    "SY.STA01.S3.BXZ.semd" };
   EXPECT_EQ(cart_files, expected_cart);
+}
+
+TEST(SacOrientation, EastNorthChannelsCarryHorizontalOrientation) {
+  const auto east = specfem::io::impl::orientation_for_channel("BXE");
+  EXPECT_FLOAT_EQ(east.cmpaz, 90.0f);
+  EXPECT_FLOAT_EQ(east.cmpinc, 90.0f);
+  const auto north = specfem::io::impl::orientation_for_channel("BXN");
+  EXPECT_FLOAT_EQ(north.cmpaz, 0.0f);
+  EXPECT_FLOAT_EQ(north.cmpinc, 90.0f);
+}
+
+TEST(ChannelGeneratorTest, Dim2ScalarSeismogramsWriteSingleYChannel) {
+  const double dt = 0.05; // 20 Hz -> band code "B"
+  specfem::io::impl::ChannelGenerator gen(dt);
+
+  const MockStationInfo sh_station{ "SY",
+                                    "STA01",
+                                    0,
+                                    { specfem::enums::wavefield::displacement },
+                                    specfem::element::medium_tag::elastic_sh };
+  const MockStationInfo psv_station{
+    "SY", "STA01", 0, { specfem::enums::wavefield::displacement }
+  };
+
+  // SH: displacement is the out-of-plane scalar, curl lies in plane.
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                sh_station, specfem::enums::wavefield::displacement),
+            (std::vector<std::string>{ "SY.STA01.S2.BXY.semd" }));
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                sh_station, specfem::enums::wavefield::curl),
+            (std::vector<std::string>{ "SY.STA01.S2.BXX.semc",
+                                       "SY.STA01.S2.BXZ.semc" }));
+
+  // P-SV (default medium): displacement in plane, rotation out of plane.
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                psv_station, specfem::enums::wavefield::displacement),
+            (std::vector<std::string>{ "SY.STA01.S2.BXX.semd",
+                                       "SY.STA01.S2.BXZ.semd" }));
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                psv_station, specfem::enums::wavefield::rotation),
+            (std::vector<std::string>{ "SY.STA01.S2.BXY.semr" }));
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                psv_station, specfem::enums::wavefield::pressure),
+            (std::vector<std::string>{ "SY.STA01.S2.BXP.semp" }));
 }

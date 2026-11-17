@@ -8,6 +8,17 @@ Overview
 
 The ``DATA_CONTAINER`` macro is a utility for generating standard data container structures for different medium types in SPECFEMPP. It creates a structured collection of ``DomainView2d`` elements with consistent interface methods for accessing and synchronizing data between host and device memory spaces.
 
+Domain views use native ``Kokkos::View`` storage with ``Kokkos::LayoutLeft``
+on CPU backends and retain tiled storage on CUDA and HIP backends. Both expose
+``mapping()`` for converting logical indices to a flat offset and ``data()``
+for accessing the underlying allocation. Use ``specfem::datatype::create_mirror_view``
+and ``specfem::datatype::deep_copy`` to preserve the selected layout when moving
+data between host and device.
+
+Property files retain their staged logical ordering. Raw kernel datasets and
+attenuation checkpoints follow the physical storage layout; checkpoints from
+older tiled CPU builds are not interchangeable with the native CPU layout.
+
 Syntax
 ------
 
