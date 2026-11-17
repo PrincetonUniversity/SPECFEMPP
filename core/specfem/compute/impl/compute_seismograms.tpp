@@ -59,7 +59,7 @@ void specfem::compute::impl::compute_seismograms(
 
   using no_simd = specfem::datatype::simd<type_real, using_simd>;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
   constexpr int chunk_size = (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
