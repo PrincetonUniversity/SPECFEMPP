@@ -143,6 +143,12 @@ void specfem::compute::impl::compute_seismograms(
 
           specfem::assembly::load_on_device(chunk_index, field, displacement,
                                             velocity, acceleration);
+          // Components not written by the medium (e.g. the in-plane slot of
+          // SH media) must be zero, not uninitialized scratch memory
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, wavefield.span()),
+              [&](const int i) { wavefield.data()[i] = 0; });
+
           team.team_barrier();
 
           using PointTags =

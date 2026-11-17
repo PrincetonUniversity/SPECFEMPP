@@ -360,6 +360,12 @@ TEST_P(Newmark, 2D) {
           computed_norm += computed_value * computed_value;
         }
 
+        // The kernel zeroes unused slots, so exact comparison is intended.
+        for (int icomp = ncomponents; icomp < static_cast<int>(value.size());
+             icomp++) {
+          EXPECT_EQ(value[icomp], 0);
+        }
+
         count++;
       }
     }

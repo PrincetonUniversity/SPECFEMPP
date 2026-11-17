@@ -31,6 +31,8 @@ struct MockStationInfo {
   std::string station_name;
   int partition_index;
   std::vector<specfem::enums::wavefield> types;
+  specfem::element::medium_tag medium =
+      specfem::element::medium_tag::elastic_psv;
 
   const std::vector<specfem::enums::wavefield> &get_seismogram_types() const {
     return types;
@@ -336,4 +338,39 @@ TEST(SacOrientation, EastNorthChannelsCarryHorizontalOrientation) {
   const auto north = specfem::io::impl::orientation_for_channel("BXN");
   EXPECT_FLOAT_EQ(north.cmpaz, 0.0f);
   EXPECT_FLOAT_EQ(north.cmpinc, 90.0f);
+}
+
+TEST(ChannelGeneratorTest, Dim2ScalarSeismogramsWriteSingleYChannel) {
+  const double dt = 0.05; // 20 Hz -> band code "B"
+  specfem::io::impl::ChannelGenerator gen(dt);
+
+  const MockStationInfo sh_station{ "SY",
+                                    "STA01",
+                                    0,
+                                    { specfem::enums::wavefield::displacement },
+                                    specfem::element::medium_tag::elastic_sh };
+  const MockStationInfo psv_station{
+    "SY", "STA01", 0, { specfem::enums::wavefield::displacement }
+  };
+
+  // SH: displacement is the out-of-plane scalar, curl lies in plane.
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                sh_station, specfem::enums::wavefield::displacement),
+            (std::vector<std::string>{ "SY.STA01.S2.BXY.semd" }));
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                sh_station, specfem::enums::wavefield::curl),
+            (std::vector<std::string>{ "SY.STA01.S2.BXX.semc",
+                                       "SY.STA01.S2.BXZ.semc" }));
+
+  // P-SV (default medium): displacement in plane, rotation out of plane.
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                psv_station, specfem::enums::wavefield::displacement),
+            (std::vector<std::string>{ "SY.STA01.S2.BXX.semd",
+                                       "SY.STA01.S2.BXZ.semd" }));
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                psv_station, specfem::enums::wavefield::rotation),
+            (std::vector<std::string>{ "SY.STA01.S2.BXY.semr" }));
+  EXPECT_EQ(gen.get_station_filenames<specfem::element::dimension_tag::dim2>(
+                psv_station, specfem::enums::wavefield::pressure),
+            (std::vector<std::string>{ "SY.STA01.S2.BXP.semp" }));
 }
