@@ -4,15 +4,17 @@
 # compile_fresh.cmake and passes when the compiler names the expected
 # unsatisfied concept. VALID is the control and must compile. Skip them with `ctest -LE compile_fail`.
 # Each message alternates the Clang wording with the GCC one ("required for
-# the satisfaction of ‘Concept<...>’ [with Method = ...]").
+# the satisfaction of ‘Concept<...>’ [with Method = ...]") and the nvcc one,
+# which quotes the concept definition: "concept NamedMethod = ..." under a
+# "concept is false for arguments" / "atomic constraint evaluates to false" note.
 # Included from tests/unit-tests/CMakeLists.txt.
 
 set(_injection_requirement_cases
   "VALID@"
-  "NO_NAME@does not satisfy 'NamedMethod'|satisfaction of [^ ]*NamedMethod<"
-  "NO_COMPUTE@does not satisfy 'ComputesSomewhere'|satisfaction of [^ ]*ComputesSomewhere<"
-  "QUANTITIES_WITHOUT_COMPUTE@'QuantitiesHaveCompute<[^>]*QuantitiesWithoutCompute|satisfaction of [^ ]*QuantitiesHaveCompute<[^ ]* [^ ]* .with Method = [^ ]*QuantitiesWithoutCompute"
-  "WRONG_RETURN@does not satisfy 'ComputeReturnsAcceleration'|satisfaction of [^ ]*ComputeReturnsAcceleration<"
+  "NO_NAME@does not satisfy 'NamedMethod'|satisfaction of [^ ]*NamedMethod<|concept NamedMethod ="
+  "NO_COMPUTE@does not satisfy 'ComputesSomewhere'|satisfaction of [^ ]*ComputesSomewhere<|concept ComputesSomewhere ="
+  "QUANTITIES_WITHOUT_COMPUTE@'QuantitiesHaveCompute<[^>]*QuantitiesWithoutCompute|satisfaction of [^ ]*QuantitiesHaveCompute<[^ ]* [^ ]* .with Method = [^ ]*QuantitiesWithoutCompute|concept QuantitiesHaveCompute ="
+  "WRONG_RETURN@does not satisfy 'ComputeReturnsAcceleration'|satisfaction of [^ ]*ComputeReturnsAcceleration<|concept ComputeReturnsAcceleration ="
 )
 
 foreach(_case IN LISTS _injection_requirement_cases)
