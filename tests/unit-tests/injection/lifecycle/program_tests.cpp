@@ -10,6 +10,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -33,7 +34,9 @@ constexpr int nstep = 10;
 // removed with its contents.
 class RunDirectory {
 public:
-  RunDirectory() {
+  // The source and station sit in the elastic layer of every test mesh.
+  explicit RunDirectory(const double source_z = -30000.0,
+                        const double station_z = -20000.0) {
     std::string pattern =
         (std::filesystem::temp_directory_path() / "specfempp_lifecycle_XXXXXX")
             .string();
@@ -45,7 +48,7 @@ sources:
   - force:
       x : 50000.0
       y : 40000.0
-      z : -30000.0
+      z : )" + std::to_string(source_z) + R"(
       source_surf: false
       fx : 0.0
       fy : 0.0
@@ -56,7 +59,7 @@ sources:
         f0: 0.05
 )";
     std::ofstream(path_ / "STATIONS")
-        << "STA TEST 30000.0 40000.0 0.0 -20000.0\n";
+        << "STA TEST 30000.0 40000.0 0.0 " << station_z << "\n";
   }
   ~RunDirectory() {
     std::error_code error;
@@ -68,7 +71,8 @@ sources:
   // Parameter file of a run on a test database, with an injection section.
   YAML::Node parameters(const std::string &database,
                         const std::string &simulation_mode,
-                        const std::string &injection) const {
+                        const std::string &injection,
+                        const std::string &dt = "0.1") const {
     const auto mesh =
         std::filesystem::absolute("data/dim3/" + database + "/database.bin");
     return YAML::Load(R"(parameters:
@@ -82,7 +86,8 @@ sources:
       time-marching:
         time-scheme:
           type: Newmark
-          dt: 0.1
+          dt: )" + dt +
+                      R"(
           nstep: )" + std::to_string(nstep) +
                       R"(
     simulation-mode:
@@ -212,6 +217,43 @@ TEST(InjectionLifecycle, StaceyRunsFromTheDefaultRegistry) {
   EXPECT_EQ(elastic.slots[1].quantity, specfem_quantity_traction);
   EXPECT_EQ(elastic.slots[1].offset, 3);
   EXPECT_EQ(elastic.slots[1].count, 3);
+}
+
+// On a mesh with an acoustic layer over an elastic one, the acoustic injection
+// points form their own group, requesting displacement and the potential rate.
+TEST(InjectionLifecycle, StaceyServesAcousticPoints) {
+  specfem::injection_session_test::reset_mock_calls();
+  // The acoustic layer spans z in [-30 km, 0]; keep the force out of it. The
+  // mock's values are large for a potential, so the step is short enough for
+  // the stability check to pass.
+  const RunDirectory directory(-45000.0, -45000.0);
+  run(directory.parameters("EightNodeAcousticElasticInjectionStacey",
+                           directory.forward(),
+                           "{method: stacey, window-steps: 4}", "1e-4"),
+      specfem::injection::default_method_registry());
+
+  EXPECT_EQ(mock_calls().destroy, 1);
+  EXPECT_THAT(mock_calls().fill_starts, ElementsAre(0, 4, 8));
+  const auto &groups = mock_calls().groups;
+  const auto acoustic =
+      std::find_if(groups.begin(), groups.end(), [](const auto &group) {
+        return group.medium == specfem_medium_acoustic;
+      });
+  ASSERT_NE(acoustic, groups.end());
+  EXPECT_GT(acoustic->count, 0);
+  ASSERT_EQ(acoustic->slots.size(), 2u);
+  EXPECT_EQ(acoustic->slots[0].quantity, specfem_quantity_displacement);
+  EXPECT_EQ(acoustic->slots[0].offset, 0);
+  EXPECT_EQ(acoustic->slots[0].count, 3);
+  EXPECT_EQ(acoustic->slots[1].quantity, specfem_quantity_potential_rate);
+  EXPECT_EQ(acoustic->slots[1].offset, 3);
+  EXPECT_EQ(acoustic->slots[1].count, 1);
+  const auto elastic =
+      std::find_if(groups.begin(), groups.end(), [](const auto &group) {
+        return group.medium == specfem_medium_elastic;
+      });
+  ASSERT_NE(elastic, groups.end());
+  EXPECT_GT(elastic->count, 0);
 }
 
 TEST(InjectionLifecycle, CombinedRunIsRejectedBeforeTheMeshRead) {
