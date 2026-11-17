@@ -124,6 +124,87 @@ TEST(TRANSFORM_SUITE, EmptySingletonAndScalar) {
   EXPECT_FALSE(g.valid(hl::make_tuple(3)));
 }
 
+namespace specfem::testing::layout_transform_impl {
+using restricted_base =
+    decltype(hl::make_layout(hl::make_tuple(hl::make_tuple(2, 3), 2),
+                             hl::make_tuple(hl::make_tuple(1, 2), 6)));
+
+// Three holes inside a rectangular envelope make inverse coordinate transport
+// observable without adding a predicate constructor to the production API.
+struct RestrictedMapping : restricted_base {
+  KOKKOS_INLINE_FUNCTION RestrictedMapping();
+  template <typename Coordinate>
+  KOKKOS_INLINE_FUNCTION bool valid(const Coordinate &coordinate) const;
+};
+} // namespace specfem::testing::layout_transform_impl
+
+KOKKOS_INLINE_FUNCTION
+specfem::testing::layout_transform_impl::RestrictedMapping::RestrictedMapping()
+    : restricted_base(hl::make_tuple(hl::make_tuple(2, 3), 2),
+                      hl::make_tuple(hl::make_tuple(1, 2), 6)) {}
+
+template <typename Coordinate>
+KOKKOS_INLINE_FUNCTION bool
+specfem::testing::layout_transform_impl::RestrictedMapping::valid(
+    const Coordinate &coordinate) const {
+  if (!restricted_base::valid(coordinate)) {
+    return false;
+  }
+  const auto offset = restricted_base::offset(coordinate);
+  return offset != 1 && offset != 10 && offset != 11;
+}
+
+TEST(TRANSFORM_SUITE, PreservesInheritedValidity) {
+  const specfem::testing::layout_transform_impl::RestrictedMapping parent;
+  const auto p = hl::permute<hl::ModePath<>, 1, 0>(parent);
+  const auto g = hl::group<hl::ModePath<>, 0, 2>(parent);
+  const auto u = hl::ungroup<hl::ModePath<0>>(parent);
+  const auto nested = hl::permute<hl::ModePath<0>, 1, 0>(g);
+  const auto flat =
+      hl::ungroup<hl::ModePath<1>>(hl::ungroup<hl::ModePath<0>>(nested));
+  int data[12];
+  for (auto &value : data) {
+    value = -1;
+  }
+  const auto view =
+      hl::permute<hl::ModePath<>, 1, 0>(hl::make_view(data, 12, parent));
+  for (int c = 0; c < 2; ++c) {
+    for (int b = 0; b < 3; ++b) {
+      for (int a = 0; a < 2; ++a) {
+        // Exclude (1,0,0), (0,2,1), and (1,2,1) in original axes.
+        const bool expected =
+            !(c == 0 && b == 0 && a == 1) && !(c == 1 && b == 2);
+        const int offset = a + 2 * b + 6 * c;
+        const auto original = hl::make_tuple(hl::make_tuple(a, b), c);
+        EXPECT_EQ(parent.valid(original), expected);
+        EXPECT_EQ(p.valid(hl::make_tuple(c, a + 2 * b)), expected);
+        EXPECT_EQ(p.valid(hl::make_tuple(c, hl::make_tuple(a, b))), expected);
+        EXPECT_EQ(g.valid(hl::make_tuple(offset)), expected);
+        EXPECT_EQ(g.valid(hl::make_tuple(original)), expected);
+        EXPECT_EQ(u.valid(hl::make_tuple(a, b, c)), expected);
+        EXPECT_EQ(nested.valid(hl::make_tuple(c + 2 * (a + 2 * b))), expected);
+        EXPECT_EQ(nested.valid(
+                      hl::make_tuple(hl::make_tuple(c, hl::make_tuple(a, b)))),
+                  expected);
+        EXPECT_EQ(flat.valid(hl::make_tuple(c, a, b)), expected);
+        const auto coordinate = hl::make_tuple(c, a + 2 * b);
+        const bool valid = view.layout().valid(coordinate);
+        EXPECT_EQ(valid, expected);
+        if (valid) {
+          view(coordinate) = offset;
+        }
+        EXPECT_EQ(data[offset], expected ? offset : -1);
+        if (expected) {
+          EXPECT_EQ(flat.offset(hl::make_tuple(c, a, b)), offset);
+        }
+      }
+    }
+  }
+  EXPECT_FALSE(p.valid(hl::make_tuple(2, 0)));
+  EXPECT_FALSE(g.valid(hl::make_tuple(-1)));
+  EXPECT_FALSE(nested.valid(hl::make_tuple(12)));
+}
+
 TEST(TRANSFORM_SUITE, AliasingAndLifetime) {
   const auto retained = [] {
     Kokkos::View<int **, Kokkos::LayoutLeft, Kokkos::HostSpace> native(
