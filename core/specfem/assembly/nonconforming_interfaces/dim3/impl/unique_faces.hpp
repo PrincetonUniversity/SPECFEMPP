@@ -27,14 +27,22 @@ collect_unique_faces(
         Kokkos::DefaultExecutionSpace>::host_mirror_type &self_faces);
 
 /**
- * @brief Computes the average length scale of the given faces.
- * @param self_faces A host-view of the (non-unique) faces to average.
- * @param mesh assembly::mesh instance that the faces belong to
- * @return type_real the length scale of the faces (averaged across unique
- * faces), taken to be the largest diagonal for each face.
+ * @brief Sum of characteristic face lengths and number of unique faces.
  */
-type_real mean_face_length_scale(
+struct FaceLengthTotal {
+  type_real length_sum = 0; ///< sum over the unique faces
+  int count = 0;            ///< number of unique faces
+};
+
+/**
+ * @brief Sums the characteristic length of the unique faces in the given view.
+ * @param faces A host-view of the (non-unique) faces to sum.
+ * @param mesh assembly::mesh instance that the faces belong to
+ * @return FaceLengthTotal the sum of the characteristic lengths (the largest
+ * diagonal of each face) over the unique faces, and the number of unique faces.
+ */
+FaceLengthTotal face_length_sum(
     const specfem::assembly::FaceView<
-        Kokkos::DefaultExecutionSpace>::host_mirror_type &self_faces,
+        Kokkos::DefaultExecutionSpace>::host_mirror_type &faces,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 } // namespace specfem::assembly::nonconforming_interfaces_impl
