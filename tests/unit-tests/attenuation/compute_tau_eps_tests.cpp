@@ -616,41 +616,7 @@ TEST(Attenuation_ComputeTauEps, ValuesAreFiniteAndPositive) {
   }
 }
 
-// The 1/L fit is the globe search converted to the 1/L normalization.
-TEST(Attenuation_ComputeTauEps, IsGlobeSearchInOneOverLNormalization) {
-  constexpr int N_SLS = 3;
-  constexpr type_real target_Q = 80.0;
-  const specfem::utilities::Band<specfem::units::Hertz> band(0.1 * Hz,
-                                                             10.0 * Hz);
-  const auto tau_sigma = compute_tau_sigma<N_SLS>(band);
-  const auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
-  const auto searched = specfem::attenuation::globe::search_tau_eps<N_SLS>(
-      target_Q, tau_sigma, band);
-
-  Kokkos::View<double[1], Kokkos::LayoutRight, Kokkos::HostSpace> f("f");
-  Kokkos::View<type_real[1], Kokkos::LayoutRight, Kokkos::HostSpace> f_real(
-      "f_real");
-  Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> sigma(
-      "sigma");
-  f(0) = 1.0;
-  f_real(0) = 1.0;
-  for (int i = 0; i < N_SLS; ++i) {
-    sigma(i) = tau_sigma(i);
-    const double expected = sigma(i) + N_SLS * (searched(i) - sigma(i));
-    EXPECT_NEAR(tau_eps(i), expected,
-                4 * std::numeric_limits<type_real>::epsilon() * expected);
-  }
-
-  // Both normalizations give the same loss tangent.
-  const auto globe =
-      specfem::attenuation::globe::maxwell<1, N_SLS>(f, sigma, searched);
-  const auto one_over_l = maxwell<1, N_SLS>(f_real, tau_sigma, tau_eps);
-  const double tan_delta = globe.imag(0) / globe.real(0);
-  EXPECT_NEAR(one_over_l.imag(0) / one_over_l.real(0), tan_delta,
-              1.e-3 * tan_delta);
-}
-
-// Q is not clipped: 9999 fits a weaker attenuation than globe's 9000 limit.
+// Q is not clipped: 9999 fits a weaker attenuation than the 3D 9000 limit.
 TEST(Attenuation_ComputeTauEps, DoesNotClipQ) {
   constexpr int N_SLS = 3;
   const specfem::utilities::Band<specfem::units::Hertz> band(0.1 * Hz,

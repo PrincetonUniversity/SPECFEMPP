@@ -1,11 +1,12 @@
 /*
- * globe_attenuation_reference.h -- TEST ONLY C ABI for independent
- * SPECFEM3D_GLOBE attenuation references.
+ * globe_attenuation_reference.h -- TEST ONLY C ABI for SPECFEM3D_GLOBE's
+ * anisotropic modulus shift.
  *
  * Implemented by globe_attenuation_reference.F90 and built into the
  * globe_evaluator::test_reference target, which is never installed and is not
  * linked into the production specfem::globe library. Inputs and outputs are in
- * physical SI units (scale_t = 1).
+ * physical SI units (scale_t = 1). The attenuation fit is supplied by the
+ * caller, so these references check the tensor algebra only.
  */
 
 #pragma once
@@ -14,22 +15,17 @@
 extern "C" {
 #endif
 
-/* Independent globe Q fit and physical-unit coefficients.
- * Array lengths are N_SLS; rates are the modulus-free factor_common values.
+/* Two-stage globe shift of Cartesian cij (21 Voigt entries) at a point of
+ * colatitude theta and longitude phi. rates (length N_SLS) holds modulus-free
+ * memory coefficients on input and modulus-weighted ones on output.
  */
-void globe_evaluator_attenuation_reference(double fmin, double fmax, double q,
-    double fc, double f0, double *tau_sigma, double *tau_epsilon,
-    double *relaxed_scale, double *unrelaxed_ratio, double *rates);
-
-/* Full independent globe attenuation setup for Cartesian cij. */
-void globe_evaluator_attenuate_cij(double theta, double phi, double fmin,
-    double fmax, double q, double fc, double f0, const double *input,
-    double *output, double *muvstore, double *rates);
-
-/* Unrotated five-coefficient inner-core attenuation setup. */
-void globe_evaluator_attenuate_inner_core(double fmin, double fmax, double q,
-    double fc, double f0, const double *input, double *output,
+void globe_evaluator_attenuate_cij(double theta, double phi,
+    double relaxed_scale, double ratio, const double *input, double *output,
     double *muvstore, double *rates);
+
+/* Unrotated five-coefficient inner-core shift; same conventions. */
+void globe_evaluator_attenuate_inner_core(double relaxed_scale, double ratio,
+    const double *input, double *output, double *muvstore, double *rates);
 
 /* Globe's radial unrelaxed-moduli shift; 21 Voigt entries. */
 void globe_evaluator_shift_cij(double theta, double phi, double increment,

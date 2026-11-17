@@ -3,10 +3,9 @@
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/attenuation/compute_factors.hpp"
-#include "specfem/attenuation/compute_tau_eps.hpp"
-#include "specfem/attenuation/quality_factor_table.hpp"
-#include "specfem/logger.hpp"
 #include "specfem/attenuation/compute_tau_sigma.hpp"
+#include "specfem/attenuation/quality_factor_fit.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
 #include "specfem/datatype/element_index_range.hpp"
@@ -190,13 +189,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
       // Per-GLL fill
       for (int j = 0; j < N_SLS; ++j) {
 
-        // Compute per element relaxation rates (modulus included, matching
-        // SPECFEM3D's factor_loc = modulus * factor_common)
-        const type_real tauinv_j = 1.0 / tau_sigma(j);
-        auto kappa_rr_j = kappa_sc * kappa_props.beta(j) * tauinv_j /
-                          kappa_props.one_minus_sum_beta;
-        auto mu_rr_j = mu_sc * 2.0 * mu_props.beta(j) * tauinv_j /
-                       mu_props.one_minus_sum_beta;
+        // Per element relaxation rates from the unrelaxed moduli.
+        const type_real kappa_rr_j =
+            kappa_props.relaxation_rate(kappa_sc, j, tau_sigma(j));
+        const type_real mu_rr_j =
+            2 * mu_props.relaxation_rate(mu_sc, j, tau_sigma(j));
 
         // Assigning relaxation rates to all GLL points
         for (int iz = 0; iz < ngllz; ++iz) {
@@ -299,20 +296,13 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
         element_range.begin_index() - props.element_range.begin_index();
     const int l_ngllz = h_Qkappa.extent(1);
     const int l_ngllx = h_Qkappa.extent(2);
-    // The 2D formulation: 1/L-normalized fit, no Q clipping.
-    struct Fit {
-      type_real scale;
-      specfem::attenuation::AttenuationPropertyValues<N_SLS> properties;
-    };
+    using Fit = specfem::attenuation::QualityFactorFit<N_SLS>;
     const auto fit = [&](const type_real q) {
-      const auto tau_eps =
-          specfem::attenuation::compute_tau_eps<N_SLS>(q, tau_sigma, band);
-      return Fit{ specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-                      fc.raw(), tau_eps, tau_sigma, q, f0.raw()),
-                  specfem::attenuation::get_attenuation_property_values<N_SLS>(
-                      tau_sigma, tau_eps) };
+      return specfem::attenuation::fit_quality_factor<N_SLS>(
+          q, tau_sigma, band, fc.raw(), f0.raw());
     };
-    specfem::attenuation::QualityFactorTables<Fit> tables;
+    // 2D uses Q as given, as SPECFEM2D does.
+    specfem::attenuation::QualityFactorFitTables<N_SLS> tables(0);
     auto &kappa_table = tables.bulk;
     auto &mu_table = tables.shear;
     for (int i = 0; i < nspec_attn; ++i) {
@@ -328,8 +318,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
           const Fit &mu_fit = mu_table.fit(Qmu, fit);
           const auto &kappa_props = kappa_fit.properties;
           const auto &mu_props = mu_fit.properties;
-          kappa_scale = kappa_fit.scale;
-          mu_scale = mu_fit.scale;
+          kappa_scale = kappa_fit.scales.unrelaxed();
+          mu_scale = mu_fit.scales.unrelaxed();
           const type_real kappa_unrelaxed =
               props.h_kappa(offset + i, iz, ix) * kappa_scale;
           const type_real mu_unrelaxed =
@@ -337,13 +327,10 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
           props.h_kappa(offset + i, iz, ix) = kappa_unrelaxed;
           props.h_mu(offset + i, iz, ix) = mu_unrelaxed;
           for (int j = 0; j < N_SLS; ++j) {
-            const type_real tauinv_j = 1.0 / tau_sigma(j);
             h_kappa_relaxation_rate(i, iz, ix, j) =
-                kappa_unrelaxed * kappa_props.beta(j) * tauinv_j /
-                kappa_props.one_minus_sum_beta;
-            h_mu_relaxation_rate(i, iz, ix, j) = mu_unrelaxed * 2.0 *
-                                                 mu_props.beta(j) * tauinv_j /
-                                                 mu_props.one_minus_sum_beta;
+                kappa_props.relaxation_rate(kappa_unrelaxed, j, tau_sigma(j));
+            h_mu_relaxation_rate(i, iz, ix, j) =
+                2 * mu_props.relaxation_rate(mu_unrelaxed, j, tau_sigma(j));
           }
         }
       }

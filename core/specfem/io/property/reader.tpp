@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/attenuation/globe.hpp"
+#include "specfem/attenuation/quality_factor_fit.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/property/impl/sub_block.hpp"
@@ -131,7 +131,7 @@ void specfem::io::property_reader<InputLibrary>::read(
 
   // One table pair for every attenuating container read here, so they agree
   // on each bucket's representative Q and fit each bucket once.
-  specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+  specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
       quality_factor_tables;
 
   specfem::tag_dispatch::for_each(
