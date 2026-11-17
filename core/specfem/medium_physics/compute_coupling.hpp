@@ -16,6 +16,76 @@
 namespace specfem::medium_physics {
 
 /**
+ * @brief Flux a coupled medium adds to the self medium at one interface point
+ *
+ * Evaluates, at a single quadrature point of the interface, the flux into the
+ * self medium from the coupled medium's field, with \f$ f \f$ the integration
+ * factor and \f$ \mathbf{n} \f$ the normal stored in `interface_data`:
+ *
+ * - `acoustic_elastic` (self acoustic, coupled elastic displacement
+ *   \f$ \mathbf{u} \f$):
+ *   \f$ \mathrm{flux} = f \, \mathbf{n} \cdot \mathbf{u} \f$
+ * - `elastic_acoustic` (self elastic, coupled acoustic potential acceleration
+ *   \f$ a \f$):
+ *   \f$ \mathrm{flux}_d = f \, n_d \, a \f$
+ *
+ * The interface tag is an explicit template argument and is not read from
+ * `InterfaceDataType`, so that data typed with the conjugate interface tag
+ * (whose factor and normal are those of the host face) can be used with the
+ * tag that selects the formula. `interface_data` may be any point type that
+ * carries the factor and normal for the dimension (`edge_factor`/`edge_normal`
+ * in 2D, `face_factor`/`face_normal` in 3D); its connection type is not
+ * restricted.
+ *
+ * @tparam InterfaceTag Interface tag selecting the flux formula
+ * @tparam InterfaceDataType Point data with factor and normal
+ * @tparam CoupledFieldType Point field of the coupled medium of `InterfaceTag`
+ * @tparam SelfFieldType Point field of the self medium of `InterfaceTag`
+ *
+ * @param interface_data Factor and normal at the quadrature point
+ * @param coupled_field Field of the coupled medium at that point
+ * @param flux Flux into the self medium (output)
+ */
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          typename InterfaceDataType, typename CoupledFieldType,
+          typename SelfFieldType>
+KOKKOS_INLINE_FUNCTION void
+compute_interface_flux(const InterfaceDataType &interface_data,
+                       const CoupledFieldType &coupled_field,
+                       SelfFieldType &flux) {
+
+  constexpr auto dimension_tag = InterfaceDataType::dimension_tag;
+
+  static_assert(specfem::data_access::is_point<CoupledFieldType>::value &&
+                    specfem::data_access::is_field<CoupledFieldType>::value,
+                "coupled_field is not a point field type");
+  static_assert(specfem::data_access::is_point<SelfFieldType>::value &&
+                    specfem::data_access::is_field<SelfFieldType>::value,
+                "flux is not a point field type");
+
+  static_assert(
+      specfem::element_coupling::attributes<dimension_tag,
+                                            InterfaceTag>::self_medium() ==
+          SelfFieldType::medium_tag,
+      "Inconsistent self medium tag between interface tag and flux field");
+  static_assert(
+      specfem::element_coupling::attributes<dimension_tag,
+                                            InterfaceTag>::coupled_medium() ==
+          CoupledFieldType::medium_tag,
+      "Inconsistent coupled medium tag between interface tag and coupled "
+      "field");
+
+  using dimension_dispatch =
+      std::integral_constant<specfem::element::dimension_tag, dimension_tag>;
+  using interface_dispatch =
+      std::integral_constant<specfem::element_coupling::interface_tag,
+                             InterfaceTag>;
+
+  impl::compute_interface_flux(dimension_dispatch(), interface_dispatch(),
+                               interface_data, coupled_field, flux);
+}
+
+/**
  * @brief Computes coupling terms between different physical media
  *
  * Handles coupling interactions at interfaces between acoustic and elastic
@@ -51,7 +121,6 @@ compute_coupling(const CoupledInterfaceType &interface_data,
                 "interface_data is not a conforming interface type");
   constexpr auto dimension_tag = CoupledInterfaceType::dimension_tag;
   constexpr auto interface_tag = CoupledInterfaceType::interface_tag;
-  constexpr auto connection_tag = CoupledInterfaceType::connection_tag;
 
   static_assert(specfem::data_access::is_point<CoupledFieldType>::value &&
                     specfem::data_access::is_field<CoupledFieldType>::value,
@@ -75,18 +144,8 @@ compute_coupling(const CoupledInterfaceType &interface_data,
           coupled_medium_tag,
       "Inconsistent coupled medium tag between interface and coupled field");
 
-  using dimension_dispatch =
-      std::integral_constant<specfem::element::dimension_tag, dimension_tag>;
-  using connection_dispatch =
-      std::integral_constant<specfem::element_connections::type,
-                             connection_tag>;
-  using interface_dispatch =
-      std::integral_constant<specfem::element_coupling::interface_tag,
-                             interface_tag>;
-
-  impl::compute_coupling(dimension_dispatch(), connection_dispatch(),
-                         interface_dispatch(), interface_data, coupled_field,
-                         self_field);
+  compute_interface_flux<interface_tag>(interface_data, coupled_field,
+                                        self_field);
 }
 
 namespace impl {
@@ -148,24 +207,13 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
   constexpr auto interface_tag = InterfaceDataType::interface_tag;
   constexpr auto connection_tag = InterfaceDataType::connection_tag;
 
-  if constexpr (specfem::data_access::is_point<IndexType>::value) {
-    static_assert(
-        specfem::data_access::is_point<SelfFieldType>::value,
-        "The index is given as a point index (assuming transfer function is "
-        "coupled chunk -> self-point). In this case, `self_field` must have "
-        "pointwise type!");
-  } else {
-    static_assert(
-        specfem::data_access::is_codim1_chunk<IndexType>::value,
-        "Since the index is not a point index, we assume the transfer function "
-        "should be coupled chunk -> self chunk. The index must be chunk_edge "
-        "(2d) or chunk_face (3d), but is not!");
-    static_assert(
-        specfem::data_access::is_codim1_chunk<SelfFieldType>::value,
-        "Since the index is not a point index, we assume the transfer function "
-        "should be coupled chunk -> self chunk. `self_field` must be "
-        "chunk_edge (2d) or chunk_face (3d), but is not!");
-  }
+  static_assert(
+      specfem::data_access::is_codim1_chunk<IndexType>::value,
+      "The index must be a chunk_edge (2d) or chunk_face (3d) index: the "
+      "transfer function is coupled chunk -> self chunk.");
+  static_assert(
+      specfem::data_access::is_codim1_chunk<SelfFieldType>::value,
+      "`self_field` must be a chunk_edge (2d) or chunk_face (3d) accessor.");
   static_assert(
       specfem::data_access::is_codim1_chunk<CoupledFieldType>::value,
       "coupled_field is not a chunk_edge (2d) or chunk_face (3d) accessor");
@@ -189,24 +237,19 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
       std::integral_constant<specfem::element_coupling::interface_tag,
                              interface_tag>;
 
-  if constexpr (specfem::data_access::is_packed_accessor<
-                    InterfaceDataType>::value) {
-    /* after the addition of `flux_scheme_tag` to the accessor template
-     * parameters, accessor packs are no longer needed. However, since the 2d
-     * implementation was made prior to that, this will stay in until the
-     * `AccessorPack`s are fully deprecated.
-     *
-     */
-    impl::compute_coupling_expand(
-        dimension_dispatch(), connection_dispatch(), interface_dispatch(),
-        std::make_integer_sequence<std::size_t,
-                                   InterfaceDataType::n_accessors>{},
-        index, interface_data, coupled_field, self_field);
-  } else {
-    impl::compute_coupling(dimension_dispatch(), connection_dispatch(),
-                           interface_dispatch(), index, interface_data,
-                           coupled_field, self_field);
-  }
+  static_assert(
+      specfem::data_access::is_packed_accessor<InterfaceDataType>::value,
+      "The nonconforming interface data must be a packed accessor.");
+
+  /* after the addition of `flux_scheme_tag` to the accessor template
+   * parameters, accessor packs are no longer needed. However, since the 2d
+   * implementation was made prior to that, this will stay in until the
+   * `AccessorPack`s are fully deprecated.
+   */
+  impl::compute_coupling_expand(
+      dimension_dispatch(), connection_dispatch(), interface_dispatch(),
+      std::make_integer_sequence<std::size_t, InterfaceDataType::n_accessors>{},
+      index, interface_data, coupled_field, self_field);
 }
 
 } // namespace specfem::medium_physics
