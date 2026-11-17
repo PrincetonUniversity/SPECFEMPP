@@ -18,8 +18,8 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 0.035
-          nstep: 150
+          dt: 0.025
+          nstep: 210
 
     simulation-mode:
       forward:
