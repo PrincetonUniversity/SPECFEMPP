@@ -24,6 +24,11 @@ pipeline {
             label 'della-rse_specfempp'
         }
     }
+    options {
+        // Each pull request is its own multibranch sub-job, so this only aborts
+        // the superseded build of the same pull request.
+        disableConcurrentBuilds(abortPrevious: true)
+    }
     stages {
         stage('Reset Reporting') {
             steps {
