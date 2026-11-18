@@ -5,7 +5,8 @@ The experimental ``specfem::experimental::layout`` module maps recursive logical
 coordinates to element offsets independently of storage ownership. Include
 ``specfem/experimental/layout/layout.hpp`` for mappings or
 ``specfem/experimental/layout/view.hpp`` for borrowed element access, or
-``specfem/experimental/layout/kokkos.hpp`` for native adaptation. Existing
+``specfem/experimental/layout/kokkos.hpp`` for native adaptation.
+``transform.hpp`` and ``subview.hpp`` add reorganization and selection. Existing
 ``DomainView`` types and storage conventions remain unchanged.
 
 Construction and indexing
@@ -31,8 +32,10 @@ Construction and indexing
 ``make_tuple`` constructs device-callable recursive metadata. ``c<N>`` preserves
 an integral value in its type. Runtime integers and constants can occur
 independently at every shape or stride leaf. Each ``make_tuple`` argument must
-satisfy ``TupleElement``: a non-boolean integer, an integral constant of one, or
-a nested tuple. Other types fail at the ``make_tuple`` call. Constants and fully
+satisfy ``TupleElement``: a non-boolean integer, an integral constant of one, a
+nested tuple, or a subview selector (``all`` or ``range``, see below). Other
+types fail at the ``make_tuple`` call. Shapes, strides, and coordinates reject
+selectors where they are used. Constants and fully
 static subtuples occupy no storage, so a tuple's size is the size of its runtime
 leaves. ``get<I>`` returns a copy of a tuple child without erasing its static
 type. Hierarchy topology and rank are compile-time properties; nesting has no
@@ -70,14 +73,21 @@ Domain and storage sizes
 
 ``valid(coord)`` queries logical membership and returns false for negative or
 out-of-bounds coordinates. ``offset(coord)`` requires a valid coordinate and
-returns an offset in elements relative to the original backing pointer.
+returns an offset in elements relative to the original backing pointer. The
+offset is ``displacement()`` plus the sum of each coordinate leaf times its
+stride. Root layouts have a static zero displacement, so their offsets need no
+extra addition. Subviews carry the offset of their first selected element.
 
-``envelope_size()`` is the product of the shape leaves. It counts the rectangular
-coordinate envelope independently of logical restrictions. ``empty()`` reports
-whether there is any valid coordinate. Root layouts use rectangular bounds and
-an optional ``enabled`` argument to ``make_layout``. Passing false disables the
-entire logical domain. Future transformations must preserve all inherited
-restrictions independently of offset metadata.
+``envelope_size()`` is the product of the shape leaves. It counts the
+rectangular coordinate envelope independently of logical restrictions. If
+``empty()`` returns true, no coordinate is valid. Root layouts report emptiness
+exactly, and reorganized mappings report their parent's answer. A subview can
+return false even when it selects only invalid parent coordinates, such as tile
+padding; anything reorganized from such a subview inherits that answer. Root
+layouts use rectangular bounds and an optional ``enabled`` argument to
+``make_layout``. Passing false disables the entire logical domain. Future
+transformations must preserve all inherited restrictions independently of
+offset metadata.
 
 Construction diagnoses type-known backing-span errors at compile time, with or
 without an enabled flag. No runtime flag can make such a layout valid. Backing
@@ -86,10 +96,11 @@ enabled, in debug execution or constant evaluation. A disabled mapping needs no
 backing storage even if its runtime values would require an unrepresentable
 span. Leaf and envelope-size checks still apply.
 
-For a nonempty root layout, ``required_span_size()`` is one plus the sum of
-``(extent - 1) * stride`` over the leaves. It includes holes, but not arbitrary
-allocation padding. The example has envelope size 24, required span 40, and a
-backing capacity of 48. Padding and holes never grant logical validity.
+For a nonempty layout, ``required_span_size()`` is the displacement plus one
+plus the sum of ``(extent - 1) * stride`` over the leaves. It includes holes,
+but not arbitrary allocation padding. The example has envelope size 24, required
+span 40, and a backing capacity of 48. Padding and holes never grant logical
+validity.
 
 A zero extent makes the domain empty and the required span zero. Empty-domain
 queries avoid division by zero and extent subtraction underflow. A rank-zero
@@ -109,12 +120,13 @@ Kokkos handle. A view over ``T`` converts implicitly to a view over
 ``const T`` with the same mapping. Conversions that would change the element
 size, such as derived to base, are rejected. A null pointer is permitted only for an empty logical domain.
 
-The internal ``rebind_layout`` operation gives future transformations one place
-to retain the original backing handle and capacity. Slice displacement must
-remain relative to that original pointer. Rebinding checks backing capacity in
-debug builds, but does not establish parent-domain correspondence. Each
-transformation must establish that property. Rebinding is not a public reshape
-operation. General transformations are separate implementation steps.
+The internal ``rebind_layout`` operation gives transformations one place to
+retain the original backing handle and capacity. Subview displacements stay
+relative to that original pointer, so the view never moves its pointer.
+Rebinding checks backing capacity in debug builds, but does not establish
+parent-domain correspondence. Each transformation must establish that property.
+Rebinding is not a public reshape operation. General transformations are
+separate implementation steps.
 
 Native Kokkos storage
 ---------------------
@@ -320,7 +332,8 @@ but cannot select a different hierarchy topology at runtime.
 The result's concrete mapping type is unspecified. Consumers use ``shape()``,
 ``strides()``, ``rank()``, ``extent<I>()``, ``envelope_size()``, ``empty()``,
 ``valid()``, ``offset()`` and ``required_span_size()``. Accepting that interface
-also permits later slicing and tiling to retain their logical restrictions.
+lets subviews and later tiling retain their logical restrictions. Each mapping
+also provides ``displacement()``, which reorganization forwards unchanged.
 General composed offset mappings and transformed-view mirror/copy operations
 remain outside this interface.
 
@@ -331,3 +344,110 @@ remain outside this interface.
 .. doxygenfunction:: specfem::experimental::layout::group
 
 .. doxygenfunction:: specfem::experimental::layout::ungroup
+
+Selecting subviews
+------------------
+
+Include ``specfem/experimental/layout/subview.hpp`` for ``subview``. It accepts
+a mapping or an experimental ``View`` and takes exactly one selector per
+top-level mode, as ``Kokkos::subview`` does. Selectors mirror coordinates:
+
+* an integer or ``c<N>`` fixes the node's scalar index (first leaf fastest) and
+  removes the node;
+* ``all`` keeps the whole node with its static types;
+* ``range(b, e)`` keeps the half-open scalar range ``[b, e)`` and the node's
+  topology;
+* a tuple of selectors, one per child, selects inside a nested node. The tuple
+  keeps its level even if it loses all but one child, or all children.
+  ``all`` and ``range`` are ``TupleElement`` types, so ``make_tuple``
+  builds selector tuples directly.
+
+The result topology depends only on selector types. Fixing every top-level mode
+gives a rank-zero mapping. Selector positions can be runtime values, including
+inside kernels.
+
+.. code-block:: cpp
+
+    #include "specfem/experimental/layout/subview.hpp"
+
+    namespace hl = specfem::experimental::layout;
+    // 7 x 3 packed, column-major.
+    const auto m = hl::make_layout(hl::make_tuple(7, 3), hl::make_tuple(1, 7));
+    const auto column = hl::subview(m, hl::all, 1);       // rank 1, displacement 7
+    const auto rows = hl::subview(m, hl::range(2, 7), 1); // rank 1, displacement 9
+    // rows.offset(hl::make_tuple(0)) == 9, the parent's (2, 1).
+
+A range on a leaf is always representable. A range on a nested node keeps every
+leaf except the slowest one, L, and shortens L. Let P be the product of the
+other leaves of that node. A nonempty range must start at a multiple of P. L's
+extent becomes ``ceil((e - b) / P)`` and the displacement grows by
+``(b / P) * stride(L)``. An unaligned start cannot be expressed with shapes and
+strides. Select the parts with a tuple selector instead, for example
+``hl::make_tuple(hl::range(b, e), tile)`` for a range inside one tile.
+
+An unaligned end is accepted. The envelope rounds up to whole blocks of P, and
+``valid`` rejects scalar indices at or past ``e - b``. The rounded envelope lies
+inside the parent's envelope, so offsets stay distinct and inside the parent's
+span.
+
+.. code-block:: cpp
+
+    // One mode of shape (4, 3) with strides (1, 10), and a mode of extent 2.
+    const auto parent = hl::make_layout(
+        hl::make_tuple(hl::make_tuple(4, 3), 2),
+        hl::make_tuple(hl::make_tuple(1, 10), 5));
+    const auto s = hl::subview(parent, hl::range(4, 10), hl::all);
+    // Shape ((4, 2), 2), displacement 10, envelope 16.
+    // Scalar 5 has offset 21, as parent scalar 9 does. Scalars 6 and 7 are
+    // in the envelope but s.valid(hl::make_tuple(6, 0)) is false.
+    const auto lanes = hl::subview(parent, hl::make_tuple(hl::range(2, 4), 1),
+                                   hl::all);
+    // Lanes 2 and 3 of block 1: shape ((2), 2), displacement 12.
+
+Every valid subview coordinate corresponds to exactly one valid parent
+coordinate with the same offset. ``valid`` checks the subview's envelope, then
+the range restrictions, then the parent's own ``valid`` at the corresponding
+coordinate. Holes, disabled domains and earlier range restrictions of the
+parent therefore carry over, including through ``permute``, ``group`` and
+``ungroup`` in either order. ``offset`` adds no work beyond the subview's own
+descriptor in release builds.
+
+``all`` and ``range(hl::c<0>, n)`` add a static zero, so selecting with them
+alone keeps the parent's displacement type. A fixed index or a nonzero range
+start adds a compile-time constant only when the index or both range bounds are
+constants and the node's shape and strides are fully static. Otherwise the
+displacement is a runtime ``std::size_t``. A subview of an empty or disabled
+parent computes no displacement terms at runtime, because such a parent need not
+have a representable span.
+
+An empty range (``b == e``) at any position gives an empty subview. It skips
+the alignment check and the displacement, and the selected extent is zero.
+``empty()`` is conservative for subviews: true means no coordinate is valid,
+but false does not prove that one is.
+
+A view result retains the parent's backing handle, capacity and element
+constness. Managed views keep their allocation alive after the parents leave
+scope. Borrowed storage follows the rules of the parent view. ``subview``
+allocates nothing and copies no elements.
+
+Selector counts and tuple arities that do not match the topology, tuple
+selectors on leaves, unsupported selector types, and invalid constant indices
+or ranges on static extents fail compilation in every build mode. Runtime
+checks in builds without ``NDEBUG`` report, in this order, "layout subview
+index out of range", "layout subview range out of order or out of range", and
+"layout subview range start not aligned to nested mode blocks", before any
+division. Displacement arithmetic is checked for overflow. Accessing a coordinate
+that ``valid`` rejects reports "layout subview coordinate out of bounds". In
+release builds these checks are absent and invalid requests are undefined
+behavior. Stepped, reversed and broadcast selections are not supported.
+
+.. doxygenstruct:: specfem::experimental::layout::All
+
+.. doxygenvariable:: specfem::experimental::layout::all
+
+.. doxygenstruct:: specfem::experimental::layout::Range
+    :members:
+
+.. doxygenfunction:: specfem::experimental::layout::range
+
+.. doxygenfunction:: specfem::experimental::layout::subview

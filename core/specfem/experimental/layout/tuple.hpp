@@ -123,6 +123,10 @@ tuple_prepend(Head head, const Tuple<Tail...> &tail) {
   }(std::index_sequence_for<Tail...>{});
 }
 
+// Subview selectors are tuple elements too. subview.hpp defines them and
+// specializes this trait next to their definitions.
+template <typename T> inline constexpr bool is_selector_v = false;
+
 template <typename T> struct StaticTree {
   static constexpr bool value = Constant<T>;
 };
@@ -161,12 +165,16 @@ inline constexpr std::size_t tuple_size_v =
 
 /**
  * @brief Type accepted as a make_tuple element: a non-boolean integer, an
- * integral constant of one, or a nested tuple.
+ * integral constant of one, a nested tuple, or a subview selector (All or
+ * Range).
+ *
+ * Each use checks its own leaves: shapes, strides, and coordinates reject
+ * selectors, and subview selectors accept them.
  * @tparam T Candidate element type.
  */
 template <typename T>
-concept TupleElement =
-    layout_impl::Index<T> || layout_impl::Constant<T> || is_tuple_v<T>;
+concept TupleElement = layout_impl::Index<T> || layout_impl::Constant<T> ||
+                       is_tuple_v<T> || layout_impl::is_selector_v<T>;
 
 /**
  * @brief Construct a recursive, device-callable tuple without erasing

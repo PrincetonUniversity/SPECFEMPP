@@ -4,6 +4,7 @@
 #else
 #define TRANSFORM_SUITE Transform
 #endif
+#include "restricted_mapping.hpp"
 #include "specfem/experimental/layout/kokkos.hpp"
 #include "specfem/experimental/layout/transform.hpp"
 #include <cstring>
@@ -122,36 +123,6 @@ TEST(TRANSFORM_SUITE, EmptySingletonAndScalar) {
   const auto g = hl::group<hl::ModePath<>, 0, 2>(singleton);
   EXPECT_EQ(g.offset(hl::make_tuple(2)), 4);
   EXPECT_FALSE(g.valid(hl::make_tuple(3)));
-}
-
-namespace specfem::testing::layout_transform_impl {
-using restricted_base =
-    decltype(hl::make_layout(hl::make_tuple(hl::make_tuple(2, 3), 2),
-                             hl::make_tuple(hl::make_tuple(1, 2), 6)));
-
-// Three holes inside a rectangular envelope make inverse coordinate transport
-// observable without adding a predicate constructor to the production API.
-struct RestrictedMapping : restricted_base {
-  KOKKOS_INLINE_FUNCTION RestrictedMapping();
-  template <typename Coordinate>
-  KOKKOS_INLINE_FUNCTION bool valid(const Coordinate &coordinate) const;
-};
-} // namespace specfem::testing::layout_transform_impl
-
-KOKKOS_INLINE_FUNCTION
-specfem::testing::layout_transform_impl::RestrictedMapping::RestrictedMapping()
-    : restricted_base(hl::make_tuple(hl::make_tuple(2, 3), 2),
-                      hl::make_tuple(hl::make_tuple(1, 2), 6)) {}
-
-template <typename Coordinate>
-KOKKOS_INLINE_FUNCTION bool
-specfem::testing::layout_transform_impl::RestrictedMapping::valid(
-    const Coordinate &coordinate) const {
-  if (!restricted_base::valid(coordinate)) {
-    return false;
-  }
-  const auto offset = restricted_base::offset(coordinate);
-  return offset != 1 && offset != 10 && offset != 11;
 }
 
 TEST(TRANSFORM_SUITE, PreservesInheritedValidity) {
@@ -282,15 +253,17 @@ int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   Kokkos::initialize(argc, argv);
   if (argc == 2 && std::strcmp(argv[1], "--invalid-device-coordinate") == 0) {
-    Kokkos::View<std::size_t *> result("invalid_result", 1);
-    Kokkos::parallel_for(
-        "invalid_transform", 1, KOKKOS_LAMBDA(int i) {
-          const auto parent =
-              hl::make_layout(hl::make_tuple(2, 3), hl::make_tuple(1, 2));
-          const auto g = hl::group<hl::ModePath<>, 0, 2>(parent);
-          result(i) = g.offset(hl::make_tuple(i + 6));
-        });
-    Kokkos::fence();
+    {
+      Kokkos::View<std::size_t *> result("invalid_result", 1);
+      Kokkos::parallel_for(
+          "invalid_transform", 1, KOKKOS_LAMBDA(int i) {
+            const auto parent =
+                hl::make_layout(hl::make_tuple(2, 3), hl::make_tuple(1, 2));
+            const auto g = hl::group<hl::ModePath<>, 0, 2>(parent);
+            result(i) = g.offset(hl::make_tuple(i + 6));
+          });
+      Kokkos::fence();
+    }
     Kokkos::finalize();
     return 0;
   }
