@@ -261,12 +261,13 @@ expand_coordinate(const Shape &shape, const Coordinate &coord) {
   }
 }
 
-template <typename Parent, typename Descriptor, typename Operation>
-class ReorganizedMapping {
+template <typename Parent, typename Descriptor, typename Transport>
+class DerivedMapping {
 public:
-  KOKKOS_INLINE_FUNCTION constexpr ReorganizedMapping(Parent parent,
-                                                      Descriptor descriptor)
-      : parent_(parent), descriptor_(descriptor) {}
+  KOKKOS_INLINE_FUNCTION constexpr DerivedMapping(Parent parent,
+                                                  Descriptor descriptor,
+                                                  Transport transport = {})
+      : parent_(parent), descriptor_(descriptor), transport_(transport) {}
   KOKKOS_INLINE_FUNCTION static constexpr std::size_t rank() {
     return Descriptor::rank();
   }
@@ -287,22 +288,26 @@ public:
     return descriptor_.envelope_size();
   }
   KOKKOS_INLINE_FUNCTION constexpr bool empty() const {
-    return parent_.empty();
+    return parent_.empty() || descriptor_.empty();
   }
   KOKKOS_INLINE_FUNCTION constexpr std::size_t required_span_size() const {
-    return parent_.required_span_size();
+    return transport_.span(parent_, descriptor_);
   }
   template <typename Coordinate>
   KOKKOS_INLINE_FUNCTION constexpr bool valid(const Coordinate &coord) const {
-    return descriptor_.valid(coord) &&
-           parent_.valid(Operation::backward(
-               parent_.shape(), expand_coordinate(shape(), coord)));
+    if (!descriptor_.valid(coord)) {
+      return false;
+    }
+    bool ok = true;
+    const auto back = transport_.back(shape(), parent_.shape(),
+                                      expand_coordinate(shape(), coord), ok);
+    return ok && parent_.valid(back);
   }
   template <typename Coordinate>
   KOKKOS_INLINE_FUNCTION constexpr std::size_t
   offset(const Coordinate &coord) const {
     if (checks_enabled()) {
-      require(valid(coord), "layout transformed coordinate out of bounds");
+      require(valid(coord), Transport::message());
     }
     return descriptor_.offset(coord);
   }
@@ -310,6 +315,24 @@ public:
 private:
   Parent parent_;
   Descriptor descriptor_;
+  Transport transport_;
+};
+
+template <typename Operation> struct ReorganizationTransport {
+  KOKKOS_INLINE_FUNCTION static constexpr const char *message() {
+    return "layout transformed coordinate out of bounds";
+  }
+  template <typename Parent, typename Descriptor>
+  KOKKOS_INLINE_FUNCTION constexpr auto span(const Parent &parent,
+                                             const Descriptor &) const {
+    return parent.required_span_size();
+  }
+  template <typename Shape, typename ParentShape, typename Coordinate>
+  KOKKOS_INLINE_FUNCTION constexpr auto
+  back(const Shape &, const ParentShape &parent, const Coordinate &coord,
+       bool &) const {
+    return Operation::backward(parent, coord);
+  }
 };
 
 // Apply a mapping transformation to a mapping, or to a view's mapping while
@@ -333,8 +356,9 @@ template <typename Operation> struct Reorganization {
         LayoutAccess::derive(Operation::forward(parent.shape()),
                              Operation::forward(parent.strides()),
                              !parent.empty(), parent.displacement());
-    return ReorganizedMapping<Parent, std::remove_cvref_t<decltype(descriptor)>,
-                              Operation>(parent, descriptor);
+    return DerivedMapping<Parent, std::remove_cvref_t<decltype(descriptor)>,
+                          ReorganizationTransport<Operation>>(parent,
+                                                              descriptor);
   }
 };
 

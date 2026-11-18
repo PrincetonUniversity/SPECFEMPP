@@ -699,6 +699,9 @@ struct LayoutAccess {
 
 // The protocol every mapping provides to transformations and views. Coordinate
 // queries (valid and offset) are templates and are not listed here.
+// required_span_size() is zero when empty, otherwise it bounds every valid
+// offset plus one. A derived mapping reports at most its parent's span.
+// A root Layout reports the displaced rectangular envelope span.
 template <typename M>
 concept Mapping = requires(const M &mapping) {
   { M::rank() } -> std::convertible_to<std::size_t>;

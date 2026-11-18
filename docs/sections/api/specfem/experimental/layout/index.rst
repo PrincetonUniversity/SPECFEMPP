@@ -96,7 +96,7 @@ enabled, in debug execution or constant evaluation. A disabled mapping needs no
 backing storage even if its runtime values would require an unrepresentable
 span. Leaf and envelope-size checks still apply.
 
-For a nonempty layout, ``required_span_size()`` is the displacement plus one
+For a nonempty root layout, ``required_span_size()`` is the displacement plus one
 plus the sum of ``(extent - 1) * stride`` over the leaves. It includes holes,
 but not arbitrary allocation padding. The example has envelope size 24, required
 span 40, and a backing capacity of 48. Padding and holes never grant logical
@@ -451,3 +451,49 @@ behavior. Stepped, reversed and broadcast selections are not supported.
 .. doxygenfunction:: specfem::experimental::layout::range
 
 .. doxygenfunction:: specfem::experimental::layout::subview
+
+Tiling modes
+------------
+
+Include ``specfem/experimental/layout/tile.hpp`` to call
+``tile(object, selectors...)`` on a mapping or view. Supply one selector per
+top-level mode. A positive integer or ``c<N>`` tiles that node, ``all`` keeps
+it, and a tuple descends into its children. One call creates one derived
+mapping, even when it tiles several modes.
+
+A leaf ``n : s`` becomes ``(size, ceil(n/size)) : (s, size*s)``.
+A nested node requires the size to divide its fastest leaf. It becomes
+``(size, rest)``, where that leaf's extent is divided by the size and its
+stride is multiplied by the size. Static inputs retain static metadata.
+
+Check ``valid(coordinate)`` before element access. The rectangular envelope
+includes boundary padding. Validity retains every parent restriction,
+including intermediate slice limits and holes. Scalar coordinates retain
+first-leaf-fastest indexing. For example::
+
+    const auto selected = subview(mapping, range(0, 7));
+    const auto tiled = tile(selected, c<4>);
+    // The envelope has eight positions, but position seven is invalid.
+    if (tiled.valid(make_tuple(i))) {
+      const auto offset = tiled.offset(make_tuple(i));
+    }
+
+For every mapping, ``required_span_size()`` is zero when empty. Otherwise it
+is at least the largest valid offset plus one. Derived mappings report at
+most their parent's span. Root layouts use the displaced envelope span
+formula above. Tiling reports its parent's span, and subview reports the
+smaller of its descriptor span and its parent's span. This permits views of
+exact-capacity storage even when a tile envelope extends beyond that storage.
+
+Offset queries use the flattened descriptor without walking parent mappings
+in release builds. Validity checks visit each operation in the chain. Each
+operation stores its parent by value. Views retain backing ownership and
+constness through the shared rebind operation.
+
+Type-detectable invalid requests fail compilation. Debug builds diagnose
+runtime zero sizes, nested non-divisors, arithmetic overflow, and invalid
+coordinate access. Invalid runtime requests have undefined behavior in
+release builds. Tile counts use checked ceiling division without adding the
+size to the extent.
+
+.. doxygenfunction:: specfem::experimental::layout::tile

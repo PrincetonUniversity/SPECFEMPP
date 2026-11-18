@@ -280,6 +280,25 @@ add_test(NAME SubviewDeviceDebug.InvalidSelection
     -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
 set_tests_properties(SubviewDeviceDebug.InvalidSelection PROPERTIES TIMEOUT 120)
 
+specfem_add_test(hierarchical_layout_tile_tests
+  SOURCES experimental/layout/tile_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  NO_UNITY
+)
+
+specfem_add_test(hierarchical_layout_tile_debug_tests
+  SOURCES experimental/layout/tile_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  DEFINITIONS SPECFEM_LAYOUT_FORCE_DEBUG
+  NO_UNITY
+)
+add_test(NAME TileDeviceDebug.InvalidCoordinate
+  COMMAND ${CMAKE_COMMAND}
+    "-DPROGRAM=$<TARGET_FILE:hierarchical_layout_tile_debug_tests>"
+    "-DARGUMENT=--invalid-device-tile"
+    "-DEXPECTED=layout tile coordinate out of bounds"
+    -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
+set_tests_properties(TileDeviceDebug.InvalidCoordinate PROPERTIES TIMEOUT 120)
 
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp

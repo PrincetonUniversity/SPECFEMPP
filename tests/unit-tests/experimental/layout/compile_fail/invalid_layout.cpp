@@ -8,7 +8,7 @@
 #endif
 #endif
 #include "specfem/experimental/layout/kokkos.hpp"
-#include "specfem/experimental/layout/subview.hpp"
+#include "specfem/experimental/layout/tile.hpp"
 #include <limits>
 
 namespace hl = specfem::experimental::layout;
@@ -261,6 +261,56 @@ void construct_layout() {
       hl::make_layout(hl::make_tuple(2, 3), hl::make_tuple(1, 2));
   [[maybe_unused]] const auto result =
       hl::subview(parent, std::true_type{}, hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 51
+  const auto parent = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  [[maybe_unused]] const auto result = hl::tile(parent, hl::c<0>);
+
+#elif LAYOUT_COMPILE_CASE == 52
+  const auto parent = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  [[maybe_unused]] const auto result = hl::tile(parent);
+
+#elif LAYOUT_COMPILE_CASE == 53
+  const auto parent = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  [[maybe_unused]] const auto result = hl::tile(parent, true);
+
+#elif LAYOUT_COMPILE_CASE == 54
+  const auto parent = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  [[maybe_unused]] const auto result =
+      hl::tile(parent, hl::make_tuple(hl::all));
+
+#elif LAYOUT_COMPILE_CASE == 55
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<4>, hl::c<3>)),
+                      hl::make_tuple(hl::make_tuple(hl::c<1>, hl::c<4>)));
+  [[maybe_unused]] const auto result = hl::tile(parent, hl::c<3>);
+
+#elif LAYOUT_COMPILE_CASE == 56
+  const auto parent = hl::make_layout(hl::make_tuple(hl::make_tuple()),
+                                      hl::make_tuple(hl::make_tuple()));
+  [[maybe_unused]] const auto result = hl::tile(parent, 2);
+
+#elif LAYOUT_COMPILE_CASE == 57
+  const auto parent = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  [[maybe_unused]] const auto result = hl::tile(parent, hl::range(0, 2));
+
+#elif LAYOUT_COMPILE_CASE == 58
+  const int data[7]{};
+  const auto m = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  const auto t = hl::tile(hl::make_view(data, 7, m), 4);
+  t(hl::make_tuple(0)) = 1;
+#elif LAYOUT_COMPILE_CASE == 59
+  constexpr auto maximum = std::numeric_limits<std::size_t>::max();
+  const auto m = hl::make_layout(hl::make_tuple(hl::c<2>),
+                                 hl::make_tuple(hl::c<maximum - 1>));
+  [[maybe_unused]] const auto t = hl::tile(m, hl::c<2>);
+#elif LAYOUT_COMPILE_CASE == 60
+  const auto m = hl::make_layout(hl::make_tuple(hl::make_tuple(2, 3)),
+                                 hl::make_tuple(hl::make_tuple(1, 2)));
+  [[maybe_unused]] const auto t = hl::tile(m, hl::make_tuple(hl::all));
+#elif LAYOUT_COMPILE_CASE == 61
+  const auto m = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  [[maybe_unused]] const auto t = hl::tile(m, std::true_type{});
 
 #else
   [[maybe_unused]] const auto mapping =

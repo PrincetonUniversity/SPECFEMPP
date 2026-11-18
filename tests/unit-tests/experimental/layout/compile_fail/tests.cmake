@@ -55,7 +55,18 @@ set(_layout_diagnostics
     "range out of order or out of range"
     "range out of order or out of range"
     "range bounds must be integers"
-    "selector must be an index, all, range or tuple")
+    "selector must be an index, all, range or tuple"
+    "tile size must be positive"
+    "one selector per top-level mode"
+    "tile selector must be a size"
+    "tuple selector must match"
+    "must divide the fastest leaf"
+    "tile requires a leaf"
+    "tile selector must be a size"
+    "read-only|modifiable lvalue|cannot assign"
+    "overflow"
+    "tuple selector must match"
+    "tile selector must be a size")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)
