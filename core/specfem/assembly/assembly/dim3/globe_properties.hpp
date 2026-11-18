@@ -32,7 +32,9 @@ namespace specfem::assembly::dim3_impl {
  *
  * @param mesh Raw Globe3D mesh containing reference geometry and evaluator
  *        context
- * @param assembly 3-D assembly object whose property container is populated
+ * @param assembly 3-D assembly object whose properties and, when enabled,
+ *        gravity container are populated
+ * @param property_reader Optional GLL property override
  * @throws std::runtime_error if @c assembly.element_types carries no globe
  *         element context, if attenuation is enabled while any element is
  *         anisotropic, if the globe evaluator is unavailable or rejects a
@@ -45,7 +47,8 @@ namespace specfem::assembly::dim3_impl {
 void read_globe_properties(
     const specfem::mesh::globe3d_mesh &mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly);
+        &assembly,
+    const std::shared_ptr<specfem::io::reader> &property_reader = nullptr);
 
 /**
  * @brief Reject azimuthal anisotropy returned by the globe evaluator.
@@ -71,8 +74,8 @@ void reject_azimuthal_anisotropy(
  * @brief Load a supplied GLL model, or populate properties from the oracle.
  * @param mesh Raw globe mesh containing model configuration.
  * @param assembly Assembly whose properties are populated.
- * @param property_reader Optional GLL model reader; takes precedence over the
- *        oracle, including its initialization and database validation.
+ * @param property_reader Optional GLL model reader; takes precedence for
+ *        material properties. Gravity uses the reference model oracle.
  */
 void read_deferred_properties(
     const specfem::mesh::globe3d_mesh &mesh,

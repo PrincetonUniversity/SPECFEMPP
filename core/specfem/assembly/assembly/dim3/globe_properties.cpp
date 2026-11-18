@@ -40,7 +40,15 @@ void specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(
 void specfem::assembly::dim3_impl::read_globe_properties(
     const specfem::mesh::globe3d_mesh &input_mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly) {
+        &assembly,
+    const std::shared_ptr<specfem::io::reader> &property_reader) {
+  const auto &globe = input_mesh.globe;
+  if (property_reader != nullptr) {
+    property_reader->read(assembly);
+    if (!globe.model_config.gravity) {
+      return;
+    }
+  }
   const auto start = std::chrono::steady_clock::now();
   std::size_t oracle_calls = 0;
 
@@ -49,22 +57,26 @@ void specfem::assembly::dim3_impl::read_globe_properties(
   using Property = specfem::element::property_tag;
 
   const auto &element_types = assembly.element_types;
-  if (!element_types.has_element_context()) {
-    throw std::runtime_error("read_globe_properties: element_types carries no "
-                             "globe element context");
+  if (property_reader == nullptr) {
+    if (!element_types.has_element_context()) {
+      throw std::runtime_error(
+          "read_globe_properties: element_types carries no "
+          "globe element context");
+    }
+
+    // Only elastic isotropic elements have an attenuation container. Fail
+    // rather than silently run anisotropic elements elastically (see issue
+    // #2059).
+    if (input_mesh.attenuation.enabled &&
+        element_types
+                .get_elements_on_host(Medium::elastic, Property::anisotropic)
+                .extent(0) > 0) {
+      throw std::runtime_error(
+          "read_globe_properties: attenuation is not supported for anisotropic "
+          "elements");
+    }
   }
 
-  // Only elastic isotropic elements have an attenuation container. Fail rather
-  // than silently run anisotropic elements elastically (see issue #2059).
-  if (input_mesh.attenuation.enabled &&
-      element_types.get_elements_on_host(Medium::elastic, Property::anisotropic)
-              .extent(0) > 0) {
-    throw std::runtime_error(
-        "read_globe_properties: attenuation is not supported for anisotropic "
-        "elements");
-  }
-
-  const auto &globe = input_mesh.globe;
   if (!globe.planet_constants.has_value()) {
     throw std::runtime_error(
         "read_globe_properties: mesh carries no planet constants");
@@ -74,6 +86,19 @@ void specfem::assembly::dim3_impl::read_globe_properties(
   evaluator.validate_database_constants(*globe.planet_constants,
                                         globe.model_verification.codes,
                                         globe.model_verification.flags);
+  if (globe.model_config.gravity) {
+    assembly.gravity = { evaluator,
+                         *globe.planet_constants,
+                         globe.model_config.ellipticity,
+                         globe.full_gravity,
+                         assembly.mesh,
+                         assembly.element_types,
+                         assembly.fields };
+  }
+  if (property_reader != nullptr) {
+    return;
+  }
+
   const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||

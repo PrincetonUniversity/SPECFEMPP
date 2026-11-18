@@ -301,6 +301,45 @@ specfem::globe::ModelEvaluator::reference_density(const double r_si) const {
   return scales_.to_si_density(rho);
 }
 
+specfem::globe::ModelEvaluator::GravityTables
+specfem::globe::ModelEvaluator::gravity_tables() const {
+  const std::lock_guard<std::recursive_mutex> lock(
+      specfem::globe::evaluator_impl::catalog_mutex);
+  if (!owns_state_) {
+    throw std::logic_error("Gravity tables require an active model evaluator");
+  }
+  int size = 0;
+  globe_evaluator_gravity_size(&size);
+  GravityTables result;
+  result.minus_gravity.resize(size);
+  result.minus_deriv_gravity.resize(size);
+  result.density.resize(size);
+  result.d_ln_density_dr.resize(size);
+  result.minus_rho_g_over_kappa_fluid.resize(size);
+  const int status = globe_evaluator_gravity_tables(
+      size, &result.range_max, result.minus_gravity.data(),
+      result.minus_deriv_gravity.data(), result.density.data(),
+      result.d_ln_density_dr.data(),
+      result.minus_rho_g_over_kappa_fluid.data());
+  specfem::globe::evaluator_impl::require_ok(status, "gravity_tables");
+
+  const double velocity_squared = scales_.velocity * scales_.velocity;
+  const double acceleration = velocity_squared / scales_.length;
+  const double inverse_time_squared = acceleration / scales_.length;
+  result.center_density = reference_density(0.0);
+  result.center_gradient = -(4.0 / 3.0) *
+                           (result.center_density / scales_.density) *
+                           inverse_time_squared;
+  for (int i = 0; i < size; ++i) {
+    result.minus_gravity[i] *= acceleration;
+    result.minus_deriv_gravity[i] *= inverse_time_squared;
+    result.density[i] *= scales_.density;
+    result.d_ln_density_dr[i] /= scales_.length;
+    result.minus_rho_g_over_kappa_fluid[i] /= scales_.length;
+  }
+  return result;
+}
+
 specfem::globe::ModelEvaluator::EllipticitySpline
 specfem::globe::ModelEvaluator::ellipticity_spline() const {
   const std::lock_guard<std::recursive_mutex> lock(
