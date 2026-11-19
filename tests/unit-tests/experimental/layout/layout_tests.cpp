@@ -17,6 +17,20 @@ KOKKOS_INLINE_FUNCTION constexpr std::size_t
 metadata_children_total(const Node &node, std::index_sequence<I...>);
 
 void write_device_storage(int *pointer);
+
+template <typename... T>
+concept TupleConstructible =
+    requires(T... values) { hl::make_tuple(values...); };
+
+template <std::size_t I, typename T>
+concept TupleGettable = requires(const T &tuple) { hl::get<I>(tuple); };
+
+struct Base {
+  int value = 0;
+};
+struct Derived : Base {
+  int extra = 0;
+};
 } // namespace specfem::testing::hierarchical_layout_impl
 
 template <typename Node, std::size_t... I>
@@ -106,6 +120,107 @@ TEST(HierarchicalLayout, PublicTraitsSupportRecursiveMetadataTraversal) {
   constexpr auto empty = hl::make_tuple();
   static_assert(
       specfem::testing::hierarchical_layout_impl::metadata_total(empty) == 0);
+}
+
+TEST(HierarchicalLayout, TupleElementsAreCheckedAtConstruction) {
+  namespace impl = specfem::testing::hierarchical_layout_impl;
+  static_assert(hl::TupleElement<int>);
+  static_assert(hl::TupleElement<unsigned long>);
+  static_assert(hl::TupleElement<std::integral_constant<int, -1>>);
+  static_assert(hl::TupleElement<decltype(hl::make_tuple(1, hl::c<2>))>);
+  static_assert(!hl::TupleElement<double>);
+  static_assert(!hl::TupleElement<bool>);
+  static_assert(!hl::TupleElement<std::true_type>);
+  static_assert(!hl::TupleElement<const char *>);
+  static_assert(impl::TupleConstructible<int, std::integral_constant<int, -1>>);
+  static_assert(impl::TupleConstructible<>);
+  static_assert(!impl::TupleConstructible<double>);
+  static_assert(!impl::TupleConstructible<int, bool>);
+  static_assert(impl::TupleGettable<0, decltype(hl::make_tuple(1))>);
+  static_assert(!impl::TupleGettable<0, int>);
+}
+
+TEST(HierarchicalLayout, GetReturnsChildrenByValue) {
+  static_assert(std::is_same_v<decltype(hl::get<0>(hl::make_tuple(hl::c<4>))),
+                               std::integral_constant<int, 4>>);
+  static_assert(std::is_same_v<decltype(hl::get<0>(hl::make_tuple(3))), int>);
+  static_assert(hl::get<0>(hl::make_tuple(3)) == 3);
+  const auto nested = hl::make_tuple(hl::make_tuple(hl::c<4>, 3), 5);
+  EXPECT_EQ(hl::get<1>(hl::get<0>(nested)), 3);
+  EXPECT_EQ(hl::get<1>(nested), 5);
+}
+
+TEST(HierarchicalLayout, StaticElementsOccupyNoStorage) {
+  static_assert(std::is_empty_v<decltype(hl::make_tuple(hl::c<4>, hl::c<4>))>);
+  static_assert(std::is_empty_v<decltype(hl::make_tuple(
+                    hl::c<1>, hl::make_tuple(hl::c<2>, hl::c<3>)))>);
+  static_assert(sizeof(hl::make_tuple(hl::make_tuple(hl::c<4>, 3), hl::c<2>)) ==
+                sizeof(int));
+  static_assert(sizeof(hl::make_tuple(hl::c<4>, hl::c<4>, hl::c<4>, 7)) ==
+                sizeof(int));
+  static_assert(sizeof(hl::make_tuple(hl::c<4>, hl::make_tuple(hl::c<4>, 3))) ==
+                sizeof(int));
+  static_assert(sizeof(hl::make_tuple(hl::make_tuple(hl::c<4>, 3),
+                                      hl::make_tuple(hl::c<4>, 5))) ==
+                2 * sizeof(int));
+  const auto mixed =
+      hl::make_tuple(hl::make_tuple(hl::c<4>, 3), hl::make_tuple(hl::c<4>, 5));
+  static_assert(std::is_trivially_copyable_v<decltype(mixed)>);
+  EXPECT_EQ(hl::get<1>(hl::get<0>(mixed)), 3);
+  EXPECT_EQ(hl::get<1>(hl::get<1>(mixed)), 5);
+}
+
+TEST(HierarchicalLayout, QueriesAreStaticWhenTheirInputsAreStatic) {
+  const auto fixed = hl::make_layout(
+      hl::make_tuple(hl::make_tuple(hl::c<4>, hl::c<3>), hl::c<2>),
+      hl::make_tuple(hl::make_tuple(hl::c<1>, hl::c<16>), hl::c<4>));
+  const auto static_coordinate = hl::make_tuple(hl::c<5>, hl::c<1>);
+  static_assert(std::is_same_v<decltype(fixed.offset(static_coordinate)),
+                               std::integral_constant<std::size_t, 21>>);
+  static_assert(std::is_same_v<decltype(fixed.offset(hl::make_tuple(5, 1))),
+                               std::size_t>);
+  EXPECT_EQ(fixed.offset(hl::make_tuple(5, 1)), 21);
+  static_assert(std::is_same_v<decltype(fixed.extent<0>()),
+                               std::integral_constant<std::size_t, 12>>);
+  static_assert(std::is_same_v<decltype(fixed.envelope_size()),
+                               std::integral_constant<std::size_t, 24>>);
+  static_assert(
+      std::is_same_v<decltype(fixed.required_span_size()), std::size_t>);
+
+  const auto mixed =
+      hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<4>, 3), hl::c<2>),
+                      hl::make_tuple(hl::make_tuple(hl::c<1>, 16), hl::c<4>));
+  static_assert(
+      std::is_same_v<decltype(mixed.offset(static_coordinate)), std::size_t>);
+  static_assert(std::is_same_v<decltype(mixed.extent<0>()), std::size_t>);
+  static_assert(std::is_same_v<decltype(mixed.extent<1>()),
+                               std::integral_constant<std::size_t, 2>>);
+  static_assert(std::is_same_v<decltype(mixed.envelope_size()), std::size_t>);
+  EXPECT_EQ(mixed.offset(static_coordinate), 21);
+
+  int storage[48]{};
+  const auto view = hl::make_view(storage, 48, fixed);
+  view(static_coordinate) = 7;
+  EXPECT_EQ(storage[21], 7);
+}
+
+TEST(HierarchicalLayout, MutableViewsConvertToReadOnlyViews) {
+  namespace impl = specfem::testing::hierarchical_layout_impl;
+  const auto layout =
+      hl::make_layout(hl::make_tuple(hl::c<4>, 3), hl::make_tuple(1, 4));
+  using Mapping = std::remove_cvref_t<decltype(layout)>;
+  static_assert(std::is_convertible_v<hl::View<int, Mapping>,
+                                      hl::View<const int, Mapping>>);
+  static_assert(!std::is_constructible_v<hl::View<int, Mapping>,
+                                         hl::View<const int, Mapping>>);
+  static_assert(!std::is_constructible_v<hl::View<impl::Base, Mapping>,
+                                         hl::View<impl::Derived, Mapping>>);
+  int storage[12]{};
+  const auto mutable_view = hl::make_view(storage, 12, layout);
+  const hl::View<const int, Mapping> readonly = mutable_view;
+  mutable_view(hl::make_tuple(2, 1)) = 11;
+  EXPECT_EQ(readonly(hl::make_tuple(2, 1)), 11);
+  EXPECT_EQ(&readonly(hl::make_tuple(2, 1)), &storage[6]);
 }
 
 class HierarchicalLayoutOracle : public ::testing::TestWithParam<int> {};
@@ -199,22 +314,19 @@ TEST(HierarchicalLayout, EmptyDomainsAndRankZeroAvoidArithmetic) {
                 maximum - 1);
 }
 
-TEST(HierarchicalLayout, DisabledDomainsIgnoreUnreachableStaticBackingSpan) {
+TEST(HierarchicalLayout, DisabledDomainsIgnoreRuntimeBackingSpan) {
   constexpr auto maximum = std::numeric_limits<std::size_t>::max();
-  constexpr auto static_mapping = hl::make_layout(
-      hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>), false);
   constexpr auto mixed_mapping =
       hl::make_layout(hl::make_tuple(hl::c<2>), hl::make_tuple(maximum), false);
   constexpr auto runtime_mapping =
       hl::make_layout(hl::make_tuple(2), hl::make_tuple(maximum), false);
-  static_assert(static_mapping.empty());
-  static_assert(static_mapping.required_span_size() == 0);
+  static_assert(mixed_mapping.empty());
   static_assert(mixed_mapping.required_span_size() == 0);
   static_assert(runtime_mapping.required_span_size() == 0);
-  static_assert(static_mapping.envelope_size() == 2);
+  static_assert(mixed_mapping.envelope_size() == 2);
   bool enabled = false;
   const auto mapping = hl::make_layout(hl::make_tuple(hl::c<2>),
-                                       hl::make_tuple(hl::c<maximum>), enabled);
+                                       hl::make_tuple(maximum), enabled);
   EXPECT_FALSE(mapping.valid(hl::make_tuple(0)));
   EXPECT_EQ(mapping.required_span_size(), 0);
   const auto view = hl::make_view(static_cast<int *>(nullptr), 0, mapping);

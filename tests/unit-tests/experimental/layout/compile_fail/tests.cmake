@@ -18,6 +18,8 @@ set(_layout_diagnostics
     "overflow"
     "constant coordinate"
     "constant coordinate"
+    "overflow"
+    "overflow"
     "overflow")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)

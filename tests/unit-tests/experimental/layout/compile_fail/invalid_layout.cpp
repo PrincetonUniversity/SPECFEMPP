@@ -1,3 +1,5 @@
+// Overrides NDEBUG for this file only. Keep each target single-source and
+// NO_UNITY, because other files would see a different layout.hpp (ODR).
 #if LAYOUT_COMPILE_DEBUG
 #undef NDEBUG
 #else
@@ -65,6 +67,13 @@ void construct_layout() {
 #elif LAYOUT_COMPILE_CASE == 14
   [[maybe_unused]] constexpr auto mapping = hl::make_layout(
       hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>), true);
+#elif LAYOUT_COMPILE_CASE == 15
+  [[maybe_unused]] const auto mapping = hl::make_layout(
+      hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>), false);
+#elif LAYOUT_COMPILE_CASE == 16
+  bool enabled = true;
+  [[maybe_unused]] const auto mapping = hl::make_layout(
+      hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>), enabled);
 
 #else
   [[maybe_unused]] const auto mapping =

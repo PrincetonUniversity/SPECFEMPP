@@ -1,4 +1,6 @@
 // Exercise debug contracts even when the surrounding preset defines NDEBUG.
+// Overrides NDEBUG for this file only. Keep this target single-source and
+// NO_UNITY, because other files would see a different layout.hpp (ODR).
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -93,9 +95,7 @@ TEST(HierarchicalLayoutDebug, RejectsOverflowButAcceptsEmptyEnvelope) {
   EXPECT_DEATH(
       {
         [[maybe_unused]] const auto checked_result = hl::make_layout(
-            hl::make_tuple(hl::c<2>),
-            hl::make_tuple(hl::c<std::numeric_limits<std::size_t>::max()>),
-            enabled);
+            hl::make_tuple(hl::c<2>), hl::make_tuple(maximum), enabled);
       },
       "addition overflow");
   const auto empty = hl::make_layout(hl::make_tuple(maximum, maximum, 0),

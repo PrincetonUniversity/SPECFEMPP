@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/experimental/layout/layout.hpp"
+#include <type_traits>
 
 /** @cond */
 namespace specfem::experimental::layout_impl {
@@ -44,6 +45,21 @@ public:
                          "layout requires nonnull backing storage");
   }
 
+  /**
+   * @brief Convert from a view whose elements convert to T, such as a mutable
+   * view to a read-only one.
+   *
+   * Array-pointer convertibility admits added const but rejects
+   * derived-to-base conversions, which would break element arithmetic.
+   * @tparam U Source element type.
+   * @param other View sharing this mapping type and the same backing storage.
+   */
+  template <typename U>
+    requires std::is_convertible_v<U (*)[], T (*)[]>
+  KOKKOS_INLINE_FUNCTION constexpr View(const View<U, Mapping> &other)
+      : storage_{ other.storage_.pointer, other.storage_.capacity },
+        layout_(other.layout_) {}
+
   /** @brief Inspect the mapping. @return Original coordinate layout. */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr const Mapping &layout() const {
     return layout_;
@@ -63,6 +79,7 @@ public:
 
 private:
   friend struct layout_impl::ViewAccess;
+  template <typename, typename> friend class View;
 
   // Only layout transformations should rewrap storage. They must establish
   // parent-domain correspondence and retain pointer-relative displacement.

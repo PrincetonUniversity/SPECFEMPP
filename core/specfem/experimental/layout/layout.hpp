@@ -36,19 +36,15 @@ multiply(std::size_t a, std::size_t b) {
 
 template <typename T>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t integer(T value) {
-  if constexpr (ConstantTraits<T>::is_constant) {
+  if constexpr (Constant<T>) {
     using value_type = typename T::value_type;
-    static_assert(std::is_integral_v<value_type> &&
-                      !std::is_same_v<value_type, bool>,
-                  "layout leaves must be non-boolean integers");
     static_assert(T::value >= 0, "layout leaf must be nonnegative");
     static_assert(sizeof(value_type) <= sizeof(std::size_t) ||
                       T::value <= std::numeric_limits<std::size_t>::max(),
                   "layout leaf exceeds index range");
     return static_cast<std::size_t>(T::value);
   } else {
-    static_assert(std::is_integral_v<T> && !std::is_same_v<T, bool>,
-                  "layout leaves must be non-boolean integers");
+    static_assert(Index<T>, "layout leaves must be non-boolean integers");
     if constexpr (std::is_signed_v<T>) {
       require(value >= 0, "layout leaf must be nonnegative");
     }
@@ -63,11 +59,9 @@ template <typename T>
 template <typename T>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr bool has_zero(const T &tree) {
   if constexpr (TupleTraits<T>::is_tuple) {
-    if constexpr (TupleTraits<T>::rank == 0) {
-      return false;
-    } else {
-      return has_zero(tree.head) || has_zero(tree.tail);
-    }
+    return [&]<std::size_t... I>(std::index_sequence<I...>) {
+      return (has_zero(tuple_get<I>(tree)) || ...);
+    }(tuple_indices<T>);
   } else {
     return integer(tree) == 0;
   }
@@ -76,24 +70,25 @@ template <typename T>
 template <typename T>
 KOKKOS_INLINE_FUNCTION constexpr void validate_leaves(const T &tree) {
   if constexpr (TupleTraits<T>::is_tuple) {
-    if constexpr (TupleTraits<T>::rank != 0) {
-      validate_leaves(tree.head);
-      validate_leaves(tree.tail);
-    }
+    [&]<std::size_t... I>(std::index_sequence<I...>) {
+      (validate_leaves(tuple_get<I>(tree)), ...);
+    }(tuple_indices<T>);
   } else {
     [[maybe_unused]] const auto checked_value = integer(tree);
   }
 }
 
+// Factors are nonzero, so partial products never decrease and the overflow
+// check fires exactly when the full product overflows.
 template <typename T>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
 product_nonzero(const T &tree) {
   if constexpr (TupleTraits<T>::is_tuple) {
-    if constexpr (TupleTraits<T>::rank == 0) {
-      return 1;
-    } else {
-      return multiply(product_nonzero(tree.head), product_nonzero(tree.tail));
-    }
+    return [&]<std::size_t... I>(std::index_sequence<I...>) {
+      std::size_t result = 1;
+      ((result = multiply(result, product_nonzero(tuple_get<I>(tree)))), ...);
+      return result;
+    }(tuple_indices<T>);
   } else {
     return integer(tree);
   }
@@ -122,25 +117,28 @@ template <typename Shape, typename Stride>
     return true;
   } else if constexpr (TupleTraits<Shape>::rank != TupleTraits<Stride>::rank) {
     return false;
-  } else if constexpr (TupleTraits<Shape>::rank == 0) {
-    return true;
   } else {
-    return matching_topology<decltype(Shape{}.head),
-                             decltype(Stride{}.head)>() &&
-           matching_topology<decltype(Shape{}.tail), decltype(Stride{}.tail)>();
+    return []<std::size_t... I>(std::index_sequence<I...>) {
+      return (matching_topology<tuple_element_t<I, Shape>,
+                                tuple_element_t<I, Stride>>() &&
+              ...);
+    }(tuple_indices<Shape>);
   }
 }
 
+// Terms are nonnegative, so the running sum overflows exactly when the total
+// does.
 template <typename Shape, typename Stride>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
 last_offset(const Shape &shape, const Stride &stride) {
   if constexpr (TupleTraits<Shape>::is_tuple) {
-    if constexpr (TupleTraits<Shape>::rank == 0) {
-      return 0;
-    } else {
-      return add(last_offset(shape.head, stride.head),
-                 last_offset(shape.tail, stride.tail));
-    }
+    return [&]<std::size_t... I>(std::index_sequence<I...>) {
+      std::size_t result = 0;
+      ((result = add(result,
+                     last_offset(tuple_get<I>(shape), tuple_get<I>(stride)))),
+       ...);
+      return result;
+    }(tuple_indices<Shape>);
   } else {
     return multiply(integer(shape) - 1, integer(stride));
   }
@@ -156,11 +154,10 @@ span(const Shape &shape, const Stride &stride) {
 template <typename Coordinate>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr bool
 in_bounds(Coordinate coordinate, std::size_t bound) {
-  if constexpr (ConstantTraits<Coordinate>::is_constant) {
+  if constexpr (Constant<Coordinate>) {
     return in_bounds(Coordinate::value, bound);
   } else {
-    static_assert(std::is_integral_v<Coordinate> &&
-                      !std::is_same_v<Coordinate, bool>,
+    static_assert(Index<Coordinate>,
                   "layout coordinates must be non-boolean integers");
     if constexpr (std::is_signed_v<Coordinate>) {
       if (coordinate < 0) {
@@ -180,11 +177,10 @@ bounds(const Shape &shape, const Coordinate &coordinate) {
     if constexpr (TupleTraits<Shape>::is_tuple) {
       static_assert(TupleTraits<Shape>::rank == TupleTraits<Coordinate>::rank,
                     "layout coordinate rank must match shape");
-      if constexpr (TupleTraits<Shape>::rank == 0) {
-        return true;
-      } else {
-        return bounds(shape.head, coordinate.head) &&
-               bounds(shape.tail, coordinate.tail);
+      if constexpr (TupleTraits<Shape>::rank == TupleTraits<Coordinate>::rank) {
+        return [&]<std::size_t... I>(std::index_sequence<I...>) {
+          return (bounds(tuple_get<I>(shape), tuple_get<I>(coordinate)) && ...);
+        }(tuple_indices<Shape>);
       }
     }
   } else {
@@ -195,7 +191,7 @@ bounds(const Shape &shape, const Coordinate &coordinate) {
 // Reject decisive constant bounds even when other modes contain runtime values.
 template <typename Shape, typename Coordinate>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr bool constant_bounds() {
-  if constexpr (ConstantTraits<Coordinate>::is_constant) {
+  if constexpr (Constant<Coordinate>) {
     if constexpr (Coordinate::value < 0) {
       return false;
     }
@@ -204,15 +200,39 @@ template <typename Shape, typename Coordinate>
     return bounds(Shape{}, Coordinate{});
   } else if constexpr (TupleTraits<Shape>::is_tuple &&
                        TupleTraits<Coordinate>::is_tuple) {
-    if constexpr (TupleTraits<Shape>::rank == TupleTraits<Coordinate>::rank &&
-                  TupleTraits<Shape>::rank != 0) {
-      return constant_bounds<decltype(Shape{}.head),
-                             decltype(Coordinate{}.head)>() &&
-             constant_bounds<decltype(Shape{}.tail),
-                             decltype(Coordinate{}.tail)>();
+    if constexpr (TupleTraits<Shape>::rank == TupleTraits<Coordinate>::rank) {
+      return []<std::size_t... I>(std::index_sequence<I...>) {
+        return (constant_bounds<tuple_element_t<I, Shape>,
+                                tuple_element_t<I, Coordinate>>() &&
+                ...);
+      }(tuple_indices<Shape>);
     }
   }
   return true;
+}
+
+template <typename Shape, typename Stride>
+[[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
+scalar_offset(const Shape &shape, const Stride &stride, std::size_t index);
+
+// Decompose index over children I and later, first child fastest.
+template <std::size_t I, typename Shape, typename Stride>
+[[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
+scalar_offset_from(const Shape &shape, const Stride &stride,
+                   std::size_t index) {
+  constexpr std::size_t rank = TupleTraits<Shape>::rank;
+  if constexpr (I == rank) {
+    return 0;
+  } else if constexpr (I + 1 == rank) {
+    // Bounds already constrain the final child. Another modulo would add a
+    // runtime division when that last extent is dynamic.
+    return scalar_offset(tuple_get<I>(shape), tuple_get<I>(stride), index);
+  } else {
+    const auto extent = product(tuple_get<I>(shape));
+    return scalar_offset(tuple_get<I>(shape), tuple_get<I>(stride),
+                         index % extent) +
+           scalar_offset_from<I + 1>(shape, stride, index / extent);
+  }
 }
 
 // The caller has already established bounds and a nonempty domain.
@@ -220,18 +240,7 @@ template <typename Shape, typename Stride>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
 scalar_offset(const Shape &shape, const Stride &stride, std::size_t index) {
   if constexpr (TupleTraits<Shape>::is_tuple) {
-    if constexpr (TupleTraits<Shape>::rank == 0) {
-      return 0;
-    } else {
-      // Bounds already constrain the final child. Another modulo would add a
-      // runtime division when that last extent is dynamic.
-      if constexpr (TupleTraits<Shape>::rank == 1) {
-        return scalar_offset(shape.head, stride.head, index);
-      }
-      const auto extent = product(shape.head);
-      return scalar_offset(shape.head, stride.head, index % extent) +
-             scalar_offset(shape.tail, stride.tail, index / extent);
-    }
+    return scalar_offset_from<0>(shape, stride, index);
   } else {
     return index * integer(stride);
   }
@@ -242,12 +251,11 @@ template <typename Shape, typename Stride, typename Coordinate>
 coordinate_offset(const Shape &shape, const Stride &stride,
                   const Coordinate &coordinate) {
   if constexpr (TupleTraits<Coordinate>::is_tuple) {
-    if constexpr (TupleTraits<Coordinate>::rank == 0) {
-      return 0;
-    } else {
-      return coordinate_offset(shape.head, stride.head, coordinate.head) +
-             coordinate_offset(shape.tail, stride.tail, coordinate.tail);
-    }
+    return [&]<std::size_t... I>(std::index_sequence<I...>) {
+      return (std::size_t{ 0 } + ... +
+              coordinate_offset(tuple_get<I>(shape), tuple_get<I>(stride),
+                                tuple_get<I>(coordinate)));
+    }(tuple_indices<Coordinate>);
   } else {
     return scalar_offset(shape, stride, integer(coordinate));
   }
@@ -258,14 +266,10 @@ template <typename T>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
 minimum_strides(const T &tree) {
   if constexpr (TupleTraits<T>::is_tuple) {
-    if constexpr (TupleTraits<T>::rank == 0) {
-      return Tuple<>{};
-    } else {
-      const auto head = minimum_strides(tree.head);
-      const auto tail = minimum_strides(tree.tail);
-      return tuple_prepend(head, tail);
-    }
-  } else if constexpr (ConstantTraits<T>::is_constant) {
+    return [&]<std::size_t... I>(std::index_sequence<I...>) {
+      return tuple_make(minimum_strides(tuple_get<I>(tree))...);
+    }(tuple_indices<T>);
+  } else if constexpr (Constant<T>) {
     return tree;
   } else {
     return std::integral_constant<std::size_t, 0>{};
@@ -299,15 +303,13 @@ public:
    * @param strides Corresponding element strides.
    */
   KOKKOS_INLINE_FUNCTION constexpr Layout(Shape shape, Strides strides)
-      : Layout(shape, strides, true) {
-    if constexpr (layout_impl::StaticTree<Shape>::value) {
-      [[maybe_unused]] constexpr auto minimum_span =
-          layout_impl::span(Shape{}, layout_impl::minimum_strides(Strides{}));
-    }
-  }
+      : Layout(shape, strides, true) {}
 
   /**
    * @brief Construct a root mapping with a rectangular logical domain.
+   *
+   * Type-known span overflow fails compilation whatever the value of enabled,
+   * because no runtime flag can make such a layout valid.
    * @param shape Recursive extents.
    * @param strides Corresponding element strides.
    * @param enabled False makes the logical domain empty, including rank zero.
@@ -319,6 +321,8 @@ public:
     layout_impl::validate_leaves(strides_);
     if constexpr (layout_impl::StaticTree<Shape>::value) {
       [[maybe_unused]] constexpr auto size = layout_impl::product(Shape{});
+      [[maybe_unused]] constexpr auto minimum_span =
+          layout_impl::span(Shape{}, layout_impl::minimum_strides(Strides{}));
     }
     if (std::is_constant_evaluated()) {
       [[maybe_unused]] const auto checked_envelope_size = envelope_size();
@@ -351,15 +355,22 @@ public:
   /**
    * @brief Scalar extent of a top-level mode.
    * @tparam I Mode position.
-   * @return Product of its leaf extents, retaining fully static results.
+   * @return Product of its leaf extents, as
+   * `std::integral_constant<std::size_t, N>` if every leaf of the mode is
+   * static, otherwise `std::size_t`. Store the result in `std::size_t` to
+   * modify it.
    */
   template <std::size_t I>
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto extent() const {
     return layout_impl::extent(get<I>(shape_));
   }
 
-  /** @brief Size of the rectangular coordinate envelope. @return Extent
-   * product. */
+  /**
+   * @brief Size of the rectangular coordinate envelope.
+   * @return Product of all shape leaves, as
+   * `std::integral_constant<std::size_t, N>` if the shape is fully static,
+   * otherwise `std::size_t`.
+   */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto envelope_size() const {
     return layout_impl::extent(shape_);
   }
@@ -373,6 +384,7 @@ public:
   /**
    * @brief Required capacity measured from the original backing pointer.
    * @return Zero for empty domains, otherwise maximum element offset plus one.
+   * Always `std::size_t`, because it depends on the runtime enabled flag.
    */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
   required_span_size() const {
@@ -397,15 +409,25 @@ public:
    * @brief Map a valid coordinate to an element offset.
    * @tparam Coordinate Tuple following shape topology, with scalar subtrees.
    * @param coordinate Valid logical coordinate, checked in debug builds.
-   * @return Element offset relative to the original backing pointer.
+   * @return Element offset relative to the original backing pointer, as
+   * `std::integral_constant<std::size_t, N>` if the shape, strides, and
+   * coordinate are all static, otherwise `std::size_t`.
    */
   template <typename Coordinate>
-  [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
+  [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
   offset(const Coordinate &coordinate) const {
     static_assert(layout_impl::constant_bounds<Shape, Coordinate>(),
                   "layout constant coordinate out of bounds");
     layout_impl::require(valid(coordinate), "layout coordinate out of bounds");
-    return layout_impl::coordinate_offset(shape_, strides_, coordinate);
+    if constexpr (layout_impl::StaticTree<Shape>::value &&
+                  layout_impl::StaticTree<Strides>::value &&
+                  layout_impl::StaticTree<Coordinate>::value) {
+      return std::integral_constant<std::size_t,
+                                    layout_impl::coordinate_offset(
+                                        Shape{}, Strides{}, Coordinate{})>{};
+    } else {
+      return layout_impl::coordinate_offset(shape_, strides_, coordinate);
+    }
   }
 
 private:
@@ -435,7 +457,8 @@ make_layout(Shape shape, Strides strides) {
  * @param shape Extents, with first-leaf-fastest scalar interpretation.
  * @param strides Element strides, including any padding.
  * @param enabled False disables the domain and its backing span requirements.
- * @return Mapping whose domain-dependent span checks respect enabled.
+ * @return Mapping with type-known span diagnostics, whose runtime span checks
+ * respect enabled.
  */
 template <typename Shape, typename Strides>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
