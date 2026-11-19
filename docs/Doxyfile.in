@@ -1086,7 +1086,14 @@ INPUT_FILTER           =
 # need to set EXTENSION_MAPPING for the extension otherwise the files are not
 # properly processed by doxygen.
 
-FILTER_PATTERNS        =
+# Doxygen 1.9.1 moves a C++20 requires-clause into the return type, for example
+# "requires constexpr is_tuple_v< Tuple > auto get", and Breathe then fails to
+# parse the declaration. The filter below blanks single-line requires-clauses in
+# the experimental layout headers before Doxygen reads them. It keeps the line
+# count, and the C++ sources are unchanged. Remove it once the Doxygen version
+# used for the docs handles requires-clauses.
+
+FILTER_PATTERNS        = */experimental/layout/*="sed -E 's/^[[:space:]]*requires[[:space:](].*$//'"
 
 # If the FILTER_SOURCE_FILES tag is set to YES, the input filter (if set using
 # INPUT_FILTER) will also be used to filter the input files that are used for
