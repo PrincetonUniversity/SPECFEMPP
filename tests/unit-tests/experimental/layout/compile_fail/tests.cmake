@@ -66,7 +66,19 @@ set(_layout_diagnostics
     "read-only|modifiable lvalue|cannot assign"
     "overflow"
     "tuple selector must match"
-    "tile selector must be a size")
+    "tile selector must be a size"
+    "constant coordinate outside logical bounds"
+    "coordinate rank mismatch"
+    "read-only|modifiable lvalue|cannot assign"
+    "overflow"
+    "static extent mismatch"
+    "coordinate rank"
+    "nonnegative"
+    "constant coordinate outside logical bounds"
+    "constant coordinate outside logical bounds"
+    "constant coordinate outside logical bounds"
+    "overflow"
+    "overflow")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)

@@ -317,6 +317,8 @@ TEST(LAYOUT_KOKKOS_SUITE, MutableViewsConvertToReadOnlyViews) {
   static_assert(std::is_convertible_v<MutableView, ReadonlyView>);
   static_assert(!std::is_convertible_v<ReadonlyView, MutableView>);
   const ReadonlyView readonly = mutable_view;
+  static_assert(
+      std::is_same_v<decltype(readonly.flat_storage()(0)), const int &>);
   mutable_view(hl::make_tuple(2)) = 17;
   native = {};
   EXPECT_EQ(readonly(hl::make_tuple(2)), 17);

@@ -1,12 +1,14 @@
 #pragma once
 
-#include "specfem/experimental/layout/layout.hpp"
+#include "specfem/experimental/layout/domain_layout.hpp"
+#include <string>
 #include <type_traits>
 
 /** @cond */
 namespace specfem::experimental::layout_impl {
 
 template <typename T> struct BorrowedStorage {
+  using const_type = BorrowedStorage<const std::remove_const_t<T>>;
   KOKKOS_INLINE_FUNCTION constexpr BorrowedStorage() = default;
 
   KOKKOS_INLINE_FUNCTION constexpr BorrowedStorage(T *data, std::size_t size)
@@ -24,9 +26,48 @@ template <typename T> struct BorrowedStorage {
   KOKKOS_INLINE_FUNCTION constexpr T *data() const { return pointer; }
   KOKKOS_INLINE_FUNCTION constexpr std::size_t size() const { return capacity; }
   KOKKOS_INLINE_FUNCTION constexpr T &access(std::size_t offset) const {
+    require(offset < capacity, "layout flat offset out of bounds");
     return pointer[offset];
   }
+  KOKKOS_INLINE_FUNCTION constexpr T &operator()(std::size_t offset) const {
+    return access(offset);
+  }
 };
+
+template <typename Mapping>
+inline constexpr bool transformed_mapping = [] {
+  if constexpr (requires { Mapping::is_transformed; }) {
+    return Mapping::is_transformed;
+  } else {
+    return false;
+  }
+}();
+
+template <typename Mapping>
+KOKKOS_INLINE_FUNCTION constexpr std::size_t
+physical_span(const Mapping &mapping) {
+  if constexpr (requires { mapping.physical_span_size(); }) {
+    return mapping.physical_span_size();
+  } else {
+    return mapping.required_span_size();
+  }
+}
+
+template <typename... Indices>
+inline constexpr bool scalar_coordinates_v =
+    ((!layout::is_tuple_v<Indices>) && ...);
+
+template <typename Mapping, typename... Indices>
+inline constexpr bool domain_extent_arguments_v =
+    sizeof...(Indices) > 0 &&
+    (!std::is_same_v<std::remove_cvref_t<Indices>, std::remove_cv_t<Mapping>> &&
+     ...);
+
+template <typename Storage>
+concept AllocatingStorage =
+    requires(const std::string &label, std::size_t count) {
+      Storage::allocate(label, count);
+    };
 
 struct ViewAccess;
 
@@ -38,17 +79,46 @@ namespace specfem::experimental::layout {
 /**
  * @brief Backing storage interpreted through a standalone layout.
  *
- * The caller retains responsibility for storage lifetime, memory-space access,
- * and completion of asynchronous work. Const element types remain const;
- * constness of the view object alone does not make its elements const.
+ * Managed handles retain allocation ownership. Callers retain responsibility
+ * for borrowed storage lifetime, memory-space access and asynchronous
+ * completion. Const element types remain const; constness of the view object
+ * alone does not make its elements const.
  * @tparam T Element type, possibly const.
  * @tparam Mapping Layout describing valid coordinates and element offsets.
  * @tparam Storage Internal backing handle, borrowed by default.
+ * @tparam Transformed Whether a public transformation produced this view.
  */
 template <typename T, typename Mapping,
-          typename Storage = layout_impl::BorrowedStorage<T>>
+          typename Storage = layout_impl::BorrowedStorage<T>,
+          bool Transformed = false>
 class View {
 public:
+  using value_type = T;
+  using mapping_type = Mapping;
+  static constexpr bool is_physical_root =
+      !Transformed && !layout_impl::transformed_mapping<Mapping>;
+
+  /** @brief Construct an empty handle without allocation. */
+  KOKKOS_INLINE_FUNCTION View() = default;
+
+  /** @brief Allocate the mapping's full physical span.
+   * @param label Kokkos allocation label. @param mapping Exact descriptor. */
+  View(const std::string &label, const Mapping &mapping)
+    requires layout_impl::AllocatingStorage<Storage>
+      : View(Storage::allocate(label, layout_impl::physical_span(mapping)),
+             mapping) {}
+
+  /** @brief Allocate canonical Left or first-axis tiled Left storage.
+   * @tparam Indices Logical extent types. @param label Allocation label.
+   * @param indices Logical extents matching the mapping rank. */
+  template <
+      typename... Indices,
+      std::enable_if_t<
+          layout_impl::domain_extent_arguments_v<Mapping, Indices...>, int> = 0>
+  View(const std::string &label, Indices... indices)
+      : View(label, layout_impl::make_domain_layout_like<Mapping>(indices...)) {
+  }
+
   /**
    * @brief Associate a borrowed allocation with a mapping.
    * @param data Original backing pointer, null only for an empty mapping.
@@ -74,8 +144,9 @@ public:
     requires(std::is_convertible_v<U (*)[], T (*)[]> &&
              std::is_convertible_v<OtherStorage, Storage>)
   KOKKOS_INLINE_FUNCTION constexpr View(
-      const View<U, Mapping, OtherStorage> &other)
-      : storage_(other.storage_), layout_(other.layout_) {}
+      const View<U, Mapping, OtherStorage, Transformed> &other)
+      : storage_(other.storage_), layout_(other.layout_),
+        initialized_(other.initialized_) {}
 
   /** @brief Inspect the mapping. @return Original coordinate layout. */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr const Mapping &layout() const {
@@ -90,16 +161,103 @@ public:
    */
   template <typename Coordinate>
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr T &
-  operator()(const Coordinate &coordinate) const {
-    return storage_.access(layout_.offset(coordinate));
+  operator()(const Coordinate &coordinate) const
+    requires is_tuple_v<Coordinate>
+  {
+    return storage_.access(offset(coordinate));
+  }
+
+  /** @brief Access a valid scalar-indexed coordinate.
+   * @tparam Indices Scalar coordinate types. @param indices Logical indices.
+   * @return Element reference preserving constness. */
+  template <
+      typename... Indices,
+      std::enable_if_t<layout_impl::scalar_coordinates_v<Indices...>, int> = 0>
+  KOKKOS_INLINE_FUNCTION T &operator()(Indices... indices) const {
+    return (*this)(layout::make_tuple(indices...));
+  }
+
+  /** @brief Coordinate rank. @return Number of top-level modes. */
+  KOKKOS_INLINE_FUNCTION static constexpr std::size_t rank() {
+    return Mapping::rank();
+  }
+
+  /** @brief Inspect a static-axis extent. @tparam I Axis.
+   * @return Extent, preserving static metadata. */
+  template <std::size_t I>
+  KOKKOS_INLINE_FUNCTION constexpr auto extent() const {
+    layout_impl::require(initialized_, "layout uninitialized view");
+    return layout_.template extent<I>();
+  }
+
+  /** @brief Inspect an extent. @param axis Axis. @return Logical extent. */
+  KOKKOS_INLINE_FUNCTION std::size_t extent(std::size_t axis) const {
+    layout_impl::require(initialized_, "layout uninitialized view");
+    return layout_impl::runtime_extent(layout_, axis);
+  }
+
+  /** @brief Test membership. @tparam Coordinate Tuple type.
+   * @param coordinate Coordinate to test. @return Whether access is valid. */
+  template <typename Coordinate>
+  KOKKOS_INLINE_FUNCTION constexpr bool
+  valid(const Coordinate &coordinate) const
+    requires is_tuple_v<Coordinate>
+  {
+    return initialized_ && layout_.valid(coordinate);
+  }
+  /** @brief Test scalar membership. @tparam Indices Scalar types.
+   * @param indices Logical indices. @return Whether access is valid. */
+  template <
+      typename... Indices,
+      std::enable_if_t<layout_impl::scalar_coordinates_v<Indices...>, int> = 0>
+  KOKKOS_INLINE_FUNCTION constexpr bool valid(Indices... indices) const {
+    return valid(layout::make_tuple(indices...));
+  }
+
+  /** @brief Original-pointer-relative offset. @tparam Coordinate Tuple type.
+   * @param coordinate Valid coordinate. @return Element offset. */
+  template <typename Coordinate>
+  KOKKOS_INLINE_FUNCTION constexpr std::size_t
+  offset(const Coordinate &coordinate) const
+    requires is_tuple_v<Coordinate>
+  {
+    layout_impl::require(initialized_, "layout uninitialized view");
+    return layout_.offset(coordinate);
+  }
+  /** @brief Scalar coordinate offset. @tparam Indices Scalar types.
+   * @param indices Valid logical indices. @return Element offset. */
+  template <
+      typename... Indices,
+      std::enable_if_t<layout_impl::scalar_coordinates_v<Indices...>, int> = 0>
+  KOKKOS_INLINE_FUNCTION constexpr std::size_t
+  offset(Indices... indices) const {
+    return offset(layout::make_tuple(indices...));
+  }
+
+  /** @brief Retain flat storage access.
+   * @return Backing adapter preserving element constness. */
+  KOKKOS_INLINE_FUNCTION auto flat_storage() const {
+    if constexpr (std::is_const_v<T>) {
+      return typename Storage::const_type(storage_);
+    } else {
+      return storage_;
+    }
+  }
+  /** @brief Declared backing region. @return Number of storage elements. */
+  KOKKOS_INLINE_FUNCTION std::size_t storage_span_size() const {
+    return storage_.size();
+  }
+  /** @brief Original physical span. @return Full allocation requirement. */
+  KOKKOS_INLINE_FUNCTION std::size_t physical_span_size() const {
+    return initialized_ ? layout_impl::physical_span(layout_) : 0;
   }
 
 private:
   friend struct layout_impl::ViewAccess;
-  template <typename, typename, typename> friend class View;
+  template <typename, typename, typename, bool> friend class View;
 
   KOKKOS_INLINE_FUNCTION constexpr View(const Storage &storage, Mapping mapping)
-      : storage_(storage), layout_(mapping) {
+      : storage_(storage), layout_(mapping), initialized_(true) {
     layout_impl::require(layout_.required_span_size() <= storage_.size(),
                          "layout exceeds backing capacity");
     layout_impl::require(storage_.data() != nullptr || layout_.empty(),
@@ -111,11 +269,12 @@ private:
   template <typename NewMapping>
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
   rebind_layout(const NewMapping &mapping) const {
-    return View<T, NewMapping, Storage>(storage_, mapping);
+    return View<T, NewMapping, Storage, true>(storage_, mapping);
   }
 
-  Storage storage_;
-  Mapping layout_;
+  Storage storage_{};
+  Mapping layout_{};
+  bool initialized_ = false;
 };
 
 /**
