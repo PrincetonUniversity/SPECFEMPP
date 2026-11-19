@@ -23,6 +23,10 @@ set(_injection_loader_plugins
   good no_manifest bad_abi table_mismatch missing_symbol)
 set(_injection_loader_definitions)
 foreach(_plugin ${_injection_loader_plugins})
+  if(SPECFEM_TEST_DATA_MODE STREQUAL "INSTALL")
+    set_target_properties(injection_loader_test_${_plugin}_plugin PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}")
+  endif()
   string(TOUPPER ${_plugin} _upper)
   list(APPEND _injection_loader_definitions
     "SPECFEM_TEST_${_upper}_PLUGIN=\"$<TARGET_FILE:injection_loader_test_${_plugin}_plugin>\"")
