@@ -76,6 +76,82 @@ transfer_interpolate(const IndexType &point_index,
   transfer_interpolate_impl::interpolate_point(
       ielem, transfer_function.interpolants, face_function, self_mapped_field);
 }
+
+/**
+ * @brief Applies the transposed interpolation at one guest-face node.
+ *
+ * For a 3D nonconforming pair, the host face's GLL nodes \f$ c = (c_i, c_j)
+ * \f$ are the quadrature points. With the guest face's 1D interpolants stored
+ * at each host node,
+ * \f[
+ *   T_{c,k} = \texttt{interpolants}(p, c_i, c_j, k_i, 0) \,
+ *             \texttt{interpolants}(p, c_i, c_j, k_j, 1),
+ * \f]
+ * this computes, at guest node \f$ k = (k_i, k_j) \f$ of pair \f$ p \f$,
+ * \f$ \mathrm{result}_d = \sum_{c_i, c_j} T_{c,k} \, F_d(c) \f$
+ * for every component \f$ d \f$, where \f$ F \f$ is a value per host node.
+ *
+ * This is the transpose of `transfer_interpolate`, which evaluates
+ * \f$ \sum_k T_{c,k} u(k) \f$ at a host node with the same \f$ T \f$. Host
+ * nodes whose interpolant rows are zero (nodes owned by another pair)
+ * contribute zero.
+ *
+ * @tparam IndexType Point face index (`iface`, `ipoint_i`, `ipoint_j`)
+ * @tparam LocalIndexType Point face index whose `iface` is local to the chunk
+ * @tparam InterpolantsViewType Rank-5 view indexable as
+ * `(ipair, ci, cj, igll, axis)`
+ * @tparam FluxViewType Rank-4 view `(iface_local, ci, cj, icomp)` with static
+ * GLL and component extents (a plain static `Kokkos::View` or a
+ * `specfem::datatype::VectorChunkFaceViewType`)
+ * @tparam PointFieldType Point vector with `components` entries
+ *
+ * @param index Guest node: `iface` is the pair index \f$ p \f$ into
+ * `interpolants`, `(ipoint_i, ipoint_j)` is \f$ (k_i, k_j) \f$
+ * @param local_index The same node; its `iface` is the face position inside
+ * the chunk, used to index `flux`
+ * @param interpolants Guest-face 1D interpolants at the host nodes, by pair
+ * @param flux Values \f$ F(c) \f$ at the host nodes of the chunk
+ * @param result \f$ \sum_c T_{c,k} F(c) \f$, one entry per component (output)
+ */
+template <typename IndexType, typename LocalIndexType,
+          typename InterpolantsViewType, typename FluxViewType,
+          typename PointFieldType>
+KOKKOS_INLINE_FUNCTION void
+transfer_integrate(const IndexType &index, const LocalIndexType &local_index,
+                   const InterpolantsViewType &interpolants,
+                   const FluxViewType &flux, PointFieldType &result) {
+
+  constexpr int ncomp = PointFieldType::components;
+  constexpr int ngll = static_cast<int>(FluxViewType::static_extent(1));
+
+  static_assert(InterpolantsViewType::rank() == 5,
+                "interpolants must be indexed (ipair, ci, cj, igll, axis)");
+  static_assert(FluxViewType::rank() == 4,
+                "flux must be indexed (iface_local, ci, cj, icomp)");
+  static_assert(ngll > 0 && FluxViewType::static_extent(2) == ngll,
+                "flux must have equal static GLL extents");
+  static_assert(FluxViewType::static_extent(3) == ncomp,
+                "flux and result must have the same number of components");
+
+  const int ipair = index.iface;
+  const int iface_local = local_index.iface;
+  const int ki = index.ipoint_i;
+  const int kj = index.ipoint_j;
+
+  for (int icomp = 0; icomp < ncomp; icomp++) {
+    result(icomp) = 0;
+  }
+
+  for (int ci = 0; ci < ngll; ci++) {
+    for (int cj = 0; cj < ngll; cj++) {
+      const type_real transfer_coeff = interpolants(ipair, ci, cj, ki, 0) *
+                                       interpolants(ipair, ci, cj, kj, 1);
+      for (int icomp = 0; icomp < ncomp; icomp++) {
+        result(icomp) += transfer_coeff * flux(iface_local, ci, cj, icomp);
+      }
+    }
+  }
+}
 } // namespace specfem::algorithms
 
 /**
