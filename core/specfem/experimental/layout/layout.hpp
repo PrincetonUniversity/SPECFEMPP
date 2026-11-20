@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/experimental/layout/tuple.hpp"
+#include <concepts>
 #include <limits>
 
 /** @cond */
@@ -373,6 +374,30 @@ KOKKOS_INLINE_FUNCTION constexpr void require_unique(const Shape &shape,
           "layout uniqueness not certified: stride separation failed");
 }
 
+// Add a displacement to an offset or span. A static zero displacement adds no
+// instruction, so root layouts keep their original address arithmetic.
+template <typename Displacement>
+[[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
+displace(Displacement displacement, std::size_t value) {
+  if constexpr (Constant<Displacement>) {
+    if constexpr (Displacement::value == 0) {
+      return value;
+    } else {
+      return add(integer(displacement), value);
+    }
+  } else {
+    return add(integer(displacement), value);
+  }
+}
+
+using static_zero = std::integral_constant<std::size_t, 0>;
+
+template <typename T>
+inline constexpr bool is_displacement_v = std::is_same_v<T, std::size_t>;
+template <std::size_t Value>
+inline constexpr bool
+    is_displacement_v<std::integral_constant<std::size_t, Value>> = true;
+
 // Selects the layout constructor that skips uniqueness certification.
 struct DeriveTag {};
 
@@ -399,10 +424,18 @@ namespace specfem::experimental::layout {
  * compile. Other descriptors are checked during constant evaluation and in
  * builds without NDEBUG, on host and device. In release builds an uncertified
  * descriptor is a precondition violation with undefined behavior.
+ *
+ * Every offset is the displacement plus the sum of coordinate leaves times
+ * their strides. Root layouts have a static zero displacement. Subviews add a
+ * displacement so that offsets stay relative to the original backing pointer.
  * @tparam Shape Recursive tuple of nonnegative integral extents.
  * @tparam Strides Matching recursive tuple of nonnegative element strides.
+ * @tparam Displacement Offset of coordinate zero, either a std::size_t or a
+ * std::size_t integral constant.
  */
-template <typename Shape, typename Strides> class Layout {
+template <typename Shape, typename Strides,
+          typename Displacement = layout_impl::static_zero>
+class Layout {
   static_assert(layout_impl::TupleTraits<Shape>::is_tuple &&
                     layout_impl::TupleTraits<Strides>::is_tuple,
                 "layout shape and strides must be tuples");
@@ -459,6 +492,16 @@ public:
   }
 
   /**
+   * @brief Offset of coordinate zero relative to the original backing pointer.
+   * @return Static zero for root layouts. Subviews add the selected start
+   * offsets; the result is static when every added term is static.
+   */
+  [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr Displacement
+  displacement() const {
+    return displacement_;
+  }
+
+  /**
    * @brief Scalar extent of a top-level mode.
    * @tparam I Mode position.
    * @return Product of its leaf extents, as
@@ -494,7 +537,9 @@ public:
    */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
   required_span_size() const {
-    return empty() ? 0 : layout_impl::span(shape_, strides_);
+    return empty() ? 0
+                   : layout_impl::displace(displacement_,
+                                           layout_impl::span(shape_, strides_));
   }
 
   /**
@@ -516,8 +561,8 @@ public:
    * @tparam Coordinate Tuple following shape topology, with scalar subtrees.
    * @param coordinate Valid logical coordinate, checked in debug builds.
    * @return Element offset relative to the original backing pointer, as
-   * `std::integral_constant<std::size_t, N>` if the shape, strides, and
-   * coordinate are all static, otherwise `std::size_t`.
+   * `std::integral_constant<std::size_t, N>` if the shape, strides,
+   * displacement, and coordinate are all static, otherwise `std::size_t`.
    */
   template <typename Coordinate>
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
@@ -527,12 +572,17 @@ public:
     layout_impl::require(valid(coordinate), "layout coordinate out of bounds");
     if constexpr (layout_impl::StaticTree<Shape>::value &&
                   layout_impl::StaticTree<Strides>::value &&
-                  layout_impl::StaticTree<Coordinate>::value) {
-      return std::integral_constant<std::size_t,
-                                    layout_impl::coordinate_offset(
-                                        Shape{}, Strides{}, Coordinate{})>{};
+                  layout_impl::StaticTree<Coordinate>::value &&
+                  layout_impl::Constant<Displacement>) {
+      return std::integral_constant<
+          std::size_t,
+          layout_impl::displace(
+              Displacement{}, layout_impl::coordinate_offset(Shape{}, Strides{},
+                                                             Coordinate{}))>{};
     } else {
-      return layout_impl::coordinate_offset(shape_, strides_, coordinate);
+      return layout_impl::displace(
+          displacement_,
+          layout_impl::coordinate_offset(shape_, strides_, coordinate));
     }
   }
 
@@ -544,8 +594,12 @@ private:
   // re-certified: the envelope of a tiled slice can overlap where its
   // inherited validity cannot.
   KOKKOS_INLINE_FUNCTION constexpr Layout(layout_impl::DeriveTag, Shape shape,
-                                          Strides strides, bool enabled)
-      : shape_(shape), strides_(strides), enabled_(enabled) {
+                                          Strides strides, bool enabled,
+                                          Displacement displacement = {})
+      : shape_(shape), strides_(strides), displacement_(displacement),
+        enabled_(enabled) {
+    static_assert(layout_impl::is_displacement_v<Displacement>,
+                  "layout displacement must be std::size_t or a constant");
     layout_impl::validate_leaves(shape_);
     layout_impl::validate_leaves(strides_);
     if constexpr (layout_impl::StaticTree<Shape>::value) {
@@ -588,6 +642,7 @@ private:
 
   Shape shape_{};
   Strides strides_{};
+  [[no_unique_address]] Displacement displacement_{};
   bool enabled_ = true;
 };
 
@@ -632,12 +687,27 @@ namespace specfem::experimental::layout_impl {
 // valid parent coordinate with the same offset, so the parent's certificate
 // carries over.
 struct LayoutAccess {
-  template <typename Shape, typename Strides>
+  template <typename Shape, typename Strides,
+            typename Displacement = static_zero>
   [[nodiscard]] KOKKOS_INLINE_FUNCTION static constexpr auto
-  derive(Shape shape, Strides strides, bool enabled) {
-    return specfem::experimental::layout::Layout<Shape, Strides>(
-        DeriveTag{}, shape, strides, enabled);
+  derive(Shape shape, Strides strides, bool enabled,
+         Displacement displacement = {}) {
+    return specfem::experimental::layout::Layout<Shape, Strides, Displacement>(
+        DeriveTag{}, shape, strides, enabled, displacement);
   }
+};
+
+// The protocol every mapping provides to transformations and views. Coordinate
+// queries (valid and offset) are templates and are not listed here.
+template <typename M>
+concept Mapping = requires(const M &mapping) {
+  { M::rank() } -> std::convertible_to<std::size_t>;
+  mapping.shape();
+  mapping.strides();
+  mapping.displacement();
+  mapping.envelope_size();
+  { mapping.empty() } -> std::same_as<bool>;
+  { mapping.required_span_size() } -> std::convertible_to<std::size_t>;
 };
 
 } // namespace specfem::experimental::layout_impl

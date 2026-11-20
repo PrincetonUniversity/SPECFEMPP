@@ -276,6 +276,9 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr const auto &strides() const {
     return descriptor_.strides();
   }
+  KOKKOS_INLINE_FUNCTION constexpr auto displacement() const {
+    return descriptor_.displacement();
+  }
   template <std::size_t I>
   KOKKOS_INLINE_FUNCTION constexpr auto extent() const {
     return descriptor_.template extent<I>();
@@ -309,18 +312,35 @@ private:
   Descriptor descriptor_;
 };
 
+// Apply a mapping transformation to a mapping, or to a view's mapping while
+// retaining the view's backing storage through the single rewrap operation.
+template <typename Object, typename Transformation>
+KOKKOS_INLINE_FUNCTION constexpr auto
+transform_object(const Object &object, const Transformation &transformation) {
+  if constexpr (requires { object.layout(); }) {
+    return ViewAccess::rebind_layout(object, transformation(object.layout()));
+  } else {
+    static_assert(Mapping<Object>,
+                  "layout transformation requires a mapping or layout view");
+    return transformation(object);
+  }
+}
+
+template <typename Operation> struct Reorganization {
+  template <typename Parent>
+  KOKKOS_INLINE_FUNCTION constexpr auto operator()(const Parent &parent) const {
+    const auto descriptor =
+        LayoutAccess::derive(Operation::forward(parent.shape()),
+                             Operation::forward(parent.strides()),
+                             !parent.empty(), parent.displacement());
+    return ReorganizedMapping<Parent, std::remove_cvref_t<decltype(descriptor)>,
+                              Operation>(parent, descriptor);
+  }
+};
+
 template <typename Operation, typename Object>
 KOKKOS_INLINE_FUNCTION constexpr auto reorganize(const Object &object) {
-  if constexpr (requires { object.layout(); }) {
-    return ViewAccess::rebind_layout(object,
-                                     reorganize<Operation>(object.layout()));
-  } else {
-    const auto descriptor = LayoutAccess::derive(
-        Operation::forward(object.shape()),
-        Operation::forward(object.strides()), !object.empty());
-    return ReorganizedMapping<Object, std::remove_cvref_t<decltype(descriptor)>,
-                              Operation>(object, descriptor);
-  }
+  return transform_object(object, Reorganization<Operation>{});
 }
 
 } // namespace specfem::experimental::layout_impl

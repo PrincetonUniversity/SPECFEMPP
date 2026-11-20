@@ -28,7 +28,7 @@ set(_layout_diagnostics
     "uniqueness not certified"
     "uniqueness not certified"
     "layout broadcast"
-    "read-only|const|modifiable"
+    "read-only|modifiable lvalue|cannot assign"
     "ordinary element references"
     "layout permutation"
     "layout permutation"
@@ -42,7 +42,20 @@ set(_layout_diagnostics
     "layout ungroup"
     "layout transform path"
     "constant coordinate"
-    "read-only|const|modifiable")
+    "read-only|modifiable lvalue|cannot assign"
+    "one selector per top-level mode"
+    "tuple selector must match a nested mode"
+    "tuple selector must match a nested mode"
+    "selector must be an index, all, range or tuple"
+    "subview index out of range"
+    "range out of order or out of range"
+    "not aligned to nested mode blocks"
+    "read-only|modifiable lvalue|cannot assign"
+    "range bounds must be integers"
+    "range out of order or out of range"
+    "range out of order or out of range"
+    "range bounds must be integers"
+    "selector must be an index, all, range or tuple")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)

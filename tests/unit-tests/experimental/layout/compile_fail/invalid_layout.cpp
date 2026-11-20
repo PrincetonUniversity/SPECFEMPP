@@ -8,7 +8,7 @@
 #endif
 #endif
 #include "specfem/experimental/layout/kokkos.hpp"
-#include "specfem/experimental/layout/transform.hpp"
+#include "specfem/experimental/layout/subview.hpp"
 #include <limits>
 
 namespace hl = specfem::experimental::layout;
@@ -104,7 +104,9 @@ void construct_layout() {
                       hl::make_tuple(hl::c<1>, hl::c<0>), enabled);
 
 #elif LAYOUT_COMPILE_CASE == 23
-  const Kokkos::View<const int *, Kokkos::HostSpace> native("const", 4);
+  // Kokkos cannot allocate const elements, so convert a mutable view.
+  const Kokkos::View<int *, Kokkos::HostSpace> storage("storage", 4);
+  const Kokkos::View<const int *, Kokkos::HostSpace> native = storage;
   const auto view = hl::make_view(native);
   view(hl::make_tuple(0)) = 1;
 #elif LAYOUT_COMPILE_CASE == 24
@@ -178,9 +180,87 @@ void construct_layout() {
   const auto p = hl::permute<hl::ModePath<>, 1, 0>(parent);
   [[maybe_unused]] const auto offset = p.offset(hl::make_tuple(0, hl::c<2>));
 #elif LAYOUT_COMPILE_CASE == 37
-  const Kokkos::View<const int **, Kokkos::HostSpace> native("const", 2, 3);
+  // Kokkos cannot allocate const elements, so convert a mutable view.
+  const Kokkos::View<int **, Kokkos::HostSpace> storage("storage", 2, 3);
+  const Kokkos::View<const int **, Kokkos::HostSpace> native = storage;
   const auto g = hl::group<hl::ModePath<>, 0, 2>(hl::make_view(native));
   g(hl::make_tuple(5)) = 1;
+
+#elif LAYOUT_COMPILE_CASE == 38
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::subview(parent, hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 39
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::make_tuple(hl::all), hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 40
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<4>, 3)),
+                      hl::make_tuple(hl::make_tuple(hl::c<1>, 8)));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::make_tuple(hl::all, hl::all, hl::all));
+
+#elif LAYOUT_COMPILE_CASE == 41
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::subview(parent, 1.5, hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 42
+  const auto parent = hl::make_layout(hl::make_tuple(hl::c<2>, hl::c<3>),
+                                      hl::make_tuple(hl::c<1>, hl::c<2>));
+  [[maybe_unused]] const auto result = hl::subview(parent, hl::c<2>, hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 43
+  const auto parent = hl::make_layout(hl::make_tuple(hl::c<2>, hl::c<3>),
+                                      hl::make_tuple(hl::c<1>, hl::c<2>));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::range(hl::c<0>, hl::c<3>), hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 44
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<4>, hl::c<3>)),
+                      hl::make_tuple(hl::make_tuple(hl::c<1>, hl::c<4>)));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::range(hl::c<1>, hl::c<5>));
+
+#elif LAYOUT_COMPILE_CASE == 45
+  // Kokkos cannot allocate const elements, so convert a mutable view.
+  const Kokkos::View<int **, Kokkos::HostSpace> storage("storage", 2, 3);
+  const Kokkos::View<const int **, Kokkos::HostSpace> native = storage;
+  const auto s = hl::subview(hl::make_view(native), hl::all, 1);
+  s(hl::make_tuple(0)) = 1;
+
+#elif LAYOUT_COMPILE_CASE == 46
+  [[maybe_unused]] const auto selector = hl::range(true, 1);
+
+#elif LAYOUT_COMPILE_CASE == 47
+  const auto parent = hl::make_layout(hl::make_tuple(hl::c<2>, hl::c<3>),
+                                      hl::make_tuple(hl::c<1>, hl::c<2>));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::range(hl::c<2>, hl::c<1>), hl::all);
+
+#elif LAYOUT_COMPILE_CASE == 48
+  // Static bounds are checked even when the selected extent is dynamic.
+  const auto parent = hl::make_layout(hl::make_tuple(3), hl::make_tuple(1));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::range(hl::c<2>, hl::c<1>));
+
+#elif LAYOUT_COMPILE_CASE == 49
+  // A Range built without range() still needs integer bounds.
+  const auto parent = hl::make_layout(hl::make_tuple(3), hl::make_tuple(1));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, hl::Range<double, double>{ 0.0, 1.0 });
+
+#elif LAYOUT_COMPILE_CASE == 50
+  // A boolean constant is not an index, as a plain bool is not.
+  const auto parent =
+      hl::make_layout(hl::make_tuple(2, 3), hl::make_tuple(1, 2));
+  [[maybe_unused]] const auto result =
+      hl::subview(parent, std::true_type{}, hl::all);
 
 #else
   [[maybe_unused]] const auto mapping =

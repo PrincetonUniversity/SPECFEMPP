@@ -255,8 +255,30 @@ specfem_add_test(hierarchical_layout_transform_debug_tests
 add_test(NAME TransformDeviceDebug.InvalidCoordinate
   COMMAND ${CMAKE_COMMAND}
     "-DPROGRAM=$<TARGET_FILE:hierarchical_layout_transform_debug_tests>"
+    "-DARGUMENT=--invalid-device-coordinate"
+    "-DEXPECTED=layout transformed coordinate out of bounds"
     -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
 set_tests_properties(TransformDeviceDebug.InvalidCoordinate PROPERTIES TIMEOUT 120)
+
+specfem_add_test(hierarchical_layout_subview_tests
+  SOURCES experimental/layout/subview_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  NO_UNITY
+)
+
+specfem_add_test(hierarchical_layout_subview_debug_tests
+  SOURCES experimental/layout/subview_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  DEFINITIONS SPECFEM_LAYOUT_FORCE_DEBUG
+  NO_UNITY
+)
+add_test(NAME SubviewDeviceDebug.InvalidSelection
+  COMMAND ${CMAKE_COMMAND}
+    "-DPROGRAM=$<TARGET_FILE:hierarchical_layout_subview_debug_tests>"
+    "-DARGUMENT=--invalid-device-selection"
+    "-DEXPECTED=layout subview coordinate out of bounds"
+    -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
+set_tests_properties(SubviewDeviceDebug.InvalidSelection PROPERTIES TIMEOUT 120)
 
 
 specfem_add_test(fortranio_test
