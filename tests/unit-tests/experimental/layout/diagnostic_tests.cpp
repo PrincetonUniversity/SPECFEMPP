@@ -4,7 +4,7 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
-#include "specfem/experimental/layout/subview.hpp"
+#include "specfem/experimental/layout/tile.hpp"
 #include <gtest/gtest.h>
 #include <limits>
 
@@ -197,4 +197,28 @@ TEST(HierarchicalLayoutDebug, DisplacementArithmetic) {
   EXPECT_EQ(disabled.required_span_size(), 0);
   EXPECT_DEATH(static_cast<void>(disabled.offset(hl::make_tuple(1))),
                "coordinate out of bounds");
+}
+
+TEST(HierarchicalLayoutDebug, TileRequests) {
+  const auto m = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
+  EXPECT_DEATH(static_cast<void>(hl::tile(m, 0)), "tile size must be positive");
+  const auto nested = hl::make_layout(hl::make_tuple(hl::make_tuple(4, 3)),
+                                      hl::make_tuple(hl::make_tuple(1, 4)));
+  EXPECT_DEATH(static_cast<void>(hl::tile(nested, 3)),
+               "must divide the fastest leaf");
+  const auto maximum = std::numeric_limits<std::size_t>::max();
+  const auto large =
+      hl::make_layout(hl::make_tuple(2), hl::make_tuple(maximum - 1));
+  EXPECT_DEATH(static_cast<void>(hl::tile(large, 2)),
+               "multiplication overflow");
+  const auto huge = hl::make_layout(hl::make_tuple(maximum), hl::make_tuple(1));
+  EXPECT_DEATH(static_cast<void>(hl::tile(huge, 2)), "multiplication overflow");
+  EXPECT_DEATH(static_cast<void>(hl::tile(m, 4).offset(hl::make_tuple(7))),
+               "tile coordinate out of bounds");
+}
+TEST(HierarchicalLayoutDebug, TileRegressionCertification) {
+  EXPECT_DEATH(static_cast<void>(
+                   hl::make_layout(hl::make_tuple(hl::make_tuple(4, 2), 3),
+                                   hl::make_tuple(hl::make_tuple(1, 4), 7))),
+               "uniqueness not certified");
 }

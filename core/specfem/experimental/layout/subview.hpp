@@ -462,62 +462,25 @@ ranges_nonempty(const Selector &selector) {
   }
 }
 
-template <typename Parent, typename Descriptor, typename Selectors>
-class SubviewMapping {
-public:
-  KOKKOS_INLINE_FUNCTION constexpr SubviewMapping(Parent parent,
-                                                  Descriptor descriptor,
-                                                  Selectors selectors)
-      : parent_(parent), descriptor_(descriptor), selectors_(selectors) {}
-  KOKKOS_INLINE_FUNCTION static constexpr std::size_t rank() {
-    return Descriptor::rank();
+template <typename Selectors> struct SubviewTransport {
+  Selectors selectors;
+  KOKKOS_INLINE_FUNCTION static constexpr const char *message() {
+    return "layout subview coordinate out of bounds";
   }
-  KOKKOS_INLINE_FUNCTION constexpr const auto &shape() const {
-    return descriptor_.shape();
+  template <typename Parent, typename Descriptor>
+  KOKKOS_INLINE_FUNCTION constexpr auto
+  span(const Parent &parent, const Descriptor &descriptor) const {
+    return Kokkos::min(descriptor.required_span_size(),
+                       parent.required_span_size());
   }
-  KOKKOS_INLINE_FUNCTION constexpr const auto &strides() const {
-    return descriptor_.strides();
-  }
-  KOKKOS_INLINE_FUNCTION constexpr auto displacement() const {
-    return descriptor_.displacement();
-  }
-  template <std::size_t I>
-  KOKKOS_INLINE_FUNCTION constexpr auto extent() const {
-    return descriptor_.template extent<I>();
-  }
-  KOKKOS_INLINE_FUNCTION constexpr auto envelope_size() const {
-    return descriptor_.envelope_size();
-  }
-  KOKKOS_INLINE_FUNCTION constexpr bool empty() const {
-    return descriptor_.empty();
-  }
-  KOKKOS_INLINE_FUNCTION constexpr std::size_t required_span_size() const {
-    return descriptor_.required_span_size();
-  }
-  template <typename Coordinate>
-  KOKKOS_INLINE_FUNCTION constexpr bool valid(const Coordinate &coord) const {
-    if (!descriptor_.valid(coord)) {
-      return false;
-    }
-    bool ok = true;
-    const auto parent_coord = back_children(
-        shape(), selectors_, expand_coordinate(shape(), coord), ok,
+  template <typename Shape, typename ParentShape, typename Coordinate>
+  KOKKOS_INLINE_FUNCTION constexpr auto
+  back(const Shape &shape, const ParentShape &, const Coordinate &coord,
+       bool &ok) const {
+    return back_children(
+        shape, selectors, coord, ok,
         std::make_index_sequence<TupleTraits<Selectors>::rank>{});
-    return ok && parent_.valid(parent_coord);
   }
-  template <typename Coordinate>
-  KOKKOS_INLINE_FUNCTION constexpr std::size_t
-  offset(const Coordinate &coord) const {
-    if (checks_enabled()) {
-      require(valid(coord), "layout subview coordinate out of bounds");
-    }
-    return descriptor_.offset(coord);
-  }
-
-private:
-  Parent parent_;
-  Descriptor descriptor_;
-  Selectors selectors_;
 };
 
 template <typename Selectors> struct Subview {
@@ -536,8 +499,9 @@ template <typename Selectors> struct Subview {
       const auto descriptor = LayoutAccess::derive(
           selected.shape, selected.strides, enabled,
           sum(parent.displacement(), selected.displacement));
-      return SubviewMapping<Parent, std::remove_cvref_t<decltype(descriptor)>,
-                            Selectors>(parent, descriptor, selectors);
+      return DerivedMapping<Parent, std::remove_cvref_t<decltype(descriptor)>,
+                            SubviewTransport<Selectors>>(parent, descriptor,
+                                                         { selectors });
     }
   }
 };
