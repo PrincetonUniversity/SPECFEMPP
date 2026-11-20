@@ -43,12 +43,13 @@ specfem::assembly::Gravity<specfem::element::dimension_tag::dim3>::Gravity(
     : radial(evaluator.gravity_tables()) {
   using Medium = specfem::element::medium_tag;
   using Field = specfem::simulation::field_type;
-  const auto &coord = mesh.h_spherical_coord;
+  const auto &coord = mesh.h_coord;
   if (mesh.nspec == 0) {
     return;
   }
   if (coord.data() == nullptr) {
-    throw std::runtime_error("Gravity setup requires spherical coordinates");
+    throw std::runtime_error(
+        "Gravity setup requires Cartesian GLL coordinates");
   }
 
   const auto spline = ellipticity
@@ -95,17 +96,31 @@ specfem::assembly::Gravity<specfem::element::dimension_tag::dim3>::Gravity(
             }
             visited[point] = true;
 
-            const double radius = coord(ispec, iz, iy, ix, 0);
-            const double theta = coord(ispec, iz, iy, ix, 1);
-            const double phi = coord(ispec, iz, iy, ix, 2);
-            const double cos_theta = std::cos(theta);
-            const double sin_theta = std::sin(theta);
-            const std::array<double, 3> direction{ sin_theta * std::cos(phi),
-                                                   sin_theta * std::sin(phi),
-                                                   cos_theta };
+            const double x = coord(ispec, iz, iy, ix, 0);
+            const double y = coord(ispec, iz, iy, ix, 1);
+            const double z = coord(ispec, iz, iy, ix, 2);
+            const double radius = std::hypot(x, y, z);
+            if (!fluid && radius < 100.0) {
+              // Unlike Globe's 100 m clamp, use the linear central field so
+              // gravity tends to zero independently of the approach direction.
+              const double a = radial.center_density * radial.center_gradient;
+              const std::array<double, 3> position{ x, y, z };
+              for (int c = 0; c < 3; ++c) {
+                solid_vector(point, c) = a * position[c];
+                solid_tensor(point, c) = a;
+                solid_tensor(point, c + 3) = 0.0;
+              }
+              continue;
+            }
+
+            std::array<double, 3> direction{};
+            if (radius != 0.0) {
+              direction = { x / radius, y / radius, z / radius };
+            }
+
             const double r_table =
                 ellipticity ? specfem::assembly::gravity_impl::spherical_radius(
-                                  radius, cos_theta, spline)
+                                  radius, direction[2], spline)
                             : radius;
             // Globe uses one-based NINT, then clamps to [1, NRAD_GRAVITY].
             const int sample =
@@ -125,16 +140,10 @@ specfem::assembly::Gravity<specfem::element::dimension_tag::dim3>::Gravity(
               continue;
             }
 
-            // Use the analytic limit inside Globe's 100 m inner-core guard.
-            const bool near_center = radius < 100.0;
-            const double rho =
-                near_center ? radial.center_density : radial.density[sample];
-            const double g = near_center ? radial.center_gradient * radius
-                                         : radial.minus_gravity[sample];
-            const double dg = near_center ? radial.center_gradient
-                                          : radial.minus_deriv_gravity[sample];
-            const double g_over_r =
-                near_center ? radial.center_gradient : g / radius;
+            const double rho = radial.density[sample];
+            const double g = radial.minus_gravity[sample];
+            const double dg = radial.minus_deriv_gravity[sample];
+            const double g_over_r = g / radius;
             const double slope = dg - g_over_r;
             for (int c = 0; c < 3; ++c) {
               solid_vector(point, c) = rho * g * direction[c];

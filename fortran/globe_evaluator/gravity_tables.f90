@@ -13,11 +13,11 @@ integer(c_int) function globe_evaluator_gravity_tables( &
     capacity, range_max, minus_gravity, minus_deriv_gravity, density, &
     d_ln_density_dr, minus_rho_g_over_kappa_fluid) bind(C, name="globe_evaluator_gravity_tables")
   use iso_c_binding, only: c_int, c_double
-  use constants, only: NR_DENSITY, NRAD_GRAVITY
+  use constants, only: NR_DENSITY, NRAD_GRAVITY, REFERENCE_MODEL_SOHL_B
   use shared_parameters, only: PLANET_TYPE, IPLANET_EARTH, IPLANET_MARS, IPLANET_MOON, &
-    R_PLANET, R_PLANET_KM, TOPO_MAXIMUM, RICB, RCMB
+    REFERENCE_1D_MODEL, R_PLANET, R_PLANET_KM, TOPO_MAXIMUM, RICB, RCMB
   use globe_evaluator_par, only: is_initialized, &
-    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, GLOBE_EVALUATOR_BAD_ARGUMENT
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, GLOBE_EVALUATOR_BAD_ARGUMENT, GLOBE_EVALUATOR_UNSUPPORTED_MODEL
   implicit none
 
   integer(c_int), value, intent(in) :: capacity
@@ -34,6 +34,12 @@ integer(c_int) function globe_evaluator_gravity_tables( &
   if (.not. is_initialized) return
   globe_evaluator_gravity_tables = GLOBE_EVALUATOR_BAD_ARGUMENT
   if (capacity < NRAD_GRAVITY) return
+
+  ! make_gravity calls Sohl_density, which executes STOP for model B.
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL_B) then
+    globe_evaluator_gravity_tables = GLOBE_EVALUATOR_UNSUPPORTED_MODEL
+    return
+  endif
 
   ! TOPO_MAXIMUM comes from the selected planet's catalog constants.
   range_max = (R_PLANET + dble(TOPO_MAXIMUM)) / R_PLANET

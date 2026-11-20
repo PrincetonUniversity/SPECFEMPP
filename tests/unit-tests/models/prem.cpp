@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -617,6 +618,43 @@ TEST_F(PremEvaluatorTest, ExposesReferenceDensityInSi) {
 
   EXPECT_GT(density, 3000.0);
   EXPECT_LT(density, 7000.0);
+}
+
+TEST(SohlGravityTest, RecoversFromUnsupportedModelBWithModelA) {
+  auto config = bare_config("1d_sohl_b");
+  config.planet_type = 2; // IPLANET_MARS
+  config.gravity = true;
+  {
+    specfem::globe::ModelEvaluator evaluator(config);
+    try {
+      (void)evaluator.reference_density(0.0);
+      ADD_FAILURE() << "Sohl B has no reference density";
+    } catch (const std::runtime_error &error) {
+      EXPECT_NE(std::string(error.what()).find("unsupported for Sohl B"),
+                std::string::npos);
+    }
+    try {
+      (void)evaluator.gravity_tables();
+      ADD_FAILURE() << "Sohl B has no gravity profile";
+    } catch (const std::runtime_error &error) {
+      EXPECT_NE(std::string(error.what()).find("unsupported for Sohl B"),
+                std::string::npos);
+    }
+  }
+
+  config.model_name = "1d_sohl";
+  specfem::globe::ModelEvaluator evaluator(config);
+  const auto tables = evaluator.gravity_tables();
+  // From model_Sohl.f90: model_Sohl weights the artificial solid inner core
+  // at 8.752 g/cm^3, but Sohl_density integrates 7.2942 g/cm^3 at r=0.
+  constexpr double solid_density = 8752.0;
+  constexpr double source_density = 7294.2;
+  constexpr double grav = 6.67384e-11; // Catalog GRAV, SI.
+  constexpr double slope =
+      -(4.0 / 3.0) * std::numbers::pi * grav * source_density;
+  EXPECT_NEAR(evaluator.reference_density(0.0), source_density, 1.0e-8);
+  EXPECT_NEAR(tables.center_density, solid_density, 1.0e-8);
+  EXPECT_NEAR(tables.center_gradient, slope, 1.0e-16);
 }
 
 TEST_F(PremEvaluatorTest, ExposesMesherEllipticitySpline) {

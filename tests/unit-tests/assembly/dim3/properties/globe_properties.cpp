@@ -380,28 +380,46 @@ TEST(GlobeGravity, PrecomputesReferenceTablesAndDeviceData) {
   const int ny = assembly.mesh.element_grid.nglly;
   const int nz = assembly.mesh.element_grid.ngllz;
 
-  // Insert the exact origin in the setup cache. Update every occurrence of its
-  // medium-local global index because adjacent elements can share the point.
-  int center = -1;
+  // Approach the centre along two axes and straddle the 100 m handoff.
+  // Update every element-local copy of each probe before setup.
+  constexpr std::array<std::array<double, 3>, 6> positions{ { { 0, 0, 0 },
+                                                              { 25, 0, 0 },
+                                                              { 50, 0, 0 },
+                                                              { 0, -50, 0 },
+                                                              { 99.99, 0, 0 },
+                                                              { 100, 0, 0 } } };
+  ASSERT_GE(nx * ny, positions.size());
+  std::array<int, positions.size()> probes;
+  probes.fill(-1);
+  const auto &xyz = assembly.mesh.h_coord;
   for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
     if (types.get_region_tag(ispec) != Region::inner_core) {
       continue;
     }
-    if (center < 0) {
-      center = field.get_iglob<false, Medium::elastic>(ispec, 0, 0, 0);
+    if (probes[0] < 0) {
+      for (int i = 0; i < static_cast<int>(probes.size()); ++i) {
+        probes[i] =
+            field.get_iglob<false, Medium::elastic>(ispec, 0, i / nx, i % nx);
+      }
     }
     for (int iz = 0; iz < nz; ++iz) {
       for (int iy = 0; iy < ny; ++iy) {
         for (int ix = 0; ix < nx; ++ix) {
-          if (field.get_iglob<false, Medium::elastic>(ispec, iz, iy, ix) ==
-              center) {
-            coord(ispec, iz, iy, ix, 0) = 0.0;
+          const int point =
+              field.get_iglob<false, Medium::elastic>(ispec, iz, iy, ix);
+          for (std::size_t i = 0; i < probes.size(); ++i) {
+            if (point == probes[i]) {
+              for (int c = 0; c < 3; ++c) {
+                xyz(ispec, iz, iy, ix, c) = positions[i][c];
+              }
+            }
           }
         }
       }
     }
   }
-  ASSERT_GE(center, 0);
+  ASSERT_GE(probes.front(), 0);
+  assembly.mesh.compute_spherical_coordinates();
 
   specfem::assembly::dim3_impl::read_deferred_properties(fixture.mesh, assembly,
                                                          reader);
@@ -442,11 +460,24 @@ TEST(GlobeGravity, PrecomputesReferenceTablesAndDeviceData) {
   ASSERT_EQ(factor.extent(0), fluid.extent(0));
   const double center_diagonal = radial.center_gradient * radial.center_density;
   ASSERT_LT(center_diagonal, 0.0);
-  for (int c = 0; c < 3; ++c) {
-    EXPECT_NEAR(solid(center, c), 0.0, 0.0);
-    EXPECT_NEAR(tensor(center, c), center_diagonal, 1.e-8);
-    EXPECT_NEAR(tensor(center, c + 3), 0.0, 0.0);
+  const double rel_tol = 2.0 * std::numeric_limits<type_real>::epsilon();
+  for (std::size_t i = 0; i + 1 < probes.size(); ++i) {
+    for (int c = 0; c < 3; ++c) {
+      const double expected = center_diagonal * positions[i][c];
+      EXPECT_NEAR(solid(probes[i], c), expected, rel_tol * std::abs(expected));
+      EXPECT_NEAR(tensor(probes[i], c), center_diagonal,
+                  rel_tol * std::abs(center_diagonal));
+      EXPECT_NEAR(tensor(probes[i], c + 3), 0.0, 0.0);
+    }
   }
+  // At 100 m PREM selects its first radial sample (about 91 m).
+  const int boundary = probes.back();
+  const double weight = radial.density.front() * radial.minus_gravity.front();
+  EXPECT_NEAR(solid(boundary, 0), weight, rel_tol * std::abs(weight));
+  EXPECT_NEAR(solid(boundary, 1), 0.0, 0.0);
+  EXPECT_NEAR(solid(boundary, 2), 0.0, 0.0);
+  EXPECT_NEAR(tensor(boundary, 1), weight / 100.0,
+              rel_tol * std::abs(weight / 100.0));
   for (std::size_t point = 0; point < factor.extent(0); ++point) {
     const double norm =
         std::hypot(fluid(point, 0), fluid(point, 1), fluid(point, 2));

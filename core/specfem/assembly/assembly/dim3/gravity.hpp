@@ -23,12 +23,13 @@ template <> struct Gravity<specfem::element::dimension_tag::dim3> {
   Gravity() = default;
 
   /**
-   * @brief Prepare gravity for a Globe mesh while spherical points are cached.
+   * @brief Prepare gravity from the final Cartesian positions of the GLL
+   * points.
    * @param evaluator Configured reference model oracle.
    * @param planet Validated SI planet constants.
    * @param ellipticity Whether to undo ellipticity for the table lookup.
    * @param full_gravity Whether to store the extra scalar for fluid points.
-   * @param mesh Assembly mesh with its host spherical coordinate cache.
+   * @param mesh Assembly mesh with its host Cartesian GLL coordinates.
    * @param element_types Compute-order medium tags.
    * @param fields Assembled fields providing the medium-local point numbering.
    */
