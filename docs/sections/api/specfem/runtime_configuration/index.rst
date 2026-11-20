@@ -15,6 +15,7 @@
     receivers
     run_setup
     database_configuration
+    injection
     seismogram
     wavefield_writer
     setup
