@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <utility>
 
 namespace specfem {
 namespace optimization {
@@ -58,59 +57,6 @@ template <int N, typename ValueType = type_real> struct NelderMeadOptions {
   ValueType initial_step = 0.05; ///< Relative step for nonzero coordinates
   ValueType zero_step = 0.00025; ///< Absolute step for zero coordinates
 };
-
-} // namespace optimization
-
-namespace optimization_impl {
-
-/**
- * @brief Ascending heap sort returning the permutation.
- *
- * Gives the simplex a deterministic order for tied function values, and the
- * same order as heap_sort_local (src/shared/heap_sort.f90) of the SPECFEM
- * Fortran codes, so fits reproduce theirs. Uses 1-based indexing to match
- * that tie handling exactly.
- *
- * @tparam M Number of values
- * @param x Values, sorted in place (entries 1..M are used)
- * @param y Output permutation (entries 1..M are used)
- */
-template <int M>
-void heap_sort(std::array<double, M + 1> &x, std::array<int, M + 1> &y) {
-  for (int i = 1; i <= M; ++i)
-    y[i] = i;
-  if (M < 2)
-    return;
-  const auto siftdown = [&](const int start, const int bottom) {
-    int i = start;
-    const double xtmp = x[i];
-    const int ytmp = y[i];
-    int j = 2 * i;
-    while (j <= bottom) {
-      if (j < bottom && x[j] <= x[j + 1])
-        ++j;
-      if (x[j] < xtmp)
-        break;
-      x[i] = x[j];
-      y[i] = y[j];
-      i = j;
-      j = 2 * i;
-    }
-    x[i] = xtmp;
-    y[i] = ytmp;
-  };
-  for (int i = M / 2; i >= 1; --i)
-    siftdown(i, M);
-  for (int i = M; i >= 2; --i) {
-    std::swap(x[1], x[i]);
-    std::swap(y[1], y[i]);
-    siftdown(1, i - 1);
-  }
-}
-
-} // namespace optimization_impl
-
-namespace optimization {
 
 // ============================================================================
 // Nelder-Mead optimize specialization
@@ -198,13 +144,15 @@ optimize(NelderMeadSimplex, Func &&objective,
   Kokkos::View<ValueType[N + 1], Kokkos::LayoutRight, Kokkos::HostSpace>
       sorted_fvals("sorted_fvals");
   const auto sort_simplex = [&]() {
-    std::array<double, N + 2> values{};
-    std::array<int, N + 2> places{};
+    // Stable, as MATLAB's sort in fminsearch: ties keep their order.
+    std::array<int, N + 1> order{};
     for (int i = 0; i <= N; ++i)
-      values[i + 1] = fvals(i);
-    specfem::optimization_impl::heap_sort<N + 1>(values, places);
+      order[i] = i;
+    std::stable_sort(order.begin(), order.end(), [&](const int a, const int b) {
+      return fvals(a) < fvals(b);
+    });
     for (int i = 0; i <= N; ++i) {
-      const int from = places[i + 1] - 1;
+      const int from = order[i];
       sorted_fvals(i) = fvals(from);
       for (int j = 0; j < N; ++j)
         sorted_simplex(i, j) = simplex(from, j);

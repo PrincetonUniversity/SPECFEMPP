@@ -527,12 +527,13 @@ Implements **Standard Linear Solid (SLS) / Maxwell solid** attenuation using the
 |---|---|
 | `compute_tau_sigma` | Compute SLS stress-relaxation times |
 | `compute_tau_eps` | Compute SLS strain-relaxation times |
-| `compute_factors` | Compute complex modulus factors M₁, M₂ |
-| `maxwell` | Maxwell solid constitutive model |
+| `compute_factors` | Relaxation coefficients (`beta`, M_U/M_R) and modulus scales |
+| `quality_factor_fit` | `fit_quality_factor` and the bulk/shear Q tables |
+| `maxwell` | 1/L Maxwell solid storage and loss moduli M₁, M₂ |
 
 The `specfem qplots` subcommand uses these routines to let users visualize the achieved Q⁻¹ vs. frequency before running a simulation.
 
-The fit / shift / container layering and the roadmap toward one framework for 2D, 3D and globe are described in [architecture/core-components/attenuation.md](architecture/core-components/attenuation.md).
+2D, 3D and globe share this one formulation. The fit / shift / container layering and the remaining roadmap are described in [architecture/core-components/attenuation.md](architecture/core-components/attenuation.md).
 
 ---
 

@@ -7,6 +7,7 @@
 #include "specfem/utilities/logarithmic_center.hpp"
 
 #include "globe_attenuation_reference.h"
+#include "reference_fit.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -146,6 +147,14 @@ HostView copy_of(const HostView &view) {
                 view.extent(3));
   Kokkos::deep_copy(copy, view);
   return copy;
+}
+
+/** @brief Shear fit of q in the inputs' band, for the Fortran references. */
+specfem::assembly::attenuation_test_impl::ReferenceFit
+reference_fit(const double q, const Inputs &inputs) {
+  return specfem::assembly::attenuation_test_impl::reference_fit(
+      q, inputs.band.min.raw(), inputs.band.max.raw(), inputs.fc.raw(),
+      inputs.f0.raw());
 }
 
 } // namespace attenuation_recompute_test_impl
@@ -415,7 +424,7 @@ TEST(AnisotropicAttenuationRecompute, IsotropicLimitWithBulkAttenuation) {
         }
 }
 
-TEST(AnisotropicAttenuationRecompute, InfiniteQUsesGlobeLimit) {
+TEST(AnisotropicAttenuationRecompute, InfiniteQUsesQMaximum) {
   namespace test = attenuation_recompute_test_impl;
   const test::Inputs inputs;
   const auto infinite = test::make_anisotropic_medium();
@@ -493,11 +502,12 @@ TEST(AnisotropicAttenuationRecompute, FullAnisotropyUsesFinalRadialC44) {
     for (int z = 0; z < test::ngll; ++z)
       for (int y = 0; y < test::ngll; ++y)
         for (int x = 0; x < test::ngll; ++x) {
-          double expected[21], muv, rates[test::N_SLS];
-          globe_evaluator_attenuate_cij(
-              theta, phi, inputs.band.min.raw(), inputs.band.max.raw(),
-              medium.h_Qmu(i, z, y, x), inputs.fc.raw(), inputs.f0.raw(),
-              original, expected, &muv, rates);
+          double expected[21], muv;
+          auto fit = test::reference_fit(medium.h_Qmu(i, z, y, x), inputs);
+          globe_evaluator_attenuate_cij(theta, phi, fit.relaxed_scale,
+                                        fit.ratio, original, expected, &muv,
+                                        fit.rates.data());
+          const auto &rates = fit.rates;
           for (int k = 0; k < 21; ++k)
             EXPECT_NEAR(views[k](i, z, y, x), expected[k],
                         tolerance * radial(0, 0));
@@ -507,7 +517,7 @@ TEST(AnisotropicAttenuationRecompute, FullAnisotropyUsesFinalRadialC44) {
         }
 }
 
-TEST(AttenuationRecompute, GlobeRatesUseRelaxedShearModulus) {
+TEST(AttenuationRecompute, RatesUseRelaxedShearModulus) {
   namespace test = attenuation_recompute_test_impl;
   const test::Inputs inputs;
   const auto medium = test::make_medium(false);
@@ -515,20 +525,18 @@ TEST(AttenuationRecompute, GlobeRatesUseRelaxedShearModulus) {
   Kokkos::deep_copy(medium.h_Qmu, 80.0);
   medium.recompute(props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
                    test::SphericalView{}, test::mantle);
-  double sigma[test::N_SLS], epsilon[test::N_SLS], rates[test::N_SLS],
-      relaxed_scale, ratio;
-  globe_evaluator_attenuation_reference(
-      inputs.band.min.raw(), inputs.band.max.raw(), 80., inputs.fc.raw(),
-      inputs.f0.raw(), sigma, epsilon, &relaxed_scale, &ratio, rates);
-  ASSERT_GT(ratio - 1, 0.01);
+  const auto fit = test::reference_fit(80., inputs);
+  const auto &rates = fit.rates;
+  const double relaxed_scale = fit.relaxed_scale;
+  ASSERT_GT(fit.ratio - 1, 0.01);
   const double tolerance = std::is_same_v<type_real, double> ? 1.e-10 : 2.e-4;
   for (int i = 0; i < test::nspec; ++i)
     for (int z = 0; z < test::ngll; ++z)
       for (int y = 0; y < test::ngll; ++y)
         for (int x = 0; x < test::ngll; ++x)
           for (int j = 0; j < test::N_SLS; ++j) {
-            // Expected = 2*mu_relaxed*(tau_e/tau_s-1)/tau_s,
-            // with the relaxed modulus and factors independently from globe.
+            // Expected = 2 * mu_R * (tau_e/tau_s - 1) / L / tau_s, with
+            // mu_R the relaxed modulus.
             const double expected =
                 test::physical_mu(i, z, y, x) * relaxed_scale * rates[j];
             EXPECT_NEAR(medium.h_mu_relaxation_rate(i, z, y, x, j), expected,
@@ -583,11 +591,12 @@ TEST(AnisotropicAttenuationRecompute, InnerCoreUsesUnrotatedHexagonalUpdate) {
     for (int z = 0; z < test::ngll; ++z)
       for (int y = 0; y < test::ngll; ++y)
         for (int x = 0; x < test::ngll; ++x) {
-          double expected[21], muv, rates[test::N_SLS];
-          globe_evaluator_attenuate_inner_core(
-              inputs.band.min.raw(), inputs.band.max.raw(),
-              medium.h_Qmu(i, z, y, x), inputs.fc.raw(), inputs.f0.raw(),
-              original, expected, &muv, rates);
+          double expected[21], muv;
+          auto fit = test::reference_fit(medium.h_Qmu(i, z, y, x), inputs);
+          globe_evaluator_attenuate_inner_core(fit.relaxed_scale, fit.ratio,
+                                               original, expected, &muv,
+                                               fit.rates.data());
+          const auto &rates = fit.rates;
           for (int k = 0; k < 21; ++k)
             EXPECT_NEAR(views[k](i, z, y, x), expected[k],
                         tolerance * hexagonal(0, 0));
@@ -656,11 +665,12 @@ TEST(AnisotropicAttenuationRecompute, CartesianMatchesGlobeAtNorthPole) {
       for (int y = 0; y < test::ngll; ++y)
         for (int x = 0; x < test::ngll; ++x) {
           // At the north pole globe's radial frame is the Cartesian frame.
-          double expected[21], muv, rates[test::N_SLS];
-          globe_evaluator_attenuate_cij(
-              0., 0., inputs.band.min.raw(), inputs.band.max.raw(),
-              medium.h_Qmu(i, z, y, x), inputs.fc.raw(), inputs.f0.raw(),
-              original, expected, &muv, rates);
+          double expected[21], muv;
+          auto fit = test::reference_fit(medium.h_Qmu(i, z, y, x), inputs);
+          globe_evaluator_attenuate_cij(0., 0., fit.relaxed_scale, fit.ratio,
+                                        original, expected, &muv,
+                                        fit.rates.data());
+          const auto &rates = fit.rates;
           for (int k = 0; k < 21; ++k)
             EXPECT_NEAR(views[k](i, z, y, x), expected[k],
                         tolerance * radial(0, 0));
@@ -721,7 +731,7 @@ TEST(AttenuationRecompute, SharedTablesGiveOneRepresentativePerBucket) {
   iso.h_Qmu(0, 0, 0, 0) = 100.01;
   aniso.h_Qmu(0, 0, 0, 0) = 100.05;
 
-  specfem::attenuation::globe::QualityFactorTables<test::N_SLS> tables;
+  specfem::attenuation::QualityFactorFitTables<test::N_SLS> tables;
   iso.recompute(iso_props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
                 test::SphericalView{}, test::cartesian, tables);
   const int iso_fits = tables.shear.fits();
@@ -750,7 +760,7 @@ TEST(AttenuationRecompute, FitCountFollowsBucketsNotPoints) {
           medium.h_Qmu(i, z, y, x) = 80.0 + 0.01 * ipoint;
           medium.h_Qkappa(i, z, y, x) = 500.0 + 0.01 * ipoint;
         }
-  specfem::attenuation::globe::QualityFactorTables<test::N_SLS> tables;
+  specfem::attenuation::QualityFactorFitTables<test::N_SLS> tables;
   medium.recompute(props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
                    test::SphericalView{}, test::cartesian, tables);
   // 54 points, 3 + 3 fits.

@@ -3,4 +3,4 @@
 
 .. doxygenfunction:: specfem::attenuation::maxwell
 
-.. doxygenstruct:: specfem::attenuation::MaxwellModuli
+.. doxygenstruct:: specfem::attenuation::MaxwellFactors

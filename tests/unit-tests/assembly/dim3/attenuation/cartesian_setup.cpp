@@ -9,6 +9,7 @@
 #include "specfem/utilities/band.hpp"
 
 #include "globe_attenuation_reference.h"
+#include "reference_fit.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
@@ -120,7 +121,7 @@ template <typename Container> auto stiffness_views(const Container &container) {
 /**
  * @brief Expected unrelaxed state of the Cartesian material.
  *
- * Shear: globe's independent Cartesian (north-pole) attenuation of cij.
+ * Shear: globe's Cartesian (north-pole) shift of cij for the fitted Q.
  * Bulk: the Voigt bulk modulus of the reference tensor scaled by the Qkappa
  * multiplier, added to the normal-stress block.
  */
@@ -138,12 +139,16 @@ struct Expected {
     for (int k = 0; k < 21; ++k)
       original[k] = c[k];
     // At the north pole the globe's radial frame is the Cartesian frame.
-    globe_evaluator_attenuate_cij(
-        0., 0., assembly.attenuation.band.min.raw(),
-        assembly.attenuation.band.max.raw(), qmu, assembly.attenuation.fc.raw(),
-        assembly.attenuation.f0.raw(), original, cij, &mu_unrelaxed, rates);
+    const auto shear = specfem::assembly::attenuation_test_impl::reference_fit(
+        qmu, assembly.attenuation.band.min.raw(),
+        assembly.attenuation.band.max.raw(), assembly.attenuation.fc.raw(),
+        assembly.attenuation.f0.raw());
+    for (int j = 0; j < n; ++j)
+      rates[j] = shear.rates[j];
+    globe_evaluator_attenuate_cij(0., 0., shear.relaxed_scale, shear.ratio,
+                                  original, cij, &mu_unrelaxed, rates);
 
-    const auto bulk = specfem::attenuation::globe::fit_quality_factor<n>(
+    const auto bulk = specfem::attenuation::fit_quality_factor<n>(
         qkappa, assembly.attenuation.tau_sigma, assembly.attenuation.band,
         assembly.attenuation.fc.raw(), assembly.attenuation.f0.raw());
     kappa_scale = static_cast<type_real>(bulk.scales.unrelaxed());
@@ -151,10 +156,12 @@ struct Expected {
     const double kappa = (c[0] + c[6] + c[11] + 2 * (c[1] + c[2] + c[7])) / 9;
     for (const int k : { 0, 6, 11, 1, 2, 7 })
       cij[k] += kappa * (kappa_scale - 1);
-    for (int j = 0; j < n; ++j)
-      kappa_rates[j] = kappa * kappa_scale * bulk.properties.beta(j) /
-                       assembly.attenuation.tau_sigma(j) /
-                       bulk.properties.one_minus_sum_beta;
+    // kappa_R (tau_e / tau_s - 1) / L / tau_s, kappa_R = kappa_U / ratio.
+    for (int j = 0; j < n; ++j) {
+      const double sigma = assembly.attenuation.tau_sigma(j);
+      kappa_rates[j] = kappa * kappa_scale / bulk.scales.ratio *
+                       (bulk.tau_eps(j) / sigma - 1) / n / sigma;
+    }
   }
 };
 

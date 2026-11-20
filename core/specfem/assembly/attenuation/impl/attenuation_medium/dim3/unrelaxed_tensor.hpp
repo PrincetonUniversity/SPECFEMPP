@@ -65,15 +65,16 @@ AssemblyAttenuationContext(const ElementTypes &)
  *        axis radial) while preserving Love's eta.
  *
  * Implements the Love-parameter update of globe's prepare_attenuation.f90
- * (reference-to-relaxed scale minus one) and prepare_elastic_elements.F90
- * (one_minus_sum_beta minus one), without the frame rotation. Cartesian
- * meshes use it directly with z as the radial axis.
+ * and prepare_elastic_elements.F90, without the frame rotation, for a
+ * relative shear increment: the reference-to-relaxed scale minus one, or
+ * \f$M_U/M_R\f$ minus one. Cartesian meshes use it directly with z as the
+ * radial axis.
  *
  * @tparam StorageType Runtime storage precision (defaults to ValueType).
  * @tparam Frame Coordinate frame of the tensor.
  * @tparam ValueType Scalar coefficient type.
  * @param radial Stiffness tensor whose third axis is radial.
- * @param minus_sum_beta Relative shear modulus increment.
+ * @param increment Relative shear modulus increment.
  * @return Shifted stiffness tensor in the same frame.
  * @throws std::runtime_error if a nonzero shift has undefined or nonfinite
  * Love's eta.
@@ -81,10 +82,10 @@ AssemblyAttenuationContext(const ElementTypes &)
 template <typename StorageType = void, typename Frame, typename ValueType>
 auto shift_radial_tensor(
     specfem::medium_physics::ElasticityTensor<Frame, ValueType> radial,
-    const ValueType minus_sum_beta) {
+    const ValueType increment) {
   using Storage =
       std::conditional_t<std::is_void_v<StorageType>, ValueType, StorageType>;
-  if (minus_sum_beta == 0) {
+  if (increment == 0) {
     return radial;
   }
   const auto a = (3 * radial(0, 0) + 3 * radial(1, 1) + 2 * radial(0, 1) +
@@ -105,8 +106,8 @@ auto shift_radial_tensor(
         "Anisotropic attenuation requires finite Love's eta = F / (A - "
         "2L)");
   }
-  const ValueType muv = static_cast<Storage>(l * minus_sum_beta);
-  const ValueType muh = static_cast<Storage>(n * minus_sum_beta);
+  const ValueType muv = static_cast<Storage>(l * increment);
+  const ValueType muh = static_cast<Storage>(n * increment);
   const auto four_thirds = static_cast<ValueType>(4.0 / 3.0);
   const auto two_thirds = static_cast<ValueType>(2.0 / 3.0);
   radial(0, 0) += four_thirds * muh;
@@ -134,7 +135,7 @@ auto shift_radial_tensor(
  * @param global Cartesian stiffness tensor, after Love-to-cij conversion.
  * @param theta Geocentric colatitude in radians.
  * @param phi Geocentric longitude in radians.
- * @param minus_sum_beta Relative shear modulus increment.
+ * @param increment Relative shear modulus increment.
  * @param radial_c44 Optional final radial c44, before the return rotation.
  * @return Shifted Cartesian stiffness tensor.
  */
@@ -142,9 +143,9 @@ template <typename StorageType = void, typename ValueType>
 auto shift_unrelaxed_tensor(
     const specfem::medium_physics::ElasticityTensor<
         specfem::coordinate_systems::CartesianFrame, ValueType> &global,
-    const ValueType theta, const ValueType phi, const ValueType minus_sum_beta,
+    const ValueType theta, const ValueType phi, const ValueType increment,
     ValueType *radial_c44 = nullptr) {
-  if (minus_sum_beta == 0 && radial_c44 == nullptr) {
+  if (increment == 0 && radial_c44 == nullptr) {
     return global;
   }
   using Cartesian = specfem::coordinate_systems::CartesianFrame;
@@ -154,10 +155,10 @@ auto shift_unrelaxed_tensor(
           global,
           specfem::coordinate_systems::rotation_matrix<Geocentric, Cartesian>(
               theta, phi)),
-      minus_sum_beta);
+      increment);
   if (radial_c44 != nullptr)
     *radial_c44 = radial(3, 3);
-  if (minus_sum_beta == 0) {
+  if (increment == 0) {
     return global;
   }
   return specfem::medium_physics::rotate(
@@ -282,7 +283,7 @@ shift_shear_stage(
  * @param frame Radial frame of the point.
  * @param reference Cartesian stiffness tensor at the reference frequency.
  * @param relaxed_scale Reference-to-relaxed shear multiplier.
- * @param ratio Relaxed-to-unrelaxed shear multiplier (one_minus_sum_beta).
+ * @param ratio Relaxed-to-unrelaxed shear multiplier \f$M_U/M_R\f$.
  * @param radial_c44 Output: final radial c44, globe's muvstore.
  * @return Unrelaxed Cartesian stiffness tensor.
  */

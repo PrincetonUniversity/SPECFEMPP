@@ -115,8 +115,8 @@ struct AnisotropicModulusShift {
         rotates ? spherical(ispec, iz, iy, ix, 2) : 0.0);
     double radial_c44 = 0;
     auto unrelaxed = shift_shear_to_unrelaxed<type_real>(
-        frame, reference, mu_fit.scales.relaxed,
-        mu_fit.properties.one_minus_sum_beta, radial_c44);
+        frame, reference, mu_fit.scales.relaxed, mu_fit.scales.ratio,
+        radial_c44);
     const type_real kappa_multiplier = kappa_fit.scales.unrelaxed();
     const double kappa = shift_bulk(unrelaxed, reference, kappa_multiplier);
 
