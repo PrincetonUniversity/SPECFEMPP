@@ -1,141 +1,103 @@
+// What each axis value means.
+
+def compiler_module = [GCC11: 'gcc/11', GCC14: 'gcc-toolset/14']
+def simd_flags = [
+    SIMD_NONE  : '-DSPECFEM_ENABLE_SIMD=OFF',
+    SIMD_NATIVE: '-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+]
+def host_flags = [
+    SERIAL: '-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON'
+]
+def mpi = [
+    MPI_GCC416: [module: 'openmpi/gcc/4.1.6', slurm: '--ntasks=8 --nodes=2-8']
+]
+// Excluded nodes (reported to the sysadmins; drop each one once it is fixed):
+//  - della-r3c* racks: MPI_Finalize (Open MPI 4.1.6 + UCX) intermittently
+//    stalls ~52 s after any communication, running the allocation out of time.
+//  - della-h17n1 (optane node): every multi-node job including it hangs in
+//    MPI start-up until killed.
+def excluded_nodes = 'della-r3c[1-4]n[1-16],della-h17n1'
+
 pipeline {
     agent {
         node {
             label 'della-rse_specfempp'
         }
     }
-    stages{
-        stage(' GCC OPENMPI Compiler Check '){
+    options {
+        // Each pull request is its own multibranch sub-job, so this only aborts
+        // the superseded build of the same pull request.
+        disableConcurrentBuilds(abortPrevious: true)
+    }
+    stages {
+        stage('Reset Reporting') {
+            steps {
+                // Every matrix cell shares one workspace and workspaces are reused between
+                // builds, so a junit/ left by an earlier build would be archived as if it
+                // belonged to this one.
+                sh 'rm -rf junit && mkdir -p junit'
+            }
+        }
+        stage('GCC OPENMPI Compiler Check') {
             matrix {
                 axes {
-                    axis{
+                    axis {
                         name 'GNUCompiler'
-                        values 'GCC8;gcc/11', 'GCC14;gcc-toolset/14'
+                        values 'GCC11', 'GCC14'
                     }
-                    axis{
+                    axis {
                         name 'SIMD'
-                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+                        values 'SIMD_NONE', 'SIMD_NATIVE'
                     }
-                    axis{
+                    axis {
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON'
+                        values 'SERIAL'
                     }
-                    axis{
+                    axis {
                         name 'MPIEnabled'
-                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;--ntasks=8  --nodes=2-8'
+                        values 'MPI_GCC416'
                     }
                 }
+                // Read by .jenkins/cell.sh
+                environment {
+                    CELL            = "mpi_${GNUCompiler}_${MPIEnabled}_${HostSpace}_${SIMD}"
+                    MODULES         = "${compiler_module[GNUCompiler]} ${mpi[MPIEnabled].module}"
+                    CC              = 'mpicc'
+                    CXX             = 'mpicxx'
+                    FC              = 'mpifort'
+                    CMAKE_FLAGS     = "${host_flags[HostSpace]} ${simd_flags[SIMD]} -DSPECFEM_ENABLE_MPI=ON -DSPECFEM_MPI_TEST_COMMAND=srun"
+                    // salloc, not srun: ctest launches the ranks itself.
+                    LAUNCHER        = 'salloc'
+                    SLURM_FLAGS     = "${mpi[MPIEnabled].slurm} -t 00:15:00 --constraint=intel --exclude=${excluded_nodes}"
+                    CTEST_FLAGS     = '-L MPI'
+                    OMP_NUM_THREADS = '20'
+                }
                 stages {
-                    stage ('Build and Clean '){
-                        environment {
-                            // CMAKE build flags
-                            GNU_COMPILER_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${GNUCompiler}"'
-                                                ).trim()}"""
-                            GNU_COMPILER_MODULE = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${GNUCompiler}"'
-                                                ).trim()}"""
-                            CMAKE_HOST_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            CMAKE_HOST_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            SIMD_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${SIMD}"'
-                                                ).trim()}"""
-                            SIMD_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${SIMD}"'
-                                                ).trim()}"""
-                            MPI_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${MPIEnabled}"'
-                                                ).trim()}"""
-                            MPI_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${MPIEnabled}"'
-                                                ).trim()}"""
-                            MPI_MODULE = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f3 <<<"${MPIEnabled}"'
-                                                ).trim()}"""
-                            MPI_RUN_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f4 <<<"${MPIEnabled}"'
-                                                ).trim()}"""
+                    stage('Build') {
+                        steps {
+                            sh '.jenkins/cell.sh build'
                         }
-                        stages {
-                            stage (' Build '){
-                                steps {
-                                    echo "Building ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} ${MPI_FLAGS} with ${GNU_COMPILER_NAME} and ${MPI_NAME}"
-                                    sh """
-                                        module load cmake/3.30.8
-                                        module load boost/1.85.0
-                                        module load ${GNU_COMPILER_MODULE}
-                                        module load ${MPI_MODULE}
-                                        export CC=mpicc
-                                        export CXX=mpicxx
-                                        export FC=mpifort
-                                        cmake3 -S . -B build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} \
-                                          -DCMAKE_BUILD_TYPE=Release \
-                                          -D CMAKE_INSTALL_PREFIX=install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/bin \
-                                          ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} ${MPI_FLAGS} \
-                                          -D SPECFEM_BUILD_TESTS=ON \
-                                          -D SPECFEM_BUILD_BENCHMARKS=OFF \
-                                          -D SPECFEM_MPI_TEST_COMMAND=srun \
-                                          -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        cmake3 --build build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                    """
-                                    echo ' Build completed '
-                                }
-                            }
-                            stage (' Test '){
-                                steps {
-                                    echo ' Running MPI tests with ctest '
-                                    sh """
-                                        module load cmake/3.30.8
-                                        module load boost/1.85.0
-                                        module load ${GNU_COMPILER_MODULE}
-                                        module load ${MPI_MODULE}
-                                        cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        # Excluded nodes (reported to the sysadmins; drop
-                                        # each one once it is fixed):
-                                        #  - della-r3c* racks: MPI_Finalize (Open MPI 4.1.6
-                                        #    + UCX) intermittently stalls ~52 s after any
-                                        #    communication, running the allocation out of time.
-                                        #  - della-h17n1 (optane node): every multi-node job
-                                        #    including it hangs in MPI start-up until killed.
-                                        salloc ${MPI_RUN_FLAGS} -t 00:15:00 --account rse \
-                                            --constraint="intel" \
-                                            --exclude="della-r3c[1-4]n[1-16],della-h17n1" \
-                                            bash -c 'export OMP_PROC_BIND=spread; \
-                                            export OMP_PLACES=threads; \
-                                            export OMP_NUM_THREADS=20; \
-                                            hostname; \
-                                            echo "ranks run on: \$SLURM_JOB_NODELIST"; \
-                                            ctest -L MPI --output-on-failure --no-tests=error;'
-                                    """
-                                    echo ' Testing completed '
-                                }
-                            }
+                    }
+                    stage('Test') {
+                        steps {
+                            sh '.jenkins/cell.sh test'
                         }
-                        post {
-                            always {
-                                echo 'Executing cleanup of build and test artifacts'
-                                sh "rm -rf build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                sh "rm -rf install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                            }
-                        }
+                    }
+                }
+                post {
+                    always {
+                        sh '.jenkins/cell.sh clean'
                     }
                 }
             }
+        }
+    }
+    post {
+        always {
+            junit testResults: 'junit/*.xml',
+                  allowEmptyResults: true,
+                  skipPublishingChecks: true
+            archiveArtifacts artifacts: 'junit/*.xml', allowEmptyArchive: true
         }
     }
 }
