@@ -11,3 +11,12 @@ formulation: 2D fits with the 1/L-normalized routines and no clipping, 3D with
 
 .. doxygenclass:: specfem::attenuation::QualityFactorTable
     :members:
+
+One setup fits Qkappa and Qmu with a pair of tables, passed to every container
+it recomputes, so that the isotropic and anisotropic containers agree on each
+bucket's representative Q. The fit count of the pair is logged at debug level
+by each ``recompute()``; a count close to the number of GLL points means the
+table is not being hit.
+
+.. doxygenstruct:: specfem::attenuation::QualityFactorTables
+    :members:

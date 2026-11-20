@@ -5,6 +5,7 @@
 #include "specfem/attenuation/compute_factors.hpp"
 #include "specfem/attenuation/compute_tau_eps.hpp"
 #include "specfem/attenuation/quality_factor_table.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/attenuation/compute_tau_sigma.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
@@ -271,8 +272,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
    * at every GLL point, so a GLL-varying Q model is honoured; the (expensive,
    * Nelder-Mead) tau_epsilon solve is memoized by a
    * specfem::attenuation::QualityFactorTable, once per Q bucket, and the
-   * stored Q is replaced by its bucket's representative. No-op when there are no attenuating elements. Host-only; const
-   * because only view data is mutated.
+   * stored Q is replaced by its bucket's representative. No-op when there
+   * are no attenuating elements. Host-only; const because only view data is
+   * mutated.
    *
    * @tparam PropsContainer Property data container type (exposes h_kappa,
    *                        h_mu and element_range)
@@ -310,7 +312,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
                   specfem::attenuation::get_attenuation_property_values<N_SLS>(
                       tau_sigma, tau_eps) };
     };
-    specfem::attenuation::QualityFactorTable<Fit> kappa_table, mu_table;
+    specfem::attenuation::QualityFactorTables<Fit> tables;
+    auto &kappa_table = tables.bulk;
+    auto &mu_table = tables.shear;
     for (int i = 0; i < nspec_attn; ++i) {
       type_real kappa_scale = 0, mu_scale = 0;
       for (int iz = 0; iz < l_ngllz; ++iz) {
@@ -350,6 +354,13 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     }
     Kokkos::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
     Kokkos::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
+    specfem::Logger::debug(
+        [&](std::ostringstream &message) {
+          message << "Attenuation recompute (2D): " << tables.fits()
+                  << " Q fits for " << nspec_attn * l_ngllz * l_ngllx
+                  << " GLL points";
+        },
+        false);
   }
 
   void copy_to_host() {
