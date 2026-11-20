@@ -240,6 +240,25 @@ specfem_add_test(hierarchical_layout_kokkos_diagnostic_tests
   NO_UNITY
 )
 
+specfem_add_test(hierarchical_layout_transform_tests
+  SOURCES experimental/layout/transform_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  NO_UNITY
+)
+
+specfem_add_test(hierarchical_layout_transform_debug_tests
+  SOURCES experimental/layout/transform_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  DEFINITIONS SPECFEM_LAYOUT_FORCE_DEBUG
+  NO_UNITY
+)
+add_test(NAME TransformDeviceDebug.InvalidCoordinate
+  COMMAND ${CMAKE_COMMAND}
+    "-DPROGRAM=$<TARGET_FILE:hierarchical_layout_transform_debug_tests>"
+    -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
+set_tests_properties(TransformDeviceDebug.InvalidCoordinate PROPERTIES TIMEOUT 120)
+
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main

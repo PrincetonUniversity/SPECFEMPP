@@ -8,6 +8,7 @@
 #endif
 #endif
 #include "specfem/experimental/layout/kokkos.hpp"
+#include "specfem/experimental/layout/transform.hpp"
 #include <limits>
 
 namespace hl = specfem::experimental::layout;
@@ -111,6 +112,76 @@ void construct_layout() {
                      Kokkos::MemoryTraits<Kokkos::Atomic>>
       native("atomic", 4);
   [[maybe_unused]] const auto view = hl::make_view(native);
+#elif LAYOUT_COMPILE_CASE == 25
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result =
+      hl::permute<hl::ModePath<>, 0, 0>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 26
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::permute<hl::ModePath<>, 0>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 27
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result =
+      hl::permute<hl::ModePath<>, 0, 2>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 28
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::permute<hl::ModePath<2>, 0>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 29
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::permute<hl::ModePath<0>, 0>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 30
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::group<hl::ModePath<>, 0, 0>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 31
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result =
+      hl::group<hl::ModePath<>, 1, maximum>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 32
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result =
+      hl::group<hl::ModePath<>, maximum, 1>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 33
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::ungroup<hl::ModePath<>>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 34
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result = hl::ungroup<hl::ModePath<0>>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 35
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  [[maybe_unused]] const auto result =
+      hl::permute<hl::ModePath<0, 0>, 0>(parent);
+
+#elif LAYOUT_COMPILE_CASE == 36
+  const auto parent =
+      hl::make_layout(hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 4));
+  const auto p = hl::permute<hl::ModePath<>, 1, 0>(parent);
+  [[maybe_unused]] const auto offset = p.offset(hl::make_tuple(0, hl::c<2>));
+#elif LAYOUT_COMPILE_CASE == 37
+  const Kokkos::View<const int **, Kokkos::HostSpace> native("const", 2, 3);
+  const auto g = hl::group<hl::ModePath<>, 0, 2>(hl::make_view(native));
+  g(hl::make_tuple(5)) = 1;
+
 #else
   [[maybe_unused]] const auto mapping =
       hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<2>, 3)),

@@ -254,3 +254,80 @@ Reference
 .. doxygenfunction:: specfem::experimental::layout::make_tuple
 
 .. doxygenfunction:: specfem::experimental::layout::get
+
+Permuting and regrouping
+------------------------
+
+Include ``specfem/experimental/layout/transform.hpp`` for ``permute``, ``group``
+and ``ungroup``. Each accepts a mapping or an experimental ``View`` and returns
+a value. These operations retain physical offsets, logical validity and backing
+storage ownership. They allocate no element storage and copy no elements.
+Managed views retain the original allocation after the parent objects leave
+scope. Borrowed storage still requires the caller to keep storage alive until
+asynchronous work completes. Element constness and memory-space access rules
+remain those of the original view.
+
+``ModePath<I...>`` selects a node by walking child positions. An empty path
+selects the root tuple. Topology requests are compile-time values. Extents and
+strides can remain runtime values without losing other leaves' static types.
+
+* ``permute<Path, Order...>`` lists all immediate children of the selected tuple
+  exactly once in their new order.
+* ``group<Path, First, Count>`` replaces consecutive children with one tuple
+  mode in the same order. Count must be positive. A count of one adds a level.
+  Permute first to group nonconsecutive children.
+* ``ungroup<Path>`` replaces a selected nonroot tuple child with its immediate
+  children. Deeper nesting remains intact. An empty tuple child disappears.
+
+.. code-block:: cpp
+
+    #include "specfem/experimental/layout/transform.hpp"
+
+    namespace hl = specfem::experimental::layout;
+    const auto mapping = hl::make_layout(
+        hl::make_tuple(hl::c<2>, 3), hl::make_tuple(hl::c<1>, 8));
+    const auto grouped = hl::group<hl::ModePath<>, 0, 2>(mapping);
+    // Shape ((2, 3)), strides ((1, 8)). Both coordinates have offset 17.
+    const auto scalar_offset = grouped.offset(hl::make_tuple(5));
+    const auto nested_offset =
+        grouped.offset(hl::make_tuple(hl::make_tuple(1, 2)));
+    const auto permuted = hl::permute<hl::ModePath<0>, 1, 0>(grouped);
+    // Shape ((3, 2)). The original point now has scalar coordinate 5 as well.
+    const auto offset = permuted.offset(hl::make_tuple(5));
+    const auto flat = hl::ungroup<hl::ModePath<0>>(permuted);
+    // Shape (3, 2). Coordinate (2, 1) still has offset 17.
+
+Scalar coordinates always decompose with the first leaf fastest in the result's
+hierarchy. A permutation within a mode can change the original point addressed
+by a scalar coordinate. For example, scalar 1 in ``((2, 3))`` refers to original
+coordinate ``(1, 0)``, while scalar 1 after permutation refers to ``(0, 1)``.
+Grouping retains recursive strides. It does not require or approximate a single
+affine stride for the resulting mode.
+
+Call ``result.layout().valid(coord)`` before accessing a transformed view, or
+``result.valid(coord)`` for a mapping. Negative and out-of-envelope coordinates
+return false. Empty domains remain empty, and a rank-zero identity permutation
+preserves a scalar's validity. Envelope size and required backing span equal
+the parent's. Allocation padding never creates valid logical coordinates.
+
+Malformed paths, invalid permutations, invalid grouping intervals, and ungrouping
+a leaf or root fail compilation in every build mode. Type-detectable invalid
+constant coordinates also fail compilation. Runtime-invalid accesses produce
+diagnostics in debug builds and have undefined behavior in release builds.
+Transforms and indexing are device-callable. A kernel can use runtime metadata,
+but cannot select a different hierarchy topology at runtime.
+
+The result's concrete mapping type is unspecified. Consumers use ``shape()``,
+``strides()``, ``rank()``, ``extent<I>()``, ``envelope_size()``, ``empty()``,
+``valid()``, ``offset()`` and ``required_span_size()``. Accepting that interface
+also permits later slicing and tiling to retain their logical restrictions.
+General composed offset mappings and transformed-view mirror/copy operations
+remain outside this interface.
+
+.. doxygenstruct:: specfem::experimental::layout::ModePath
+
+.. doxygenfunction:: specfem::experimental::layout::permute
+
+.. doxygenfunction:: specfem::experimental::layout::group
+
+.. doxygenfunction:: specfem::experimental::layout::ungroup

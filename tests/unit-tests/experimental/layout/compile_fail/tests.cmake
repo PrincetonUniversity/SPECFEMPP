@@ -29,7 +29,20 @@ set(_layout_diagnostics
     "uniqueness not certified"
     "layout broadcast"
     "read-only|const|modifiable"
-    "ordinary element references")
+    "ordinary element references"
+    "layout permutation"
+    "layout permutation"
+    "layout permutation"
+    "layout transform path"
+    "layout permutation"
+    "layout group"
+    "layout group"
+    "layout group"
+    "layout ungroup"
+    "layout ungroup"
+    "layout transform path"
+    "constant coordinate"
+    "read-only|const|modifiable")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)
