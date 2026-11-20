@@ -532,6 +532,8 @@ Implements **Standard Linear Solid (SLS) / Maxwell solid** attenuation using the
 
 The `specfem qplots` subcommand uses these routines to let users visualize the achieved Q⁻¹ vs. frequency before running a simulation.
 
+The fit / shift / container layering and the roadmap toward one framework for 2D, 3D and globe are described in [architecture/core-components/attenuation.md](architecture/core-components/attenuation.md).
+
 ---
 
 ### Quadrature (`specfem::quadrature`)

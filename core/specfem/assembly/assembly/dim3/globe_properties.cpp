@@ -1,5 +1,7 @@
 #include "globe_properties.hpp"
 
+#include "specfem/attenuation/globe.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
 #include "specfem/logger.hpp"
@@ -54,16 +56,6 @@ void specfem::assembly::dim3_impl::read_globe_properties(
                              "globe element context");
   }
 
-  // Only elastic isotropic elements have an attenuation container. Fail rather
-  // than silently run anisotropic elements elastically (see issue #2059).
-  if (input_mesh.attenuation.enabled &&
-      element_types.get_elements_on_host(Medium::elastic, Property::anisotropic)
-              .extent(0) > 0) {
-    throw std::runtime_error(
-        "read_globe_properties: attenuation is not supported for anisotropic "
-        "elements");
-  }
-
   const auto &globe = input_mesh.globe;
   if (!globe.planet_constants.has_value()) {
     throw std::runtime_error(
@@ -97,6 +89,12 @@ void specfem::assembly::dim3_impl::read_globe_properties(
       has_attenuation
           ? &assembly.attenuation
                  .get_container<Medium::elastic, Property::isotropic>()
+          : nullptr;
+
+  auto *anisotropic_attenuation =
+      has_attenuation
+          ? &assembly.attenuation
+                 .get_container<Medium::elastic, Property::anisotropic>()
           : nullptr;
 
   // One serial catalog call per element: the catalog retains element-scoped
@@ -208,6 +206,15 @@ void specfem::assembly::dim3_impl::read_globe_properties(
                     stiffness[20], rho);
             specfem::assembly::store_on_host(index, point_property,
                                              assembly.properties);
+            if (anisotropic_attenuation != nullptr) {
+              const int i =
+                  compute_ispec -
+                  anisotropic_attenuation->element_range.begin_index();
+              anisotropic_attenuation->h_Qkappa(i, iz, iy, ix) =
+                  values.qkappa[ipoint];
+              anisotropic_attenuation->h_Qmu(i, iz, iy, ix) =
+                  values.qmu[ipoint];
+            }
           } else {
             if (vs == 0.0) {
               throw std::runtime_error(
@@ -236,6 +243,13 @@ void specfem::assembly::dim3_impl::read_globe_properties(
     }
   }
 
+  const specfem::assembly::impl::AssemblyAttenuationContext attenuation_context{
+    element_types
+  };
+  // One table pair for both containers, so isotropic and anisotropic
+  // elements agree on each bucket's representative Q.
+  specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+      quality_factor_tables;
   if (attenuation_container != nullptr) {
     using specfem::units::unit_symbols::Hz;
     const auto fc = specfem::utilities::logarithmic_center(
@@ -247,7 +261,18 @@ void specfem::assembly::dim3_impl::read_globe_properties(
             .get_container<Medium::elastic, Property::isotropic>();
     attenuation_container->recompute(
         elastic_properties, fc, input_mesh.attenuation.f0,
-        input_mesh.attenuation.band, input_mesh.attenuation.tau_sigma);
+        input_mesh.attenuation.band, input_mesh.attenuation.tau_sigma,
+        assembly.mesh.h_spherical_coord, attenuation_context,
+        quality_factor_tables);
+  }
+  if (anisotropic_attenuation != nullptr) {
+    anisotropic_attenuation->recompute(
+        assembly.properties
+            .get_container<Medium::elastic, Property::anisotropic>(),
+        assembly.attenuation.fc, assembly.attenuation.f0,
+        assembly.attenuation.band, assembly.attenuation.tau_sigma,
+        assembly.mesh.h_spherical_coord, attenuation_context,
+        quality_factor_tables);
   }
   assembly.properties.copy_to_device();
   Kokkos::fence();

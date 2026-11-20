@@ -1,6 +1,10 @@
+#include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  Kokkos::initialize(argc, argv);
+  const int result = RUN_ALL_TESTS();
+  Kokkos::finalize();
+  return result;
 }
