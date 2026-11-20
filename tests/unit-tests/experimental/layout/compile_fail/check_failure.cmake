@@ -1,6 +1,6 @@
 # Build the control first so missing dependencies cannot masquerade as rejection.
 execute_process(
-  COMMAND "${CMAKE_COMMAND}" --build "${BUILD_DIR}" --target layout_compile_control
+  COMMAND "${CMAKE_COMMAND}" --build "${BUILD_DIR}" --target "${CONTROL}"
   RESULT_VARIABLE control_result OUTPUT_VARIABLE control_out ERROR_VARIABLE control_err
 )
 if(NOT control_result EQUAL 0)

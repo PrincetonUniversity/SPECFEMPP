@@ -61,3 +61,12 @@ tests/unit-tests/
   displacement_tests/Newmark/
   ...
 ```
+
+## Compile-fail tests (experimental layout)
+
+`tests/unit-tests/experimental/layout/compile_fail/` holds tests that must fail
+to compile. Each case's expected message sits beside it as `// expect:`, and
+`tests.cmake` generates the tests. A type-known invalid descriptor goes in
+`root_matrix.cpp` as a `LAYOUT_BAD` row, and a new public root constructor as a
+`LAYOUT_ENTRY`; every row is then tested through every constructor. Other
+cases go in `invalid_layout.cpp` with a unique `LAYOUT_COMPILE_CASE` number.
