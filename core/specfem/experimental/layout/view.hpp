@@ -7,7 +7,11 @@
 /** @cond */
 namespace specfem::experimental::layout_impl {
 
+template <typename NativeView> struct KokkosStorage;
+
 template <typename T> struct BorrowedStorage {
+  using memory_space = Kokkos::HostSpace;
+  using host_mirror_memory_space = Kokkos::HostSpace;
   using const_type = BorrowedStorage<const std::remove_const_t<T>>;
   KOKKOS_INLINE_FUNCTION constexpr BorrowedStorage() = default;
 
@@ -94,7 +98,20 @@ template <typename T, typename Mapping,
 class View {
 public:
   using value_type = T;
+  using non_const_value_type = std::remove_const_t<T>;
+  using memory_space = typename Storage::memory_space;
   using mapping_type = Mapping;
+  /// Mutable host view, retaining borrowed semantics when storage is shared.
+  using host_mirror_type = std::conditional_t<
+      std::is_same_v<memory_space,
+                     typename Storage::host_mirror_memory_space> &&
+          !std::is_const_v<T>,
+      View,
+      View<non_const_value_type, Mapping,
+           layout_impl::KokkosStorage<
+               Kokkos::View<non_const_value_type *,
+                            typename Storage::host_mirror_memory_space>>,
+           Transformed>>;
   static constexpr bool is_physical_root =
       !Transformed && !layout_impl::transformed_mapping<Mapping>;
 

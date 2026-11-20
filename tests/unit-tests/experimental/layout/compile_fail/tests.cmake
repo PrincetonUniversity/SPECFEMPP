@@ -79,6 +79,16 @@ set(_layout_diagnostics
     "constant coordinate outside logical bounds"
     "overflow"
     "overflow")
+# Physical operations reject const destinations, conversions and transforms.
+# Each case must fail overload resolution on the operation it targets, so a
+# broken setup line cannot pass. GCC and Clang report "no matching function
+# for call to"; NVCC reports "no instance of function template".
+foreach(_physical_operation IN ITEMS
+    fill deep_copy deep_copy create_mirror_view fill deep_copy deep_copy
+    create_mirror_view fill deep_copy deep_copy deep_copy create_mirror_view)
+  list(APPEND _layout_diagnostics
+    "(no matching function for call to|no instance of function template)[^(]*${_physical_operation}")
+endforeach()
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)
