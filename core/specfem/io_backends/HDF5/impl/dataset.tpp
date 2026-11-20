@@ -7,6 +7,7 @@
 #include "dataset.hpp"
 #include "datasetbase.hpp"
 
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include "native_type.hpp"
 #include "native_type.tpp"
 #include "specfem/io/operators.hpp"
@@ -20,10 +21,15 @@ specfem::io_backends::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
     const ViewType data)
     : data(data), DatasetBase<OpType>(
                       file, name, rank,
-                      [&data]() -> hsize_t * {
+                      [&data, &name]() -> hsize_t * {
+                        const auto extents =
+                            specfem::io_backends::impl::file_extents(
+                                data, specfem::io_backends::impl::
+                                          require_contiguous_storage_order(
+                                              data, name));
                         hsize_t *dims = new hsize_t[rank];
                         for (int i = 0; i < rank; i++) {
-                          dims[i] = data.extent(i);
+                          dims[i] = extents[i];
                         }
                         return dims;
                       }(),
@@ -35,10 +41,15 @@ specfem::io_backends::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
     const ViewType data)
     : data(data), DatasetBase<OpType>(
                       group, name, rank,
-                      [&data]() -> hsize_t * {
+                      [&data, &name]() -> hsize_t * {
+                        const auto extents =
+                            specfem::io_backends::impl::file_extents(
+                                data, specfem::io_backends::impl::
+                                          require_contiguous_storage_order(
+                                              data, name));
                         hsize_t *dims = new hsize_t[rank];
                         for (int i = 0; i < rank; i++) {
-                          dims[i] = data.extent(i);
+                          dims[i] = extents[i];
                         }
                         return dims;
                       }(),

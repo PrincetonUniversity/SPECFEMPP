@@ -45,6 +45,7 @@
     :maxdepth: 1
 
     kernel_writer
+    xdmf
 
 
 .. toctree::

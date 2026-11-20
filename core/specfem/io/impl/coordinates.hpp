@@ -6,7 +6,7 @@
 
 namespace specfem {
 namespace io {
-namespace property_impl {
+namespace impl {
 
 /**
  * @brief Write the GLL coordinates of @p element_indices as "X"/"Z" datasets
@@ -94,6 +94,6 @@ void write_coordinates(
   group.createDataset("Z", z).write();
 }
 
-} // namespace property_impl
+} // namespace impl
 } // namespace io
 } // namespace specfem

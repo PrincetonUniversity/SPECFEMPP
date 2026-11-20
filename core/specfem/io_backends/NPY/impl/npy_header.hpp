@@ -61,7 +61,7 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
 
 template <typename value_type>
 NPYString create_npy_header(const std::vector<size_t> &shape,
-                            bool fortran_order = true) {
+                            bool fortran_order) {
   return create_npy_header(shape, map_type<value_type>(), sizeof(value_type),
                            fortran_order);
 }
@@ -72,6 +72,7 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
 struct NPYHeader {
   std::vector<size_t> shape; ///< Dimensions of the array
   size_t item_size = 0;      ///< Size of each element in bytes
+  bool fortran_order = true; ///< Whether the data is stored column-major
 };
 
 /**
@@ -83,9 +84,9 @@ struct NPYHeader {
  * @param file File stream to the .npy file, positioned at the start of the
  * header
  * @param type_char Expected NumPy type character
- * @return NPYHeader Shape and element size stored in the header
- * @throws std::runtime_error If the header cannot be parsed, is not in
- * Fortran order, is big-endian, or its type does not match `type_char`
+ * @return NPYHeader Shape, element size and storage order stored in the header
+ * @throws std::runtime_error If the header cannot be parsed, is big-endian, or
+ * its type does not match `type_char`
  *
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
@@ -99,17 +100,30 @@ NPYHeader read_npy_header(std::ifstream &file, const char type_char);
  * header
  * @param type_char Expected NumPy type character
  * @param type_size Expected size of each element in bytes
- * @return std::vector<size_t> Dimensions of the array
+ * @return NPYHeader Shape, element size and storage order stored in the header
  * @throws std::runtime_error If the header cannot be parsed or does not match
  * the expected type and element size
  */
-std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
-                                     const size_t type_size);
+NPYHeader parse_npy_header(std::ifstream &file, const char type_char,
+                           const size_t type_size);
 
-template <typename value_type>
-std::vector<size_t> parse_npy_header(std::ifstream &file) {
+template <typename value_type> NPYHeader parse_npy_header(std::ifstream &file) {
   return parse_npy_header(file, map_type<value_type>(), sizeof(value_type));
 }
+
+/**
+ * @brief Check that a file's storage order matches the view it is read into
+ *
+ * The payload is copied into the view as is, so a mismatch would permute the
+ * values.
+ *
+ * @param header Header parsed from the file
+ * @param fortran_order Storage order of the destination view
+ * @param path Path of the dataset, used in the error message
+ * @throws std::runtime_error If the storage orders differ
+ */
+void check_fortran_order(const NPYHeader &header, const bool fortran_order,
+                         const std::string &path);
 
 /**
  * @brief Record width used to store strings as a NumPy `|S<n>` array

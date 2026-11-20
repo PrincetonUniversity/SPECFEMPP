@@ -7,18 +7,18 @@
 
 namespace specfem {
 namespace io {
-namespace property_impl {
+namespace impl {
 
 /**
  * @brief Allocate a plain row-major host view shaped like a leading-dimension
  *        sub-block [count][ngll...] of @p view.
  *
- * Property and attenuation-model views use LayoutLeft on CPU and tiled
- * storage on GPU. The I/O backends serialize flat storage linearly, so
- * writing either layout directly would change the logical row-major file
- * order; tiled storage can also contain padding. Every dataset is therefore
- * staged through a plain LayoutRight view, making the file hold the logical
- * row-major values independent of the execution backend.
+ * Property and kernel views use LayoutLeft on CPU and tiled storage on GPU.
+ * The I/O backends serialize flat storage linearly, so writing either layout
+ * directly would change the logical row-major file order; tiled storage can
+ * also contain padding. Every dataset is therefore staged through a plain
+ * LayoutRight view, making the file hold the logical row-major values
+ * independent of the execution backend.
  *
  * @tparam ViewType Domain view type (rank 3 or 4)
  * @param view View whose trailing (GLL) extents are replicated
@@ -102,6 +102,6 @@ void insert_sub_block(const ViewType &dst, const PlainViewType &src,
   }
 }
 
-} // namespace property_impl
+} // namespace impl
 } // namespace io
 } // namespace specfem
