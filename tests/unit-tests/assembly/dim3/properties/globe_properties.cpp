@@ -549,6 +549,129 @@ TEST(GlobeGravity, PrecomputesReferenceTablesAndDeviceData) {
   }
 }
 
+// Checks every solid vector and tensor component at oblique points against
+// Globe's theta/phi expressions (prepare_gravity.f90), which are written
+// independently of the nn^T form used in setup. Ellipticity is disabled so the
+// expected table sample follows directly from the Cartesian radius.
+TEST(GlobeGravity, SolidTensorMatchesGlobeAtObliquePoints) {
+  using specfem::assembly::globe_properties_test_impl::GlobeFixture;
+  GlobeFixture fixture(false);
+  auto &assembly = fixture.assembly;
+  auto &globe = fixture.mesh.globe;
+  using Medium = specfem::element::medium_tag;
+  using Field = specfem::simulation::field_type;
+  using Region = specfem::element::region_tag;
+
+  assembly.fields = { assembly.mesh, assembly.element_types,
+                      specfem::simulation::type::forward };
+  globe.model_config.gravity = true;
+  const specfem::globe::ModelEvaluator evaluator(globe.model_config);
+  const specfem::assembly::Gravity<specfem::element::dimension_tag::dim3>
+      gravity(evaluator, *globe.planet_constants, false, false, assembly.mesh,
+              assembly.element_types, assembly.fields);
+
+  const auto &radial = gravity.radial;
+  const auto solid = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), gravity.gravity_pre_store);
+  const auto tensor = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
+                                                          gravity.gravity_h);
+  const auto &types = assembly.element_types;
+  const auto &field = assembly.fields.get_simulation_field<Field::forward>();
+  const auto &xyz = assembly.mesh.h_coord;
+  const int nx = assembly.mesh.element_grid.ngllx;
+  const int ny = assembly.mesh.element_grid.nglly;
+  const int nz = assembly.mesh.element_grid.ngllz;
+  const int table_size = static_cast<int>(radial.density.size());
+  const double planet_radius = globe.planet_constants->r_planet();
+  const double rel_tol = 8.0 * std::numeric_limits<type_real>::epsilon();
+
+  constexpr int max_samples = 20;
+  int crust_mantle = 0;
+  int inner_core = 0;
+  std::vector<bool> checked(solid.extent(0));
+  for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+    if (types.get_medium_tag(ispec) != Medium::elastic) {
+      continue;
+    }
+    const bool is_inner_core =
+        types.get_region_tag(ispec) == Region::inner_core;
+    int &count = is_inner_core ? inner_core : crust_mantle;
+    if (count >= max_samples) {
+      continue;
+    }
+    for (int iz = 0; iz < nz && count < max_samples; ++iz) {
+      for (int iy = 0; iy < ny && count < max_samples; ++iy) {
+        for (int ix = 0; ix < nx && count < max_samples; ++ix) {
+          const int point =
+              field.get_iglob<false, Medium::elastic>(ispec, iz, iy, ix);
+          const double x = xyz(ispec, iz, iy, ix, 0);
+          const double y = xyz(ispec, iz, iy, ix, 1);
+          const double z = xyz(ispec, iz, iy, ix, 2);
+          const double radius = std::hypot(x, y, z);
+          // Require every Cartesian direction component to be sizeable, so
+          // each off-diagonal entry and the slope term are exercised.
+          if (checked[point] || radius < 1000.0 ||
+              std::min({ std::abs(x), std::abs(y), std::abs(z) }) <
+                  0.2 * radius) {
+            continue;
+          }
+          checked[point] = true;
+          ++count;
+
+          const int sample =
+              std::clamp(
+                  static_cast<int>(std::lround(radius / planet_radius /
+                                               radial.range_max * table_size)),
+                  1, table_size) -
+              1;
+          const double rho = radial.density[sample];
+          const double minus_g = radial.minus_gravity[sample];
+          const double minus_dg = radial.minus_deriv_gravity[sample];
+          ASSERT_LT(minus_g, 0.0);
+
+          const double theta = std::acos(z / radius);
+          const double phi = std::atan2(y, x);
+          const double ct = std::cos(theta);
+          const double st = std::sin(theta);
+          const double cp = std::cos(phi);
+          const double sp = std::sin(phi);
+          const double g_over_r = minus_g / radius;
+          const double dg_plus = minus_dg - g_over_r;
+          const std::array<double, 3> vector{ minus_g * st * cp * rho,
+                                              minus_g * st * sp * rho,
+                                              minus_g * ct * rho };
+          const std::array<double, 6> h{
+            (g_over_r * (cp * cp * ct * ct + sp * sp) +
+             cp * cp * minus_dg * st * st) *
+                rho,
+            (g_over_r * (cp * cp + ct * ct * sp * sp) +
+             minus_dg * sp * sp * st * st) *
+                rho,
+            (ct * ct * minus_dg + g_over_r * st * st) * rho,
+            (cp * dg_plus * sp * st * st) * rho,
+            (cp * ct * dg_plus * st) * rho,
+            (ct * dg_plus * sp * st) * rho
+          };
+
+          const double vector_scale = rho * std::abs(minus_g);
+          const double tensor_scale =
+              rho * std::max(std::abs(g_over_r), std::abs(minus_dg));
+          for (int c = 0; c < 3; ++c) {
+            EXPECT_NEAR(solid(point, c), vector[c], rel_tol * vector_scale)
+                << "point " << point << " component " << c;
+          }
+          for (int c = 0; c < 6; ++c) {
+            EXPECT_NEAR(tensor(point, c), h[c], rel_tol * tensor_scale)
+                << "point " << point << " component " << c;
+          }
+        }
+      }
+    }
+  }
+  EXPECT_EQ(crust_mantle, max_samples);
+  EXPECT_EQ(inner_core, max_samples);
+}
+
 TEST(GlobeGravity, AssemblyReleasesSphericalCache) {
   using specfem::assembly::globe_properties_test_impl::Assembly;
   constexpr auto dim = Assembly::dimension_tag;
