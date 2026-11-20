@@ -21,6 +21,8 @@ template <typename NativeView> struct KokkosStorage {
                          Kokkos::LayoutStride>,
       "layout native adapter requires LayoutLeft, LayoutRight or LayoutStride");
   using memory_space = typename NativeView::memory_space;
+  using host_mirror_memory_space =
+      typename NativeView::host_mirror_type::memory_space;
   using const_type = KokkosStorage<typename NativeView::const_type>;
   NativeView native;
 

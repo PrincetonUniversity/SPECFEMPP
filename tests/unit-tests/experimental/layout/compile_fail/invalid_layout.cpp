@@ -7,7 +7,7 @@
 #define NDEBUG
 #endif
 #endif
-#include "specfem/experimental/layout/kokkos.hpp"
+#include "specfem/experimental/layout/physical.hpp"
 #include "specfem/experimental/layout/tile.hpp"
 #include <limits>
 
@@ -357,7 +357,58 @@ void construct_layout() {
   [[maybe_unused]] const auto mapping =
       hl::make_layout(hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>),
                       hl::make_tuple(0));
+#elif LAYOUT_COMPILE_CASE >= 74 && LAYOUT_COMPILE_CASE <= 86
+  const auto mapping = hl::make_domain_layout<32>(hl::make_tuple(7, 2));
+  using V = hl::ManagedView<int, decltype(mapping), Kokkos::HostSpace>;
+  const V root("root", mapping);
+  const auto identity = hl::permute<hl::ModePath<>, 0, 1>(root);
+  const auto full = hl::subview(root, hl::all, hl::all);
+  const hl::ManagedView<const int, decltype(mapping), Kokkos::HostSpace>
+      readonly(root);
+#if LAYOUT_COMPILE_CASE == 74
+  hl::fill(readonly, 1);
+#elif LAYOUT_COMPILE_CASE == 75
+  hl::deep_copy(readonly, root);
+#elif LAYOUT_COMPILE_CASE == 76
+  hl::ManagedView<float, decltype(mapping), Kokkos::HostSpace> floats("floats",
+                                                                      mapping);
+  hl::deep_copy(root, floats);
+#elif LAYOUT_COMPILE_CASE == 77
+  (void)hl::create_mirror_view(identity);
+#elif LAYOUT_COMPILE_CASE == 78
+  hl::fill(identity, 1);
+#elif LAYOUT_COMPILE_CASE == 79
+  hl::deep_copy(root, identity);
+#elif LAYOUT_COMPILE_CASE == 80
+  hl::deep_copy(identity, root);
+#elif LAYOUT_COMPILE_CASE == 81
+  (void)hl::create_mirror_view(full);
+#elif LAYOUT_COMPILE_CASE == 82
+  hl::fill(full, 1);
+#elif LAYOUT_COMPILE_CASE == 83
+  hl::deep_copy(root, full);
+#elif LAYOUT_COMPILE_CASE == 84
+  hl::deep_copy(full, root);
+#elif LAYOUT_COMPILE_CASE == 85
+  const auto flat = hl::make_layout(hl::make_tuple(4), hl::make_tuple(1));
+  const auto nested = hl::make_layout(hl::make_tuple(hl::make_tuple(2, 2)),
+                                      hl::make_tuple(hl::make_tuple(1, 2)));
+  hl::ManagedView<int, decltype(flat), Kokkos::HostSpace> a("a", flat);
+  hl::ManagedView<int, decltype(nested), Kokkos::HostSpace> b("b", nested);
+  hl::deep_copy(a, b);
 #else
+  const auto transformed_mapping = hl::permute<hl::ModePath<>, 0, 1>(mapping);
+  const auto transformed =
+      hl::make_view(root.flat_storage().data(), 64, transformed_mapping);
+  (void)hl::create_mirror_view(transformed);
+#endif
+#else
+  const auto physical_mapping = hl::make_domain_layout<32>(hl::make_tuple(7));
+  const hl::ManagedView<int, decltype(physical_mapping), Kokkos::HostSpace>
+      physical("control", physical_mapping);
+  auto mirror = hl::create_mirror_view(physical);
+  hl::fill(mirror, 1);
+  hl::deep_copy(physical, mirror);
   [[maybe_unused]] const auto mapping =
       hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<2>, 3)),
                       hl::make_tuple(hl::make_tuple(hl::c<1>, 2)));

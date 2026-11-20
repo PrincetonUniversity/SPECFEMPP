@@ -542,7 +542,8 @@ alone does not make mutable elements const.
 Every public transformation removes physical-operation root eligibility, even
 an identity permutation or a full-range slice. Ordinary handle copies retain
 it. Physical mirror/copy/fill operations require a root describing its exact
-physical region and belong to the subsequent physical-storage-operations work.
+physical region. Include ``specfem/experimental/layout/physical.hpp`` for these
+operations.
 
 Statically invalid requests fail compilation. Debug builds diagnose runtime
 bounds, arithmetic, backing-capacity and memory-accessibility violations.
@@ -554,3 +555,62 @@ Views with the same mapping and transformation status convert implicitly when
 the element array pointers and backing handles convert. Converting to const
 retains ownership and initialization state. ``flat_storage()`` preserves element
 constness, including when the converted view shares a mutable storage handle.
+
+Physical storage operations
+---------------------------
+
+``create_mirror_view(root)`` returns a mutable host view with the same mapping
+and full physical span. It uses the native Kokkos host-mirror memory space and
+shares storage when that space matches the source and the elements are
+mutable. Kokkos retains host-accessible spaces such as CUDA UVM. Other sources
+receive a separate managed allocation in their native host-mirror memory space
+without copying source values. This includes const-element host sources.
+``View::host_mirror_type`` names the result type.
+A const handle to mutable elements remains writable.
+
+``fill(root, value)`` writes every physical element, including padding and holes.
+``deep_copy(destination, source)`` copies that full region. Copy operands must
+have equal logical extents, recursive shape and stride values, and full physical
+spans. Equal static and runtime encodings interoperate. Equivalent offsets with
+different hierarchies are insufficient. Copy requires the same underlying
+element type and mutable destination elements. Const sources are permitted.
+
+Every operand must be an untransformed root with ``storage_span_size()`` equal
+to ``physical_span_size()``. Identity permutations and full-range slices also
+lose eligibility. Handle copies retain it. No operation restores eligibility.
+Runtime descriptor and span mismatches abort in debug builds and violate release
+preconditions. Unsupported element types, hierarchies and transformed operands
+fail compilation.
+
+These operations run on the host and use default Kokkos transfer completion
+semantics. They do not manage dependencies between execution streams. Complete
+producer work before transfer and retain borrowed allocations until all related
+asynchronous work completes. A shared mirror of borrowed host storage remains
+borrowed. A larger allocation may supply an exact-span interior region; the
+operations leave storage outside that declared region untouched. A root
+imported with ``make_view(native)`` from a strided native subview declares the
+subview's whole span, so these operations also write the elements it skips.
+
+Raw-pointer ``make_view(pointer, span, mapping)`` results carry no pointer-space
+information. Physical operations require their pointers to designate host
+storage. For device pointers, use the existing ``make_view(native, mapping)``
+overload with an unmanaged Kokkos view tagged with the actual memory space.
+``memory_space`` and ``non_const_value_type`` support generic view consumers.
+
+.. code-block:: cpp
+
+   #include "specfem/experimental/layout/physical.hpp"
+
+   namespace hl = specfem::experimental::layout;
+   const auto mapping = hl::make_domain_layout<32>(hl::make_tuple(7, 2));
+   hl::ManagedView<float, decltype(mapping)> field("field", mapping);
+   auto host = hl::create_mirror_view(field);
+   hl::fill(host, 0.0f);
+   host(6, 1) = 4.0f;
+   hl::deep_copy(field, host);
+
+.. doxygenfunction:: specfem::experimental::layout::create_mirror_view
+
+.. doxygenfunction:: specfem::experimental::layout::fill
+
+.. doxygenfunction:: specfem::experimental::layout::deep_copy

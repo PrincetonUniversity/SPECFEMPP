@@ -1099,3 +1099,16 @@ add_test(NAME ManagedDeviceDebug.InvalidCoordinate
     "-DEXPECTED=layout coordinate out of bounds"
     -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
 set_tests_properties(ManagedDeviceDebug.InvalidCoordinate PROPERTIES TIMEOUT 120)
+
+specfem_add_test(hierarchical_layout_physical_tests
+  SOURCES experimental/layout/physical_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  NO_UNITY
+)
+
+specfem_add_test(hierarchical_layout_physical_debug_tests
+  SOURCES experimental/layout/physical_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  DEFINITIONS SPECFEM_LAYOUT_FORCE_DEBUG
+  NO_UNITY
+)
