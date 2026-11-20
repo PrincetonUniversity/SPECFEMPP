@@ -156,8 +156,8 @@ public:
     const int ipoint_j = point_idx % num_points;
 
     // Get the face point index from the faces view
-    // The ViewType must provide operator()(iface)(ipoint_i, ipoint_j)
-    return index_type{ faces(iface)(ipoint_i, ipoint_j), iface, i };
+    // The ViewType must provide operator()(iface, ipoint_i, ipoint_j)
+    return index_type{ faces(iface, ipoint_i, ipoint_j), iface, i };
   }
 
   /**
@@ -168,16 +168,15 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   ChunkFaceIterator(const TeamMemberType &team_member, const ViewType &faces_)
-      : num_points(faces_.n_points), nfaces(faces_.N),
-        base_type(team_member, faces_.N * faces_.n_points * faces_.n_points),
-        faces(faces_) {}
+      : base_type(team_member, faces_.N * faces_.n_points * faces_.n_points),
+        nfaces(faces_.N), faces(faces_), num_points(faces_.n_points) {}
 
   const int nfaces; ///< Total number of faces in this chunk
   const int &chunk_size = nfaces;
 
 private:
-  ViewType faces;         ///< View of mesh faces to iterate over
-  std::size_t num_points; ///< Number of GLL points per face dimension
+  ViewType faces; ///< View of mesh faces to iterate over
+  int num_points; ///< Number of GLL points per face dimension
 };
 
 /**
@@ -250,8 +249,8 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   Kokkos::pair<std::size_t, std::size_t> get_range() const {
-    return Kokkos::make_pair(faces(0).face_index,
-                             faces(faces.N - 1).face_index + 1);
+    return Kokkos::make_pair(faces.face_index(0),
+                             faces.face_index(faces.N - 1) + 1);
   }
 
 private:

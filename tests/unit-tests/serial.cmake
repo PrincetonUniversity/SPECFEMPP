@@ -205,6 +205,12 @@ specfem_add_test(domain_view_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(chunk_face_view_tests
+  SOURCES   datatype/chunk_face_view_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main
@@ -299,6 +305,12 @@ specfem_add_test(mesh_dim3_tests
 specfem_add_test(nonconforming_tests
   SOURCES   nonconforming/reparameterizations/compute_intersection_test.cpp
             nonconforming/reparameterizations/set_transfer_functions_test.cpp
+            nonconforming/kernel/dim3/kerneltest.cpp
+            nonconforming/kernel/dim3/acoustic_elastic.cpp
+            nonconforming/kernel/dim3/acoustic_elastic_conjugate.cpp
+            nonconforming/container/dim3/host_selection.cpp
+            nonconforming/container/dim3/interpolants.cpp
+            nonconforming/kernel/dim3/host_dispatch.cpp
             nonconforming/runner.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
@@ -515,6 +527,7 @@ specfem_add_test(gradient_tests
 specfem_add_test(transfer_tests
   SOURCES   algorithms/dim2/transfer.cpp
             algorithms/dim3/transfer_interpolate.cpp
+            algorithms/dim3/transfer_integrate.cpp
   LIBRARIES specfem::algorithms
             specfem::enums
             gtest_main

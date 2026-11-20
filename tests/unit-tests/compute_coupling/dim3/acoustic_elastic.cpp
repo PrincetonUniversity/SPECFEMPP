@@ -1,5 +1,6 @@
 #include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
+#include "specfem/point/nonconforming_interface3d.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -64,6 +65,50 @@ TEST_P(AcousticElasticDim3CouplingTest, CouplingCalculation) {
                                             self_field);
 
   EXPECT_NEAR(self_field(0), params.expected_result, params.tolerance);
+}
+
+/**
+ * The flux leaf takes the interface tag explicitly, so it also works on data
+ * typed with the conjugate interface tag (here elastic_acoustic) and on
+ * nonconforming point data; the interpolants are not read.
+ */
+TEST(AcousticElasticDim3FluxTest, DataTypedWithConjugateInterfaceTag) {
+  constexpr int ngll = 5;
+  using NonconformingData = specfem::point::nonconforming_interface<
+      specfem::element::dimension_tag::dim3, ngll,
+      specfem::element_coupling::interface_tag::elastic_acoustic,
+      specfem::element::boundary_tag::none,
+      specfem::element_coupling::flux_scheme_tag::natural>;
+
+  typename NonconformingData::template tensor_type<type_real, ngll, 2>
+      interpolants;
+  for (int k = 0; k < ngll; ++k) {
+    interpolants(k, 0) = 0.25;
+    interpolants(k, 1) = -3.0;
+  }
+
+  const NonconformingData interface_data({ 2.0 }, { 0.6, 0.8, 0.0 },
+                                         interpolants);
+
+  specfem::point::displacement<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                          specfem::element::medium_tag::elastic, false>>
+      coupled_field;
+  coupled_field(0) = 1.0;
+  coupled_field(1) = 2.0;
+  coupled_field(2) = 3.0;
+
+  specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                          specfem::element::medium_tag::acoustic, false>>
+      flux;
+
+  specfem::medium_physics::compute_interface_flux<
+      specfem::element_coupling::interface_tag::acoustic_elastic>(
+      interface_data, coupled_field, flux);
+
+  // 2.0 * (0.6 * 1.0 + 0.8 * 2.0 + 0.0 * 3.0)
+  EXPECT_NEAR(flux(0), 4.4, 1e-5);
 }
 
 INSTANTIATE_TEST_SUITE_P(

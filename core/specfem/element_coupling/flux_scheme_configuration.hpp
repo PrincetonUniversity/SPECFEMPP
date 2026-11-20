@@ -4,6 +4,8 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/quadrature/quadrature.hpp"
 
+#include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 namespace specfem::element_coupling {
@@ -17,10 +19,32 @@ namespace specfem::element_coupling {
  */
 enum class interfacial_meshing_type {
   intersections, ///< integrals defined on intersections.
-  acoustic_host, ///< integrals defined by element faces on acoustic side.
-  elastic_host,  ///< integrals defined by element faces on elastic side.
+  highres_host,  ///< integrals defined by element faces on highest resolution
+                 ///< side.
   self_host      ///< integrals defined by element faces on self side.
 };
+
+inline std::string
+to_string(const interfacial_meshing_type &interfacial_meshing_type) {
+  switch (interfacial_meshing_type) {
+  case interfacial_meshing_type::intersections:
+    return "intersections";
+  case interfacial_meshing_type::highres_host:
+    return "highres-host";
+  case interfacial_meshing_type::self_host:
+    return "self-host";
+  default:
+    return "[interfacial_meshing_type to_string unpopulated]";
+  }
+}
+inline std::ostream &
+operator<<(std::ostream &stream,
+           const specfem::element_coupling::interfacial_meshing_type
+               &interfacial_meshing_type) {
+  stream << to_string(interfacial_meshing_type);
+  return stream;
+}
+
 struct flux_scheme_configuration {
 private:
   // ====== acoustic-elastic ======
@@ -30,17 +54,13 @@ private:
   bool was_quadrature_set;
   // ==== end acoustic-elastic ====
 
-  std::vector<type_real> scheme_parameters;
-
 public:
   flux_scheme_configuration()
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
         was_quadrature_set(false),
         interfacial_meshing_type(
-            specfem::
-                element_coupling:: // this may differ from defaults in
-                                   // core/specfem/runtime_configuration/flux_schemes.hpp
-            interfacial_meshing_type::intersections) {}
+            specfem::element_coupling::interfacial_meshing_type::highres_host) {
+  }
 
   /**
    * @brief Get the flux scheme tag for a given intersection. At the moment, the
