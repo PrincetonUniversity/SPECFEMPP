@@ -226,6 +226,20 @@ specfem_add_test(hierarchical_layout_certification_tests
   NO_UNITY
 )
 
+specfem_add_test(hierarchical_layout_kokkos_tests
+  SOURCES   experimental/layout/kokkos_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  NO_UNITY
+)
+
+specfem_add_test(hierarchical_layout_kokkos_diagnostic_tests
+  SOURCES   experimental/layout/kokkos_tests.cpp
+            experimental/layout/kokkos_diagnostic_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  DEFINITIONS SPECFEM_LAYOUT_FORCE_DEBUG
+  NO_UNITY
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main

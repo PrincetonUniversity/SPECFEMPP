@@ -4,7 +4,8 @@ Hierarchical layouts
 The experimental ``specfem::experimental::layout`` module maps recursive logical
 coordinates to element offsets independently of storage ownership. Include
 ``specfem/experimental/layout/layout.hpp`` for mappings or
-``specfem/experimental/layout/view.hpp`` for borrowed element access. Existing
+``specfem/experimental/layout/view.hpp`` for borrowed element access, or
+``specfem/experimental/layout/kokkos.hpp`` for native adaptation. Existing
 ``DomainView`` types and storage conventions remain unchanged.
 
 Construction and indexing
@@ -96,8 +97,8 @@ layout uses empty shape and stride tuples. It has one valid empty coordinate,
 offset zero, and required span one, unless disabled. A disabled rank-zero
 layout requires zero storage while retaining an envelope size of one.
 
-Borrowed storage and future transformations
--------------------------------------------
+Storage lifetime and transformations
+------------------------------------
 
 A borrowed view retains the original pointer, capacity in elements, and layout.
 It allocates nothing and copies no elements. The caller must keep the storage
@@ -113,8 +114,64 @@ to retain the original backing handle and capacity. Slice displacement must
 remain relative to that original pointer. Rebinding checks backing capacity in
 debug builds, but does not establish parent-domain correspondence. Each
 transformation must establish that property. Rebinding is not a public reshape
-operation. General transformations and managed Kokkos ownership adapters are
-separate implementation steps.
+operation. General transformations are separate implementation steps.
+
+Native Kokkos storage
+---------------------
+
+Include ``specfem/experimental/layout/kokkos.hpp`` and pass a native view to
+``make_view``. The adapter retains the exact native handle. Managed views and
+managed subviews keep their allocation alive after the original handles leave
+scope. Unmanaged views remain borrowed, including team scratch views.
+
+.. code-block:: cpp
+
+    Kokkos::View<int ***, Kokkos::LayoutLeft> data("data", 3, 8, 5);
+    const auto slot = Kokkos::subview(data, 1, Kokkos::ALL, Kokkos::ALL);
+    const auto view = hl::make_view(slot);
+    Kokkos::parallel_for("write_slot", 8, KOKKOS_LAMBDA(const int j) {
+      view(hl::make_tuple(j, 2)) = j;
+    });
+    Kokkos::fence();
+    // data(1, j, 2) now contains j. Read it in an accessible execution space.
+
+The adapter imports actual native extents and strides through ``make_layout``
+certification. Static native extents retain their compile-time values; strides
+come from the native handle even when the shape is static. A subview's offsets
+start at its own ``data()`` pointer. Its accessible capacity is its ``span()``,
+which includes native holes and padding. The adapter does not infer logical
+validity from padding.
+
+``make_view(native, mapping)`` retains the same native handle with an explicit
+certified mapping. The mapping may have a different hierarchy or rank, but its
+offsets must be relative to ``native.data()`` and its required span must fit
+``native.span()``. This overload does not infer validity restrictions for a flat
+backing allocation.
+
+Supported native layouts are ``LayoutLeft``, ``LayoutRight`` and ``LayoutStride``
+with ordinary element references. Atomic proxies and custom accessors/layouts
+are not supported. Adapt production scratch wrappers through their native
+``::type`` base explicitly:
+
+.. code-block:: cpp
+
+    using native_type = typename ScratchWrapper::type;
+    const native_type &native_scratch = scratch;
+    const auto view = hl::make_view(native_scratch);
+
+A const handle over mutable elements still permits writes. A native view of
+const elements gives const references. The adapter retains the native memory
+space. Host construction and metadata queries do not dereference device memory.
+Element access requires an execution space that can access that memory; debug
+builds diagnose inaccessible access and release violations are undefined behavior.
+Raw-pointer views carry no memory-space information.
+
+Factories and supported transformations allocate no storage and fence no work.
+Retain the managed adapter or another owner until asynchronous work completes.
+Keep borrowed storage alive for that duration. A scratch adapter cannot extend
+the team's scratch lifetime. Transformations retain the original handle through
+the shared internal rewrapping operation, so they do not change these rules.
+General mirrors and physical copies for transformed views remain outside this API.
 
 Preconditions and diagnostics
 -----------------------------
@@ -188,7 +245,11 @@ Reference
 
 .. doxygenfunction:: specfem::experimental::layout::make_layout(Shape, Strides, bool)
 
-.. doxygenfunction:: specfem::experimental::layout::make_view
+.. doxygenfunction:: specfem::experimental::layout::make_view(T *, std::size_t, const Mapping &)
+
+.. doxygenfunction:: specfem::experimental::layout::make_view(const Kokkos::View<DataType, Properties...> &)
+
+.. doxygenfunction:: specfem::experimental::layout::make_view(const Kokkos::View<DataType, Properties...> &, const Mapping &)
 
 .. doxygenfunction:: specfem::experimental::layout::make_tuple
 
