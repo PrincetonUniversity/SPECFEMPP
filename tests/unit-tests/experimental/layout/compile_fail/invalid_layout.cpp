@@ -75,6 +75,33 @@ void construct_layout() {
   [[maybe_unused]] const auto mapping = hl::make_layout(
       hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>), enabled);
 
+#elif LAYOUT_COMPILE_CASE == 17
+  [[maybe_unused]] const auto mapping = hl::make_layout(
+      hl::make_tuple(hl::c<3>, hl::c<2>), hl::make_tuple(hl::c<1>, hl::c<0>));
+#elif LAYOUT_COMPILE_CASE == 18
+  [[maybe_unused]] const auto mapping = hl::make_layout(
+      hl::make_tuple(hl::c<4>, hl::c<2>), hl::make_tuple(hl::c<1>, hl::c<2>));
+#elif LAYOUT_COMPILE_CASE == 19
+  [[maybe_unused]] const auto mapping = hl::make_layout(
+      hl::make_tuple(
+          hl::make_tuple(hl::c<4>, hl::make_tuple(hl::c<2>, hl::c<2>)),
+          hl::c<3>),
+      hl::make_tuple(
+          hl::make_tuple(hl::c<1>, hl::make_tuple(hl::c<8>, hl::c<8>)),
+          hl::c<32>));
+#elif LAYOUT_COMPILE_CASE == 20
+  [[maybe_unused]] constexpr auto mapping =
+      hl::make_layout(hl::make_tuple(4, 2), hl::make_tuple(1, 2));
+#elif LAYOUT_COMPILE_CASE == 21
+  [[maybe_unused]] const auto mapping =
+      hl::make_layout(hl::make_tuple(hl::c<2>, hl::c<2>),
+                      hl::make_tuple(hl::c<1>, hl::c<1>), false);
+#elif LAYOUT_COMPILE_CASE == 22
+  bool enabled = true;
+  [[maybe_unused]] const auto mapping =
+      hl::make_layout(hl::make_tuple(hl::c<3>, hl::c<2>),
+                      hl::make_tuple(hl::c<1>, hl::c<0>), enabled);
+
 #else
   [[maybe_unused]] const auto mapping =
       hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<2>, 3)),

@@ -28,6 +28,9 @@ if(diagnostic MATCHES "error: expression must have a constant value" AND
   elseif(EXPECTED STREQUAL "nonnull backing" AND
          diagnostic MATCHES "require\\(data != nullptr")
     return()
+  elseif(EXPECTED STREQUAL "uniqueness not certified" AND
+         diagnostic MATCHES "require_unique\\(")
+    return()
   endif()
 endif()
 message(FATAL_ERROR "Missing expected diagnostic ${EXPECTED}:\n${diagnostic}")
