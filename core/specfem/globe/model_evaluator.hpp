@@ -68,6 +68,24 @@ public:
     std::vector<double> second_derivatives;
   };
 
+  /**
+   * @brief Globe gravity-enabled radial tables in SI units.
+   *
+   * Sample i (zero based) is at (i+1)/size * range_max in units of the
+   * planet radius. The origin is handled separately from the lookup grid.
+   */
+  struct GravityTables {
+    double range_max = 0.0;      ///< Maximum radius divided by planet radius.
+    double center_density = 0.0; ///< Innermost solid material weight, kg/m^3.
+    double center_gradient =
+        0.0; ///< Inward acceleration gradient at r=0, 1/s^2.
+    std::vector<double> minus_gravity;       ///< Inward acceleration, m/s^2.
+    std::vector<double> minus_deriv_gravity; ///< Radial derivative, 1/s^2.
+    std::vector<double> density;             ///< Material density, kg/m^3.
+    std::vector<double> d_ln_density_dr; ///< 1/m, zero with gravity enabled.
+    std::vector<double> minus_rho_g_over_kappa_fluid; ///< Fluid factor, 1/m.
+  };
+
   /** @brief SI values from the catalog's direct PREM reference path. */
   struct ReferencePoint {
     double rho = 0.0;
@@ -133,8 +151,16 @@ public:
    * @brief Evaluate the pure 1-D reference density used by gravity.
    * @param r_si Radius in metres, in the closed interval [0, planet radius].
    * @return Density in kg/m^3.
+   * @throws std::runtime_error for Sohl B, which has no density profile.
    */
   [[nodiscard]] double reference_density(double r_si) const;
+
+  /**
+   * @brief Build the radial tables from the catalog's 1-D gravity spline.
+   * @return Gravity samples and central limits in SI units.
+   * @throws std::runtime_error for Sohl B, which has no density profile.
+   */
+  [[nodiscard]] GravityTables gravity_tables() const;
 
   /** @brief Return the catalog's Clairaut/Radau ellipticity spline in SI. */
   [[nodiscard]] EllipticitySpline ellipticity_spline() const;

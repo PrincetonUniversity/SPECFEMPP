@@ -102,6 +102,14 @@ void globe_evaluator_reference_size(int *size);
 /* Returns the non-dimensional pure 1-D reference density at radius r. */
 int globe_evaluator_reference_density(double r, double *rho);
 
+/* Gravity-enabled radial tables in catalog units. Buffers have gravity_size entries. */
+void globe_evaluator_gravity_size(int *size_out);
+int globe_evaluator_gravity_tables(int capacity, double *range_max,
+                                    double *minus_gravity,
+                                    double *minus_deriv_gravity, double *density,
+                                    double *d_ln_density_dr,
+                                    double *minus_rho_g_over_kappa_fluid);
+
 /*
  * Constructs the mesher's non-dimensional ellipticity spline. Arrays must have
  * at least `capacity` entries; query the required capacity first. Only the first

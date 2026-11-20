@@ -520,11 +520,12 @@
 ! deliberately bypasses get_model, whose value may contain 3-D perturbations.
 
   use iso_c_binding, only: c_int, c_double
+  use constants, only: REFERENCE_MODEL_SOHL_B
   use globe_evaluator_par, only: is_initialized, &
     GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, &
-    GLOBE_EVALUATOR_BAD_ARGUMENT
+    GLOBE_EVALUATOR_BAD_ARGUMENT, GLOBE_EVALUATOR_UNSUPPORTED_MODEL
   use shared_parameters, only: PLANET_TYPE, IPLANET_EARTH, IPLANET_MARS, &
-    IPLANET_MOON
+    IPLANET_MOON, REFERENCE_1D_MODEL
 
   implicit none
 
@@ -545,6 +546,10 @@
   case (IPLANET_EARTH)
     call prem_density(r, rho)
   case (IPLANET_MARS)
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL_B) then
+      globe_evaluator_reference_density = GLOBE_EVALUATOR_UNSUPPORTED_MODEL
+      return
+    endif
     call Sohl_density(r, rho)
   case (IPLANET_MOON)
     call model_vpremoon_density(r, rho)

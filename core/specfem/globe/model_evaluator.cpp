@@ -57,11 +57,17 @@ void require_ok(const int status, const std::string &operation) {
   }
 }
 
-bool is_data_independent_model(std::string model_name) {
+bool is_data_independent_model(const ModelConfig &config) {
+  std::string model_name = config.model_name;
   std::transform(model_name.begin(), model_name.end(), model_name.begin(),
                  [](const unsigned char value) {
                    return static_cast<char>(std::tolower(value));
                  });
+  // Bare analytic Sohl models need no DATA/ files for gravity tables.
+  if (!config.topography &&
+      (model_name == "1d_sohl" || model_name == "1d_sohl_b")) {
+    return true;
+  }
   const auto option = model_name.find_first_of("+, ");
   if (option != std::string::npos) {
     model_name.resize(option);
@@ -78,7 +84,7 @@ bool is_data_independent_model(std::string model_name) {
 }
 
 void preflight_model_data(const ModelConfig &config) {
-  if (is_data_independent_model(config.model_name)) {
+  if (is_data_independent_model(config)) {
     return;
   }
   const std::filesystem::path expected =
@@ -297,8 +303,59 @@ specfem::globe::ModelEvaluator::reference_density(const double r_si) const {
   const double r = scales_.to_catalog_length(r_si);
   double rho = 0.0;
   const int status = globe_evaluator_reference_density(r, &rho);
+  if (status == specfem::globe::evaluator_impl::status_unsupported_model) {
+    throw std::runtime_error(
+        "specfem::globe::ModelEvaluator::reference_density: "
+        "reference density is unsupported for Sohl B");
+  }
   specfem::globe::evaluator_impl::require_ok(status, "reference_density");
   return scales_.to_si_density(rho);
+}
+
+specfem::globe::ModelEvaluator::GravityTables
+specfem::globe::ModelEvaluator::gravity_tables() const {
+  const std::lock_guard<std::recursive_mutex> lock(
+      specfem::globe::evaluator_impl::catalog_mutex);
+  if (!owns_state_) {
+    throw std::logic_error("Gravity tables require an active model evaluator");
+  }
+  int size = 0;
+  globe_evaluator_gravity_size(&size);
+  GravityTables result;
+  result.minus_gravity.resize(size);
+  result.minus_deriv_gravity.resize(size);
+  result.density.resize(size);
+  result.d_ln_density_dr.resize(size);
+  result.minus_rho_g_over_kappa_fluid.resize(size);
+  const int status = globe_evaluator_gravity_tables(
+      size, &result.range_max, result.minus_gravity.data(),
+      result.minus_deriv_gravity.data(), result.density.data(),
+      result.d_ln_density_dr.data(),
+      result.minus_rho_g_over_kappa_fluid.data());
+  if (status == specfem::globe::evaluator_impl::status_unsupported_model) {
+    throw std::runtime_error("specfem::globe::ModelEvaluator::gravity_tables: "
+                             "gravity tables are unsupported for Sohl B");
+  }
+  specfem::globe::evaluator_impl::require_ok(status, "gravity_tables");
+
+  const double velocity_squared = scales_.velocity * scales_.velocity;
+  const double acceleration = velocity_squared / scales_.length;
+  const double inverse_time_squared = acceleration / scales_.length;
+  const double gravity_source_density = reference_density(0.0);
+  result.center_gradient = -(4.0 / 3.0) *
+                           (gravity_source_density / scales_.density) *
+                           inverse_time_squared;
+  for (int i = 0; i < size; ++i) {
+    result.minus_gravity[i] *= acceleration;
+    result.minus_deriv_gravity[i] *= inverse_time_squared;
+    result.density[i] *= scales_.density;
+    result.d_ln_density_dr[i] /= scales_.length;
+    result.minus_rho_g_over_kappa_fluid[i] /= scales_.length;
+  }
+  // Clamp the solid weight to the innermost material sample, not the
+  // density integrated by make_gravity (the two differ for Sohl A).
+  result.center_density = result.density.front();
+  return result;
 }
 
 specfem::globe::ModelEvaluator::EllipticitySpline
