@@ -73,12 +73,10 @@ public:
         nglly_(assembly.element_types.element_grid.nglly),
         ngllx_(assembly.element_types.element_grid.ngllx),
         nglob_(forward_field(assembly).template get_nglob<medium_tag>()),
-        dof_base_(
+        mapping_(
             forward_field(assembly)
-                .dof_ranges
-                .template get<specfem::tags::Tags<DimensionTag, MediumTag>>()
-                .begin_index()),
-        mapping_(forward_field(assembly).h_index_mapping),
+                .h_local_index_mapping
+                .template get<specfem::tags::Tags<DimensionTag, MediumTag>>()),
         component_layout_(extents_type(nglob_, ncomponents)),
         damping_mask_(build_damping_mask(assembly)) {}
 
@@ -213,8 +211,8 @@ public:
   }
 
 private:
-  /// `(ispec, iz, iy, ix)` to global point index, on the host; the host
-  /// mirror of the simulation field's `index_mapping`
+  /// `(ispec - first element of the medium, iz, iy, ix)` to the medium's point
+  /// index, on the host; the simulation field's `h_local_index_mapping`
   using index_view_type =
       Kokkos::View<int ****, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>::host_mirror_type;
@@ -231,11 +229,10 @@ private:
         specfem::simulation::field_type::forward>();
   }
 
-  /// Per-medium global point index of a GLL point: the all-media
-  /// `index_mapping` value less this medium's `dof_ranges` base
+  /// Per-medium point index of a GLL point
   inline int iglob(const int ispec, const int iz, const int iy,
                    const int ix) const {
-    return mapping_(ispec, iz, iy, ix) - dof_base_;
+    return mapping_(ispec - elements_.begin_index(), iz, iy, ix);
   }
 
   /**
@@ -287,13 +284,13 @@ private:
 
   element_range_type elements_; ///< Elements of the medium
 
-  int ngllz_;    ///< Quadrature points in z
-  int nglly_;    ///< Quadrature points in y
-  int ngllx_;    ///< Quadrature points in x
-  int nglob_;    ///< Points of the medium
-  int dof_base_; ///< All-media base offset of this medium's points
+  int ngllz_; ///< Quadrature points in z
+  int nglly_; ///< Quadrature points in y
+  int ngllx_; ///< Quadrature points in x
+  int nglob_; ///< Points of the medium
 
-  index_view_type mapping_; ///< (ispec, iz, iy, ix) -> all-media point index
+  index_view_type mapping_; ///< (ispec - first element, iz, iy, ix) -> point
+                            ///< index of the medium
   component_layout_type component_layout_; ///< (iglob, icomp) -> global dof id
 
   // Declared after everything build_damping_mask reads, so that the

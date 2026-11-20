@@ -215,4 +215,32 @@ struct expand_impl<Tags<TagMembers...>, NewTag> {
 template <typename TagsType, auto NewTag>
 using expand = typename expand_impl<TagsType, NewTag>::type;
 
+/**
+ * @brief Value of the tag of type `Kind` held by a Tags type.
+ *
+ * Deduced from the Tags type's `TagMember` base for `Kind`.
+ *
+ * @tparam Kind Tag enum type, e.g. `specfem::element::medium_tag`.
+ * @tparam Value Deduced tag value.
+ * @return The tag value.
+ *
+ * @code
+ * using T = Tags<dimension_tag::dim3, medium_tag::elastic>;
+ * static_assert(tag_value<medium_tag>(T{}) == medium_tag::elastic);
+ * @endcode
+ */
+template <typename Kind, Kind Value>
+constexpr Kind tag_value(const TagMember<Kind, Value> &) {
+  return Value;
+}
+
+/**
+ * @brief Whether a Tags type holds a tag of type `Kind`.
+ *
+ * @tparam Kind Tag enum type.
+ * @tparam TagsType Tags type to inspect.
+ */
+template <typename Kind, typename TagsType>
+concept has_tag_kind = requires { tag_value<Kind>(TagsType{}); };
+
 } // namespace specfem::tags

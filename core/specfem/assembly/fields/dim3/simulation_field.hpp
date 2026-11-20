@@ -119,8 +119,8 @@ public:
     this->ngllx = rhs.ngllx;
     specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
       field.template get<TagsType>() = rhs.field.template get<TagsType>();
-      dof_ranges.template get<TagsType>() =
-          rhs.dof_ranges.template get<TagsType>();
+      element_ranges.template get<TagsType>() =
+          rhs.element_ranges.template get<TagsType>();
     });
   }
 
@@ -179,15 +179,15 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const int &ispec,
                                                  const int &iz, const int &iy,
                                                  const int &ix) const {
-    const int base =
-        dof_ranges
-            .template get<specfem::tags::Tags<
-                specfem::element::dimension_tag::dim3, MediumTag>>()
-            .begin_index();
+    using TagsType =
+        specfem::tags::Tags<specfem::element::dimension_tag::dim3, MediumTag>;
+    const int ielement =
+        ispec - element_ranges.template get<TagsType>().begin_index();
     if constexpr (on_device) {
-      return index_mapping(ispec, iz, iy, ix) - base;
+      return local_index_mapping.template get<TagsType>()(ielement, iz, iy, ix);
     } else {
-      return h_index_mapping(ispec, iz, iy, ix) - base;
+      return h_local_index_mapping.template get<TagsType>()(ielement, iz, iy,
+                                                            ix);
     }
   }
 
@@ -218,16 +218,11 @@ public:
                                            index.iy, index.ix);
   }
 
-  int nglob = 0;               ///< Number of global degrees of freedom
-  int nspec;                   ///< Number of spectral elements
-  int ngllz;                   ///< Number of quadrature points in z direction
-  int nglly;                   ///< Number of quadrature points in y direction
-  int ngllx;                   ///< Number of quadrature points in x direction
-  IndexViewType index_mapping; ///< Device 3D index mapping from
-                               ///< (ispec,iz,iy,ix) to linear index
-  IndexViewType::host_mirror_type h_index_mapping; ///< Host mirror of 3D index
-                                                   ///< mapping for CPU
-                                                   ///< operations
+  int nglob = 0; ///< Number of global degrees of freedom
+  int nspec;     ///< Number of spectral elements
+  int ngllz;     ///< Number of quadrature points in z direction
+  int nglly;     ///< Number of quadrature points in y direction
+  int ngllx;     ///< Number of quadrature points in x direction
 
   specfem::tag_dispatch::TypedStorage<FieldImplTemplateType,
                                       decltype(combinations)>
@@ -235,8 +230,20 @@ public:
 
   specfem::tag_dispatch::Storage<specfem::datatype::ElementIndexRange,
                                  decltype(combinations)>
-      dof_ranges; ///< Per-medium DOF range; begin_index() is the compact DOF
-                  ///< base offset
+      element_ranges; ///< Per-medium element range; the medium's elements are
+                      ///< [begin_index(), end_index()) of the mesh
+
+  /// Per-medium device element-to-DOF table: (ispec -
+  /// element_ranges.begin_index(), iz, iy, ix) -> row in the medium's field
+  /// arrays, in [0, get_nglob<medium>()). Holds only the medium's elements.
+  /// Built in the constructor and not copied by operator= or deep_copy.
+  specfem::tag_dispatch::Storage<IndexViewType, decltype(combinations)>
+      local_index_mapping;
+
+  /// Host mirrors of local_index_mapping, read by get_iglob<false, ...>.
+  specfem::tag_dispatch::Storage<IndexViewType::host_mirror_type,
+                                 decltype(combinations)>
+      h_local_index_mapping;
 
   /**
    * @brief Get total degrees of freedom in the 3D elastic system.
@@ -281,14 +288,14 @@ inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {
   dst.nglob = src.nglob;
 
-  specfem::tag_dispatch::for_each(SimulationWavefieldType1::combinations,
-                                  [&]<typename TagsType>() {
-                                    dst.dof_ranges.template get<TagsType>() =
-                                        src.dof_ranges.template get<TagsType>();
-                                    specfem::assembly::fields_impl::deep_copy(
-                                        dst.field.template get<TagsType>(),
-                                        src.field.template get<TagsType>());
-                                  });
+  specfem::tag_dispatch::for_each(
+      SimulationWavefieldType1::combinations, [&]<typename TagsType>() {
+        dst.element_ranges.template get<TagsType>() =
+            src.element_ranges.template get<TagsType>();
+        specfem::assembly::fields_impl::deep_copy(
+            dst.field.template get<TagsType>(),
+            src.field.template get<TagsType>());
+      });
 }
 
 } // namespace specfem::assembly
