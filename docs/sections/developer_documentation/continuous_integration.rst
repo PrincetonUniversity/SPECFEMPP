@@ -61,15 +61,70 @@ github release builds that have a version number and builds based on the
 Jenkins - Complete compilation and unit tests
 ---------------------------------------------
 
-We also have a Jenkins server that runs more exhaustive tests on every
-maintainer pull request to the repository and on request from contributors from
-forks. If an external contributor would like to run these tests on their pull
-request, then a maintainer will have to comment ``please this this`` or ``retest
-this please`` on the pull request, to launch these tests. Pull requests can only
-be merged if these tests pass (and maintainers approve the pull request).
+We also have a Jenkins server that runs more exhaustive tests on pull requests
+that target the ``main`` or ``devel`` branch. Draft pull requests are ignored.
+
+- Pull requests from branches in the main repository are tested automatically.
+- Pull requests from forks are tested automatically only if the fork's owner is
+  a collaborator on the repository. For all other forks, a maintainer has to
+  start the tests by commenting ``test this please`` on the pull request. To
+  start a single job, comment ``test <keyword> please``, where ``<keyword>`` is
+  given in the table below (for example ``test gcc please``). The comment must
+  contain nothing else. Each comment starts one run, so after a new push to an
+  outside fork the maintainer has to comment again.
+
+The results appear in the "Checks" tab of the pull request as
+"Princeton Jenkins CI / <check name>". Users with write access can start a job
+again with the "Re-run" button next to its check. Pull requests can only be
+merged if these tests pass (and maintainers approve the pull request).
+Pushing a new commit to a pull request cancels that pull request's running
+builds and starts new ones.
+
+There is one Jenkins job for each of the following pipeline files:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 15 45 25
+
+   * - Jenkins job
+     - Check name
+     - Pipeline file
+     - Comment keyword
+   * - GNU
+     - GCC
+     - :repo-file:`.jenkins/gnu_compiler_checks.gvy`
+     - ``gcc``
+   * - Intel
+     - Intel
+     - :repo-file:`.jenkins/intel_compiler_checks.gvy`
+     - ``intel``
+   * - MPI
+     - MPI
+     - :repo-file:`.jenkins/mpi_compiler_checks.gvy`
+     - ``mpi``
+   * - Nvidia
+     - Nvidia
+     - :repo-file:`.jenkins/nvidia_compiler_checks.gvy`
+     - ``nvidia``
+   * - Trilinos
+     - Trilinos
+     - :repo-file:`.jenkins/trilinos_compiler_checks.gvy`
+     - ``trilinos``
+
+Results are published to Jenkins as JUnit XML (``ctest --output-junit``) and
+archived as build artifacts, so individual test failures are visible in the
+Jenkins UI rather than only in the console log.
 
 We run a matrix of compilation and unit tests on various supported compilers and
-and options for both CPU and GPU, which are summarized below.
+options for both CPU and GPU, which are summarized below.
+
+Maintainers who administer the Jenkins jobs find the setup and migration guide
+here:
+
+.. toctree::
+    :maxdepth: 1
+
+    jenkins_setup
 
 CPU
 +++
@@ -151,11 +206,11 @@ GPU
 
 **NVIDIA CUDA Compiler (NVCC)**
 
-This is defined in :repo-file:`.jenkins/cuda_compiler_checks.gvy`. Currently the only
-architecture that is tested is NVIDIA Ampere (A100).
+This is defined in :repo-file:`.jenkins/nvidia_compiler_checks.gvy`. Currently
+the only architecture that is tested is NVIDIA Ampere (A100).
 
-- CPU Compiler: GNU 11.5.0
-- CUDA: :repo-file:`cudatoolkit/11.8`, :repo-file:`cudatoolkit/12.8`
+- Host compiler: the system default GCC (the pipeline loads no compiler module)
+- CUDA: ``cudatoolkit/12.6``, ``cudatoolkit/12.9``
 - Compilation modes: Serial, OpenMP
 - SIMD options: On, Off
 
@@ -168,29 +223,70 @@ The resulting test combinations are:
    * - CUDA Version
      - Compilation Mode
      - SIMD Option
-   * - 11.8
+   * - 12.6
      - Serial
      - On
-   * - 11.8
-     - Serial
-     - Off
-   * - 11.8
-     - OpenMP
-     - On
-   * - 11.8
-     - OpenMP
-     - Off
-   * - 12.8
-     - Serial
-     - On
-   * - 12.8
+   * - 12.6
      - Serial
      - Off
-   * - 12.8
+   * - 12.6
      - OpenMP
      - On
-   * - 12.8
+   * - 12.6
      - OpenMP
+     - Off
+   * - 12.9
+     - Serial
+     - On
+   * - 12.9
+     - Serial
+     - Off
+   * - 12.9
+     - OpenMP
+     - On
+   * - 12.9
+     - OpenMP
+     - Off
+
+MPI
++++
+
+This is defined in :repo-file:`.jenkins/mpi_compiler_checks.gvy`. It builds with
+``SPECFEM_ENABLE_MPI=ON``.
+
+- GCC Versions: 11.5.0, 14.2.1 (same modules as the GCC job)
+- MPI: Open MPI 4.1.6 (``openmpi/gcc/4.1.6``)
+- Host space: Serial only
+- SIMD options: On, Off
+
+The tests run with 8 MPI tasks spread over 2 to 8 nodes. Only tests that carry
+the ``MPI`` CTest label are run (``ctest -L MPI``).
+
+The resulting test combinations are:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 25 25 20
+
+   * - GCC Version
+     - MPI
+     - Compilation Mode
+     - SIMD Option
+   * - 11.5.0
+     - Open MPI 4.1.6
+     - Serial
+     - On
+   * - 11.5.0
+     - Open MPI 4.1.6
+     - Serial
+     - Off
+   * - 14.2.1
+     - Open MPI 4.1.6
+     - Serial
+     - On
+   * - 14.2.1
+     - Open MPI 4.1.6
+     - Serial
      - Off
 
 Trilinos implicit solvers
@@ -264,11 +360,7 @@ job and should not be excluded by ``-LE TRILINOS``.
     discovery file, so ``LABELS a b`` reaches ``set_tests_properties()`` as two key/value
     pairs: ``LABELS`` binds to ``a`` and ``b`` is treated as a property name of its own.
     The second label is dropped with no CMake or CTest diagnostic.
-
-Results are published to Jenkins as JUnit XML (``ctest --output-junit``) and archived as
-build artifacts, so individual test failures are visible in the Jenkins UI rather than
-only in the console log.
-
+    
 Injection plugin checks
 +++++++++++++++++++++++
 
