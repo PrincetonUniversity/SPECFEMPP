@@ -401,6 +401,87 @@ inline constexpr bool
 // Selects the layout constructor that skips uniqueness certification.
 struct DeriveTag {};
 
+// First-leaf-fastest scalar index of an in-bounds coordinate.
+template <typename Shape, typename Coordinate>
+KOKKOS_INLINE_FUNCTION constexpr std::size_t
+linearize(const Shape &shape, const Coordinate &coordinate) {
+  if constexpr (!TupleTraits<Coordinate>::is_tuple) {
+    return integer(coordinate);
+  } else if constexpr (TupleTraits<Shape>::rank == 0) {
+    return 0;
+  } else {
+    return linearize(tuple_head(shape), tuple_head(coordinate)) +
+           product(tuple_head(shape)) *
+               linearize(tuple_tail(shape), tuple_tail(coordinate));
+  }
+}
+
+template <typename Shape, typename Bounds, typename Coordinate>
+KOKKOS_INLINE_FUNCTION constexpr bool
+logical_contains(const Shape &shape, const Bounds &bounds,
+                 const Coordinate &coord) {
+  if constexpr (TupleTraits<Bounds>::rank == 0) {
+    return true;
+  } else {
+    return linearize(tuple_head(shape), tuple_head(coord)) <
+               integer(tuple_head(bounds)) &&
+           logical_contains(tuple_tail(shape), tuple_tail(bounds),
+                            tuple_tail(coord));
+  }
+}
+
+// A constant scalar bound can reject one mode independently of other modes.
+template <typename Shape, typename Bound, typename Coordinate>
+KOKKOS_INLINE_FUNCTION constexpr bool constant_logical_mode() {
+  if constexpr (Constant<Bound>) {
+    if constexpr (Constant<Coordinate>) {
+      return in_bounds(Coordinate{}, integer(Bound{}));
+    } else if constexpr (StaticTree<Shape>::value &&
+                         StaticTree<Coordinate>::value) {
+      return linearize(Shape{}, Coordinate{}) < integer(Bound{});
+    }
+  }
+  return true;
+}
+
+template <typename Shape, typename Bounds, typename Coordinate>
+KOKKOS_INLINE_FUNCTION constexpr bool constant_logical_bounds() {
+  if constexpr (TupleTraits<Bounds>::rank != 0 &&
+                TupleTraits<Coordinate>::is_tuple) {
+    if constexpr (TupleTraits<Bounds>::rank == TupleTraits<Coordinate>::rank) {
+      return constant_logical_mode<tuple_element_t<0, Shape>,
+                                   tuple_element_t<0, Bounds>,
+                                   tuple_element_t<0, Coordinate>>() &&
+             constant_logical_bounds<decltype(tuple_tail(Shape{})),
+                                     decltype(tuple_tail(Bounds{})),
+                                     decltype(tuple_tail(Coordinate{}))>();
+    }
+  }
+  return true;
+}
+
+template <typename Shape, typename Bounds>
+KOKKOS_INLINE_FUNCTION constexpr void
+check_logical_bounds(const Shape &shape, const Bounds &bounds) {
+  if constexpr (TupleTraits<Bounds>::rank != 0) {
+    require(integer(tuple_head(bounds)) <= product(tuple_head(shape)),
+            "layout logical bound exceeds envelope");
+    check_logical_bounds(tuple_tail(shape), tuple_tail(bounds));
+  }
+}
+
+template <std::size_t I = 0, typename M>
+KOKKOS_INLINE_FUNCTION constexpr std::size_t runtime_extent(const M &mapping,
+                                                            std::size_t axis) {
+  if constexpr (I == M::rank()) {
+    require(false, "layout extent axis out of bounds");
+    return 0;
+  } else {
+    return axis == I ? integer(mapping.template extent<I>())
+                     : runtime_extent<I + 1>(mapping, axis);
+  }
+}
+
 struct LayoutAccess;
 
 } // namespace specfem::experimental::layout_impl
@@ -432,9 +513,11 @@ namespace specfem::experimental::layout {
  * @tparam Strides Matching recursive tuple of nonnegative element strides.
  * @tparam Displacement Offset of coordinate zero, either a std::size_t or a
  * std::size_t integral constant.
+ * @tparam LogicalBounds Optional tuple of top-level logical scalar bounds.
  */
 template <typename Shape, typename Strides,
-          typename Displacement = layout_impl::static_zero>
+          typename Displacement = layout_impl::static_zero,
+          typename LogicalBounds = void>
 class Layout {
   static_assert(layout_impl::TupleTraits<Shape>::is_tuple &&
                     layout_impl::TupleTraits<Strides>::is_tuple,
@@ -443,6 +526,42 @@ class Layout {
                 "layout shape and stride topology must match");
 
 public:
+  using shape_type = Shape;
+  using strides_type = Strides;
+  using logical_bounds_type = LogicalBounds;
+  static constexpr bool is_transformed = false;
+
+  /** @brief Construct an uninitialized descriptor for an empty view handle. */
+  KOKKOS_INLINE_FUNCTION constexpr Layout()
+      : Layout(layout_impl::DeriveTag{}, Shape{}, Strides{}, false) {
+    if constexpr (!std::is_void_v<LogicalBounds>) {
+      layout_impl::validate_leaves(logical_);
+    }
+  }
+
+  /**
+   * @brief Restrict a root envelope by top-level logical scalar bounds.
+   * Type-known span overflow and uniqueness failures do not compile, including
+   * with empty logical bounds.
+   * @tparam Bounds Tuple matching the logical bound metadata type.
+   * @param shape Rectangular coordinate envelope.
+   * @param strides Corresponding element strides.
+   * @param logical Logical extents excluding padding.
+   */
+  template <typename Bounds>
+  KOKKOS_INLINE_FUNCTION constexpr Layout(Shape shape, Strides strides,
+                                          Bounds logical)
+    requires std::is_same_v<Bounds, LogicalBounds>
+      : Layout(layout_impl::DeriveTag{}, shape, strides,
+               !layout_impl::has_zero(logical)) {
+    static_assert(layout_impl::TupleTraits<Bounds>::rank == rank(),
+                  "layout logical bound rank must match shape");
+    logical_ = logical;
+    layout_impl::validate_leaves(logical_);
+    layout_impl::check_logical_bounds(shape_, logical_);
+    check_root_descriptor();
+  }
+
   /**
    * @brief Construct an enabled root mapping with static diagnostics.
    *
@@ -452,6 +571,7 @@ public:
    * @param strides Corresponding element strides.
    */
   KOKKOS_INLINE_FUNCTION constexpr Layout(Shape shape, Strides strides)
+    requires std::is_void_v<LogicalBounds>
       : Layout(layout_impl::DeriveTag{}, shape, strides, true) {
     check_root_descriptor();
   }
@@ -469,6 +589,7 @@ public:
    */
   KOKKOS_INLINE_FUNCTION constexpr Layout(Shape shape, Strides strides,
                                           bool enabled)
+    requires std::is_void_v<LogicalBounds>
       : Layout(layout_impl::DeriveTag{}, shape, strides, enabled) {
     check_root_descriptor();
   }
@@ -511,7 +632,22 @@ public:
    */
   template <std::size_t I>
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto extent() const {
-    return layout_impl::extent(get<I>(shape_));
+    if constexpr (std::is_void_v<LogicalBounds>) {
+      return layout_impl::extent(get<I>(shape_));
+    } else {
+      return get<I>(logical_);
+    }
+  }
+
+  /** @brief Inspect a logical extent by axis. @param axis Top-level axis.
+   * @return Logical scalar extent. */
+  KOKKOS_INLINE_FUNCTION constexpr std::size_t extent(std::size_t axis) const {
+    return layout_impl::runtime_extent(*this, axis);
+  }
+
+  /** @brief Full physical envelope span. @return Original allocation span. */
+  KOKKOS_INLINE_FUNCTION constexpr std::size_t physical_span_size() const {
+    return required_span_size();
   }
 
   /**
@@ -532,7 +668,7 @@ public:
 
   /**
    * @brief Required capacity measured from the original backing pointer.
-   * @return Zero for empty domains, otherwise maximum element offset plus one.
+   * @return Zero for empty domains, otherwise a safe upper backing bound.
    * Always `std::size_t`, because it depends on the runtime enabled flag.
    */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr std::size_t
@@ -553,7 +689,14 @@ public:
   valid(const Coordinate &coordinate) const {
     static_assert(layout_impl::TupleTraits<Coordinate>::is_tuple,
                   "layout coordinates must be tuples at the top level");
-    return !empty() && layout_impl::bounds(shape_, coordinate);
+    if (empty() || !layout_impl::bounds(shape_, coordinate)) {
+      return false;
+    }
+    if constexpr (std::is_void_v<LogicalBounds>) {
+      return true;
+    } else {
+      return layout_impl::logical_contains(shape_, logical_, coordinate);
+    }
   }
 
   /**
@@ -569,6 +712,11 @@ public:
   offset(const Coordinate &coordinate) const {
     static_assert(layout_impl::constant_bounds<Shape, Coordinate>(),
                   "layout constant coordinate out of bounds");
+    if constexpr (!std::is_void_v<LogicalBounds>) {
+      static_assert(layout_impl::constant_logical_bounds<Shape, LogicalBounds,
+                                                         Coordinate>(),
+                    "layout constant coordinate outside logical bounds");
+    }
     layout_impl::require(valid(coordinate), "layout coordinate out of bounds");
     if constexpr (layout_impl::StaticTree<Shape>::value &&
                   layout_impl::StaticTree<Strides>::value &&
@@ -640,6 +788,9 @@ private:
     }
   }
 
+  [[no_unique_address]] std::conditional_t<std::is_void_v<LogicalBounds>,
+                                           layout_impl::Tuple<>, LogicalBounds>
+      logical_{};
   Shape shape_{};
   Strides strides_{};
   [[no_unique_address]] Displacement displacement_{};
@@ -675,6 +826,25 @@ template <typename Shape, typename Strides>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION constexpr auto
 make_layout(Shape shape, Strides strides, bool enabled) {
   return Layout<Shape, Strides>(shape, strides, enabled);
+}
+
+/**
+ * @brief Construct a padded root with explicit logical scalar bounds.
+ * @tparam Shape Envelope shape type.
+ * @tparam Strides Element stride type.
+ * @tparam Bounds Logical scalar extent tuple type.
+ * @param shape Rectangular envelope.
+ * @param strides Corresponding strides.
+ * @param logical Logical extents, excluding padding.
+ * @return Shared layout retaining logical bounds and physical metadata.
+ */
+template <typename Shape, typename Strides, typename Bounds>
+KOKKOS_INLINE_FUNCTION constexpr auto make_layout(Shape shape, Strides strides,
+                                                  Bounds logical)
+  requires is_tuple_v<Bounds>
+{
+  return Layout<Shape, Strides, layout_impl::static_zero, Bounds>(
+      shape, strides, logical);
 }
 
 } // namespace specfem::experimental::layout

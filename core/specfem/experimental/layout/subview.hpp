@@ -377,21 +377,6 @@ template <typename... Selectors> struct KeptBefore<Tuple<Selectors...>> {
   }
 };
 
-// First-leaf-fastest scalar index of a fully expanded in-bounds coordinate.
-template <typename Shape, typename Coordinate>
-KOKKOS_INLINE_FUNCTION constexpr std::size_t
-linearize(const Shape &shape, const Coordinate &coordinate) {
-  if constexpr (!TupleTraits<Shape>::is_tuple) {
-    return integer(coordinate);
-  } else if constexpr (TupleTraits<Shape>::rank == 0) {
-    return 0;
-  } else {
-    return linearize(tuple_head(shape), tuple_head(coordinate)) +
-           product(tuple_head(shape)) *
-               linearize(tuple_tail(shape), tuple_tail(coordinate));
-  }
-}
-
 template <typename ResultShape, typename Selectors, typename Result,
           std::size_t... J>
 KOKKOS_INLINE_FUNCTION constexpr auto

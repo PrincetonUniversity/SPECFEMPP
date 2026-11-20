@@ -1079,3 +1079,23 @@ specfem_add_test(globe_properties_tests
   LIBRARIES specfem::assembly specfem::globe specfem::io
             specfem::mesh specfem::quadrature specfem_environment gtest_main
 )
+
+specfem_add_test(hierarchical_layout_managed_tests
+  SOURCES experimental/layout/managed_view_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  NO_UNITY
+)
+specfem_add_test(hierarchical_layout_managed_debug_tests
+  SOURCES experimental/layout/managed_view_tests.cpp
+  LIBRARIES gtest Kokkos::kokkos
+  DEFINITIONS SPECFEM_LAYOUT_FORCE_DEBUG
+  NO_UNITY
+)
+
+add_test(NAME ManagedDeviceDebug.InvalidCoordinate
+  COMMAND ${CMAKE_COMMAND}
+    "-DPROGRAM=$<TARGET_FILE:hierarchical_layout_managed_debug_tests>"
+    "-DARGUMENT=--invalid-managed-index"
+    "-DEXPECTED=layout coordinate out of bounds"
+    -P "${CMAKE_CURRENT_LIST_DIR}/experimental/layout/check_device_failure.cmake")
+set_tests_properties(ManagedDeviceDebug.InvalidCoordinate PROPERTIES TIMEOUT 120)

@@ -264,6 +264,14 @@ expand_coordinate(const Shape &shape, const Coordinate &coord) {
 template <typename Parent, typename Descriptor, typename Transport>
 class DerivedMapping {
 public:
+  static constexpr bool is_transformed = true;
+  KOKKOS_INLINE_FUNCTION constexpr std::size_t physical_span_size() const {
+    if constexpr (requires { parent_.physical_span_size(); }) {
+      return parent_.physical_span_size();
+    } else {
+      return parent_.required_span_size();
+    }
+  }
   KOKKOS_INLINE_FUNCTION constexpr DerivedMapping(Parent parent,
                                                   Descriptor descriptor,
                                                   Transport transport = {})

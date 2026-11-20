@@ -20,7 +20,32 @@ template <typename NativeView> struct KokkosStorage {
           std::is_same_v<typename NativeView::array_layout,
                          Kokkos::LayoutStride>,
       "layout native adapter requires LayoutLeft, LayoutRight or LayoutStride");
+  using memory_space = typename NativeView::memory_space;
+  using const_type = KokkosStorage<typename NativeView::const_type>;
   NativeView native;
+
+  KOKKOS_DEFAULTED_FUNCTION KokkosStorage() = default;
+  KOKKOS_INLINE_FUNCTION explicit KokkosStorage(const NativeView &value)
+      : native(value) {}
+
+  template <typename OtherNativeView>
+    requires std::is_convertible_v<OtherNativeView, NativeView>
+  KOKKOS_INLINE_FUNCTION
+  KokkosStorage(const KokkosStorage<OtherNativeView> &other)
+      : native(other.native) {}
+
+  static auto allocate(const std::string &label, std::size_t capacity)
+    requires(!NativeView::memory_traits::is_unmanaged &&
+             !std::is_const_v<element_type> && NativeView::rank() == 1 &&
+             !std::is_same_v<typename NativeView::array_layout,
+                             Kokkos::LayoutStride>)
+  {
+    return KokkosStorage{ NativeView(label, capacity) };
+  }
+  KOKKOS_INLINE_FUNCTION element_type &operator()(std::size_t offset) const {
+    require(offset < size(), "layout flat offset out of bounds");
+    return access(offset);
+  }
 
   KOKKOS_INLINE_FUNCTION auto data() const { return native.data(); }
   KOKKOS_INLINE_FUNCTION std::size_t size() const { return native.span(); }
@@ -61,6 +86,16 @@ KOKKOS_INLINE_FUNCTION auto native_layout(const NativeView &native,
 /** @endcond */
 
 namespace specfem::experimental::layout {
+
+/** @brief Shared View with managed flat Kokkos storage.
+ * @tparam T Element type. @tparam Mapping Coordinate mapping.
+ * @tparam MemorySpace Allocation memory space. */
+template <typename T, typename Mapping,
+          typename MemorySpace =
+              typename Kokkos::DefaultExecutionSpace::memory_space>
+using ManagedView =
+    View<T, Mapping,
+         layout_impl::KokkosStorage<Kokkos::View<T *, MemorySpace>>>;
 
 /**
  * @brief Interpret native storage through a compatible certified mapping.

@@ -49,16 +49,19 @@ integral constants. Together with ``get<I>``, these traits let generic adapters
 walk the hierarchy without naming an implementation type. They do not add a
 standard-library tuple protocol.
 
-``rank()`` counts top-level modes. ``extent<I>()`` multiplies the leaves in that
-mode.
+``rank()`` counts top-level modes. For rectangular layouts, ``extent<I>()``
+multiplies the leaves in that mode. Roots with explicit logical bounds report
+those bounds instead. Static extents retain their integral constant types.
 
 A query is static when everything it depends on is static, as in CuTe.
-``extent<I>()`` returns ``std::integral_constant<std::size_t, N>`` when the
-entire mode is static, ``envelope_size()`` when the entire shape is static, and
-``offset(coord)`` when the shape, strides, and coordinate are all static.
+For rectangular layouts, ``extent<I>()`` returns
+``std::integral_constant<std::size_t, N>`` when the entire mode is static,
+``envelope_size()`` when the entire shape is static, and ``offset(coord)`` when
+the shape, strides, displacement, and coordinate are all static.
 Otherwise each returns ``std::size_t``. ``required_span_size()`` always returns
 ``std::size_t``, because it depends on the runtime enabled flag. Generic code
 that modifies a result should store it in ``std::size_t``.
+
 ``shape()`` and ``strides()`` retain the complete recursive metadata. A nested
 mode need not have one affine stride.
 
@@ -90,7 +93,8 @@ transformations must preserve all inherited restrictions independently of
 offset metadata.
 
 Construction diagnoses type-known backing-span errors at compile time, with or
-without an enabled flag. No runtime flag can make such a layout valid. Backing
+without an enabled flag, including roots with explicit logical bounds.
+No runtime flag can make such a layout valid. Backing
 spans that depend on runtime values are validated only when the layout is
 enabled, in debug execution or constant evaluation. A disabled mapping needs no
 backing storage even if its runtime values would require an unrepresentable
@@ -230,8 +234,8 @@ compare each one with the production code that produces it:
   used by the forward displacement buffer, the wavefield helper, element
   intersections, and the chunked domain iterators.
 
-A fully static descriptor that fails certification does not compile, with or
-without an ``enabled`` flag. Constant evaluation of any failing descriptor
+A fully static descriptor that fails certification does not compile, whatever
+its ``enabled`` flag or logical bounds. Constant evaluation of any failing descriptor
 fails compilation. Other descriptors are checked on host and device in builds
 without ``NDEBUG``.
 In release builds no certification code runs, and constructing an uncertified
@@ -497,3 +501,56 @@ release builds. Tile counts use checked ceiling division without adding the
 size to the extent.
 
 .. doxygenfunction:: specfem::experimental::layout::tile
+
+Managed domain storage
+----------------------
+
+``make_domain_layout<B>(extents)`` builds the shared ``Layout`` from a tuple of
+logical extents or an mdspan extents object. ``B=1`` gives LayoutLeft storage.
+Larger values tile the first axis while keeping element lanes contiguous.
+``DomainLayout<Extents>`` aliases its result type, with backend defaults of one
+on CPU, 32 on CUDA, and 64 on HIP. The factory uses the same default tile size;
+explicit ``<1>``, ``<32>`` and ``<64>`` requests override it. Storage tiles do not
+set execution chunk sizes. Bounded layout types require logical bounds when
+constructed from shape/strides. Their rectangular constructor forms are disabled;
+default-empty construction and descriptor copies remain available.
+
+``ManagedView<T, Mapping, MemorySpace>`` aliases the shared ``View`` with managed
+flat Kokkos storage. Construct it with a label and logical extents for canonical
+Left or first-axis tiled Left storage, or pass a label and an existing mapping
+to preserve that exact descriptor. Default construction allocates nothing.
+
+The mapping retains logical bounds separately from its padded shape. A logical
+extent of seven in a storage tile of 32 admits indices zero through six.
+``valid`` accepts tuple coordinates or scalar variadic indices. Check validity
+before access. Supported free transformations retain all parent restrictions and
+storage ownership, including transformations performed in a device kernel.
+
+``physical_span_size()`` reports the original full physical span, including
+padding. ``storage_span_size()`` reports the declared backing region; borrowed
+storage can have excess capacity. ``required_span_size()`` on a mapping bounds
+its accessible offsets and is not the allocation-size contract.
+
+``offset`` returns an offset relative to the original backing pointer. Reuse it
+only with a compatible mapping, element type and coordinate origin. The
+``flat_storage()`` handle retains managed storage and offers ``data()``,
+``size()`` and flat element access. Raw-pointer and unmanaged handles remain
+borrowed, including their flat handles. Callers retain external storage until
+all asynchronous work completes. Const elements remain const; a const handle
+alone does not make mutable elements const.
+
+Every public transformation removes physical-operation root eligibility, even
+an identity permutation or a full-range slice. Ordinary handle copies retain
+it. Physical mirror/copy/fill operations require a root describing its exact
+physical region and belong to the subsequent physical-storage-operations work.
+
+Statically invalid requests fail compilation. Debug builds diagnose runtime
+bounds, arithmetic, backing-capacity and memory-accessibility violations.
+Invalid runtime requests have undefined behavior in release builds.
+
+.. doxygenfunction:: specfem::experimental::layout::make_domain_layout
+
+Views with the same mapping and transformation status convert implicitly when
+the element array pointers and backing handles convert. Converting to const
+retains ownership and initialization state. ``flat_storage()`` preserves element
+constness, including when the converted view shares a mutable storage handle.

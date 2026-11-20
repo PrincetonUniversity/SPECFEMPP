@@ -312,6 +312,51 @@ void construct_layout() {
   const auto m = hl::make_layout(hl::make_tuple(7), hl::make_tuple(1));
   [[maybe_unused]] const auto t = hl::tile(m, std::true_type{});
 
+#elif LAYOUT_COMPILE_CASE == 62
+  const auto m = hl::make_domain_layout<32>(hl::make_tuple(hl::c<7>));
+  [[maybe_unused]] const auto invalid = m.offset(hl::make_tuple(hl::c<7>));
+#elif LAYOUT_COMPILE_CASE == 63
+  const auto m = hl::make_domain_layout<32>(hl::make_tuple(7, 2));
+  hl::ManagedView<int, decltype(m)> v("bad_rank", 7);
+#elif LAYOUT_COMPILE_CASE == 64
+  const auto m = hl::make_domain_layout<32>(hl::make_tuple(7));
+  int buffer[32]{};
+  const auto v = hl::make_view(static_cast<const int *>(buffer), 32, m);
+  v(0) = 1;
+#elif LAYOUT_COMPILE_CASE == 65
+  [[maybe_unused]] const auto m = hl::make_domain_layout<32>(
+      hl::make_tuple(hl::c<std::numeric_limits<std::size_t>::max()>));
+#elif LAYOUT_COMPILE_CASE == 66
+  const auto m = hl::make_domain_layout<32>(hl::make_tuple(hl::c<7>));
+  hl::ManagedView<int, decltype(m)> v("bad_static", hl::c<8>);
+#elif LAYOUT_COMPILE_CASE == 67
+  const auto m = hl::make_domain_layout<32>(hl::make_tuple(7));
+  hl::ManagedView<int, decltype(m)> v("bad_coordinate", m);
+  [[maybe_unused]] const auto invalid = v(1, 2);
+#elif LAYOUT_COMPILE_CASE == 68
+  using Shape = decltype(hl::make_tuple(hl::c<-1>));
+  using Strides = decltype(hl::make_tuple(hl::c<1>));
+  [[maybe_unused]] hl::Layout<Shape, Strides> invalid_default;
+#elif LAYOUT_COMPILE_CASE == 69
+  const auto mapping = hl::make_domain_layout<32>(hl::make_tuple(hl::c<7>, 2));
+  [[maybe_unused]] const auto invalid =
+      mapping.offset(hl::make_tuple(hl::c<7>, hl::c<0>));
+#elif LAYOUT_COMPILE_CASE == 70
+  const auto mapping = hl::make_domain_layout<32>(hl::make_tuple(hl::c<7>, 2));
+  [[maybe_unused]] const auto invalid = mapping.offset(
+      hl::make_tuple(hl::make_tuple(hl::c<7>, hl::c<0>), hl::c<0>));
+#elif LAYOUT_COMPILE_CASE == 71
+  const auto mapping = hl::make_domain_layout<32>(hl::make_tuple(hl::c<7>, 2));
+  [[maybe_unused]] const auto invalid =
+      mapping.offset(hl::make_tuple(hl::c<7>, 0));
+#elif LAYOUT_COMPILE_CASE == 72
+  [[maybe_unused]] const auto mapping =
+      hl::make_layout(hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>),
+                      hl::make_tuple(hl::c<0>));
+#elif LAYOUT_COMPILE_CASE == 73
+  [[maybe_unused]] const auto mapping =
+      hl::make_layout(hl::make_tuple(hl::c<2>), hl::make_tuple(hl::c<maximum>),
+                      hl::make_tuple(0));
 #else
   [[maybe_unused]] const auto mapping =
       hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<2>, 3)),
