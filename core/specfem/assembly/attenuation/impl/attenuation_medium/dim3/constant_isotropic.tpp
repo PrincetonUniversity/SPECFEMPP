@@ -3,10 +3,9 @@
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/modulus_shift.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/unrelaxed_tensor.hpp"
-#include "specfem/attenuation/globe.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/attenuation/compute_factors.hpp"
-#include "specfem/attenuation/compute_tau_eps.hpp"
+#include "specfem/attenuation/quality_factor_fit.hpp"
 #include "specfem/attenuation/compute_tau_sigma.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
@@ -283,15 +282,13 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         // Per-GLL fill
         for (int j = 0; j < N_SLS; ++j) {
 
-          // Compute per element relaxation rates (modulus included, matching
-          // SPECFEM3D's factor_loc = modulus * factor_common)
-          const type_real tauinv_j = 1.0 / tau_sigma(j);
-          auto kappa_rr_j = bulk_attenuation
-                                ? kappa_sc * kappa_props.beta(j) * tauinv_j /
-                                      kappa_props.one_minus_sum_beta
-                                : static_cast<type_real>(0);
-          auto mu_rr_j = mu_sc * 2.0 * mu_props.beta(j) * tauinv_j /
-                         mu_props.one_minus_sum_beta;
+          // Per element relaxation rates from the unrelaxed moduli.
+          const type_real kappa_rr_j =
+              bulk_attenuation
+                  ? kappa_props.relaxation_rate(kappa_sc, j, tau_sigma(j))
+                  : static_cast<type_real>(0);
+          const type_real mu_rr_j =
+              2 * mu_props.relaxation_rate(mu_sc, j, tau_sigma(j));
 
           // Assigning relaxation rates to all GLL points
           for (int iz = 0; iz < ngllz; ++iz) {
@@ -427,7 +424,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
             const Kokkos::View<type_real[N_SLS],
                                Kokkos::DefaultHostExecutionSpace> &tau_sigma,
             const SphericalView &spherical, const ElementContext &context,
-            specfem::attenuation::globe::QualityFactorTables<N_SLS> &tables)
+            specfem::attenuation::QualityFactorFitTables<N_SLS> &tables)
       const {
     if (element_range.size() == 0) {
       return;
@@ -444,15 +441,16 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       for (int i = 0; i < element_range.size(); ++i) {
         if (context(element_range(i)).needs_spherical_coordinates()) {
           throw std::runtime_error(
-              "Anisotropic attenuation requires spherical coordinates");
+              "Global anisotropic attenuation requires spherical "
+              "coordinates");
         }
       }
     }
     h_recomputed() = true;
 
-    using Fit = specfem::attenuation::globe::QualityFactorFit<N_SLS>;
+    using Fit = specfem::attenuation::QualityFactorFit<N_SLS>;
     const auto fit = [&](const type_real q) {
-      return specfem::attenuation::globe::fit_quality_factor<N_SLS>(
+      return specfem::attenuation::fit_quality_factor<N_SLS>(
           q, tau_sigma, band, fc.raw(), f0.raw());
     };
     auto &bulk_table = tables.bulk;
@@ -460,9 +458,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     const int fits_before = tables.fits();
     long long points = 0;
     // Without bulk attenuation kappa keeps scale 1 and zero relaxation rates.
-    Fit no_bulk;
-    no_bulk.properties.beta = decltype(no_bulk.properties.beta)("beta");
-    no_bulk.properties.one_minus_sum_beta = 1;
+    const Fit no_bulk = Fit::identity();
 
     const int l_ngllz = h_Qkappa.extent(1);
     const int l_nglly = h_Qkappa.extent(2);
@@ -524,17 +520,18 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
                                Kokkos::DefaultHostExecutionSpace> &tau_sigma,
             const SphericalView &spherical,
             const ElementContext &context) const {
-    specfem::attenuation::globe::QualityFactorTables<N_SLS> tables;
+    specfem::attenuation::QualityFactorFitTables<N_SLS> tables;
     recompute(props, fc, f0, band, tau_sigma, spherical, context, tables);
   }
 
   /**
    * @brief Relaxation rates of one GLL point from its unrelaxed moduli.
    *
-   * \f$\kappa\,\beta^\kappa_j/(\tau_{\sigma_j}\Sigma^\kappa)\f$ and
-   * \f$2\mu\,\beta^\mu_j/(\tau_{\sigma_j}\Sigma^\mu)\f$, with
-   * \f$\Sigma\f$ the one_minus_sum_beta of each fit; matches SPECFEM3D's
-   * factor_common scaled by the unrelaxed modulus.
+   * Memory variable \f$j\f$ is driven at \f$M_R\,\beta_j/\tau_{\sigma_j}\f$
+   * with \f$M_R = M_U/(M_U/M_R)\f$ (see
+   * specfem::attenuation::AttenuationPropertyValues::relaxation_rate()):
+   * \f$\kappa_R\,\beta^\kappa_j/\tau_{\sigma_j}\f$ for bulk and
+   * \f$2\mu_R\,\beta^\mu_j/\tau_{\sigma_j}\f$ for shear.
    *
    * @param i Attenuation-local element index
    * @param iz, iy, ix GLL indices
@@ -551,11 +548,10 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma) const {
     for (int j = 0; j < N_SLS; ++j) {
-      const type_real tauinv_j = 1.0 / tau_sigma(j);
       h_kappa_relaxation_rate(i, iz, iy, ix, j) =
-          moduli.kappa * kappa.beta(j) * tauinv_j / kappa.one_minus_sum_beta;
+          kappa.relaxation_rate(moduli.kappa, j, tau_sigma(j));
       h_mu_relaxation_rate(i, iz, iy, ix, j) =
-          moduli.mu * 2.0 * mu.beta(j) * tauinv_j / mu.one_minus_sum_beta;
+          2 * mu.relaxation_rate(moduli.mu, j, tau_sigma(j));
     }
   }
 

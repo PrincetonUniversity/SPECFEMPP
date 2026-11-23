@@ -13,113 +13,131 @@
     compute_band.rst
     compute_integration_factors.rst
     maxwell.rst
-    globe.rst
     quality_factor_table.rst
     optimization.rst
 
-Formulations
-------------
+Formulation
+-----------
 
-2D uses the routines in ``specfem::attenuation``: a 1/L-normalized Maxwell
-model, ``one_minus_sum_beta = sum(tau_epsilon / tau_sigma)`` and a 1/L
-dispersion factor. Its ``tau_epsilon`` comes from the same search as 3D,
-``specfem::attenuation::globe::search_tau_eps``, converted to the 1/L
-normalization.
+2D, 3D Cartesian and 3D globe meshes share one formulation, that of Chapter 5
+of Tromp's attenuation notes (sections 5.4 to 5.6). With :math:`L` =
+``N_SLS`` mechanisms:
 
-All 3D meshes, globe and non-globe, use ``specfem::attenuation::globe``
-(see :doc:`globe`), which follows SPECFEM3D_GLOBE: an unnormalized Maxwell model
-fitted in double precision with ``NelderMeadSimplex`` and globe's
-single-precision tolerances and simplex steps,
-``one_minus_sum_beta = 1 + sum(tau_epsilon / tau_sigma - 1)``, Liu's
-reference-to-relaxed scale, and relaxation rates that divide the unrelaxed
-modulus by ``one_minus_sum_beta``. Globe meshes have no bulk attenuation;
-non-globe 3D elements apply the same formulas to Q_kappa. Whether kappa
-attenuates is decided by the mesh's ``bulk_attenuation`` flag alone, for
-isotropic and anisotropic elements alike.
+- **Solid** (eq. 5.33). A generalized Maxwell solid normalized by
+  :math:`1/L`,
+  :math:`M(\omega) = M_R\,\frac{1}{L}\sum_i
+  \frac{1 + i\omega\tau_{\epsilon_i}}{1 + i\omega\tau_{\sigma_i}}`
+  (:doc:`maxwell`). ``tau_sigma`` is log-spaced over the band and
+  ``tau_epsilon`` is fitted to a constant Q over the band by
+  :doc:`compute_tau_eps`.
+- **Unrelaxed modulus and defects** (eqs. 5.34 to 5.36, 5.58, 5.59, 5.62,
+  5.63). The mechanism defects are :math:`\delta M_i = M_R\,\beta_i` with
+  :math:`\beta_i = (\tau_{\epsilon_i}/\tau_{\sigma_i} - 1)/L`, and
+  :math:`M_U/M_R = 1 + \sum_i \beta_i = \frac{1}{L}\sum_i
+  \tau_{\epsilon_i}/\tau_{\sigma_i}`. They are stored as ``beta`` and
+  ``unrelaxed_ratio`` in ``AttenuationPropertyValues``.
+- **Memory variables** (eqs. 5.64 and 5.65). Memory variable :math:`i` decays
+  with :math:`\tau_{\sigma_i}` and is driven by :math:`\mathrm{tr}(\varepsilon)`
+  or :math:`\mathbf{d}` with coefficient :math:`\delta M_i/\tau_{\sigma_i}
+  = M_R\,\beta_i/\tau_{\sigma_i}`, where :math:`M_R = M_U/(M_U/M_R)` is
+  recovered from the stored unrelaxed modulus
+  (``AttenuationPropertyValues::relaxation_rate``). The solver subtracts the
+  sum of the memory variables from the stress, as in (5.57), and stores the
+  shear memory variable as :math:`2\mathbf{r}_\mu` (shear coefficient
+  :math:`2\,\delta\mu_i/\tau_{\sigma_i}`). This places the factor 2 that
+  substituting (5.50) into (5.48) produces,
+  :math:`2\mu_U\mathbf{d} - 2\sum_\ell \mathbf{r}^\ell_\mu`, which (5.57)
+  as printed omits.
+- **Modulus scaling** (eqs. 5.70 to 5.76). Model moduli are given at the
+  reference frequency :math:`f_0`. :math:`M_R` is chosen so that the storage
+  modulus at the band center matches the absorption band,
+  :math:`M_1(\omega_c) = M_0\,[1 + 2\ln(f_c/f_0)/(\pi Q)]`.
+  ``get_attenuation_modulus_scales`` returns the two factors separately:
+  ``relaxed`` :math:`= M_R/M_0` and ``ratio`` :math:`= M_U/M_R`. Isotropic
+  moduli are scaled by their product; anisotropic tensors use them in two
+  stages (below).
+
+``fit_quality_factor`` runs the fit, the coefficients and the scales for one
+Q. Whether kappa attenuates is decided by the mesh's ``bulk_attenuation`` flag
+alone, for isotropic and anisotropic elements alike. Globe meshes turn it off.
+
+Quality factors
+---------------
 
 Native non-globe 3D elastic materials, isotropic and anisotropic, reject
 ``Qkappa <= 0`` or ``Qmu <= 0``. When attenuation is enabled, the native reader
 treats a material with both ``Qkappa = 9999`` and ``Qmu = 9999`` as elastic and
-skips attenuation fitting. These input conventions are retained independently
-of the globe formulation.
+skips attenuation fitting.
 
-For Q values that reach the globe fitting routines, Q at or below zero, above
-9000, or infinite becomes 9000. NaN is rejected. Thus an individual Q of 9999
-is capped to 9000 unless the native reader selects the elastic material as
-described above. As in SPECFEM3D, this includes per-GLL Q values from a
-property file.
+In 3D, as in the SPECFEM3D and SPECFEM3D_GLOBE meshers, any other Q at or
+below zero, above 9000, or infinite becomes 9000. This includes per-GLL Q
+values from a property file. NaN is rejected. 2D uses Q as given.
+
 Q values are grouped by ``max(1, int(Q * 10))`` with
-:doc:`quality_factor_table`, as in globe's storage table: the first Q seen in a
-bucket is fitted, and later Q values are replaced by it, including in the
-stored model. 2D property reads use the same table, without clipping. Non-globe 3D materials are
-bucketed in material order; GLL-varying Q is bucketed per recomputation. The
-first Q in a bucket can therefore differ from globe's mesher order when two
-different Q values share a bucket.
+:doc:`quality_factor_table`: the first Q seen in a bucket is fitted, and later
+Q values are replaced by it, including in the stored model. Non-globe 3D
+materials are bucketed in material order; GLL-varying Q is bucketed per
+recomputation. The first Q in a bucket can therefore differ from globe's
+mesher order when two different Q values share a bucket.
 
-3D anisotropic elements
------------------------
+Assumptions beyond the isotropic theory
+---------------------------------------
 
-Elastic anisotropic elements carry the same per-GLL Q model, stress relaxation
-times, and Runge--Kutta memory variables as isotropic elastic elements. Acoustic
-outer-core elements have no attenuation container.
+The notes treat an isotropic solid with one shear and one bulk Q. Elastic
+anisotropic elements carry the same per-GLL ``Qmu`` and ``Qkappa``, stress
+relaxation times and Runge--Kutta memory variables as isotropic ones, and the
+following is assumed on top of the chapter.
 
-Shear is shifted in the radial frame described below. With bulk attenuation
-enabled (non-globe meshes), the bulk modulus is shifted by the isotropic
-increment ``kappa_V * (s - 1)`` added to ``c11, c22, c33, c12, c13, c23``,
-where ``kappa_V`` is the Voigt bulk modulus of the reference tensor and ``s``
-the bulk reference-to-unrelaxed multiplier. The increment is frame-independent
-and reproduces ``kappa <- s * kappa`` for isotropic input. The bulk relaxation
-rates use the unrelaxed ``s * kappa_V``. On globe meshes bulk attenuation is
-off, as in SPECFEM3D_GLOBE: the bulk scale stays one and the bulk relaxation
-rates are zero.
+**Shear: Love-parameter shift in a radial frame.** Each tensor is rotated into
+a frame whose third axis is the symmetry axis. There the Love parameters
+``A``, ``N``, ``L`` and ``F`` are recovered and both shear moduli ``L`` and
+``N`` are scaled, preserving ``eta = F / (A - 2 L)``. All 21 coefficients are
+then rotated back. Full anisotropy uses the same projection onto radial Love
+parameters; other radial components are preserved. The scaling uses the
+chapter's two factors in turn, as SPECFEM3D_GLOBE's ``prepare_attenuation.f90``
+and ``prepare_elastic_elements.F90`` do: ``relaxed`` takes the reference
+tensor to the relaxed one, with the coefficients rounded to storage precision
+in between, and ``ratio`` takes it to the unrelaxed one. For a nonzero shift,
+an undefined or nonfinite eta (including ``A = 2 L``) raises an error before
+the tensor is updated. Exact unity factors bypass the rotations.
 
-On non-globe (Cartesian) meshes, Cartesian z is the radial axis. The shift
-described below for globe crust/mantle elements is applied with an identity
-rotation, as at the globe's north pole. Anisotropic materials from the native
-reader hold the physical (reference-frequency) stiffnesses. The assembly shifts
-them once the property container is filled. Property-file reads on Cartesian
-meshes take the same path.
+**Symmetry axis.**
 
-For crust/mantle elements, after the globe model builder has converted Love parameters to Cartesian
-stiffnesses, attenuation rotates each tensor into its radial basis, recovers
-``A``, ``N``, ``L`` and ``F``, and shifts both radial shear moduli while preserving
-``eta = F / (A - 2 L)``. It then rotates all 21 coefficients back to Cartesian
-axes. Full anisotropy uses the same projection onto radial Love parameters;
-other radial tensor components are preserved.
-For a nonzero shift, an undefined or nonfinite eta (including ``A = 2 L``)
-raises an error before updating the tensor. An exact zero shift preserves the
-input without evaluating eta.
+- Globe crust and mantle: the local radial direction.
+- Globe inner core: no rotation. The five hexagonal coefficients ``c11``,
+  ``c12``, ``c13``, ``c33`` and ``c44`` are shifted from ``c44`` in both
+  stages, then expanded into all 21 entries. Fictitious central-cube elements
+  are excluded.
+- Cartesian (non-globe) meshes: Cartesian z, the globe's frame at the north
+  pole.
 
-The two setup stages follow SPECFEM3D_GLOBE. First, the reference-frequency
-model is shifted to relaxed moduli with the compliance-based scale from
-``globe::get_attenuation_modulus_scales``. Next, the tensor is shifted to unrelaxed
-moduli with ``one_minus_sum_beta = 1 + sum(tau_epsilon / tau_sigma - 1)``.
-Each mantle stage preserves Love's eta. Exact unity multipliers bypass the rotations.
-The isotropic and anisotropic paths use the same Q fit, frequency band and
-``tau_sigma``.
+**Shear modulus of the memory variables.** The shear relaxation rates use the
+final shifted radial ``c44``, rounded to storage precision, as
+SPECFEM3D_GLOBE's ``muvstore`` does. For full anisotropy this is radial
+``c44`` rather than ``L = (c44 + c55) / 2``.
 
+**Bulk: Voigt-kappa increment.** With bulk attenuation enabled (non-globe
+meshes), the bulk modulus is shifted by the isotropic increment
+``kappa_V * (s - 1)`` added to ``c11, c22, c33, c12, c13, c23``, where
+``kappa_V`` is the Voigt bulk modulus of the reference tensor and ``s`` the
+bulk multiplier ``relaxed * ratio``. The increment is frame-independent and
+reproduces ``kappa <- s * kappa`` for isotropic input. The bulk relaxation
+rates use the unrelaxed ``s * kappa_V``.
+
+Lifecycle
+---------
+
+Anisotropic materials from the native reader, globe model setup and
+property-file reads all supply physical (reference-frequency) stiffnesses. The
+assembly shifts them once the property container is filled; writes subtract
+the stored per-coefficient shift increments to recover the physical model.
 The shared ``h_recomputed`` guard prevents a second shift, including through a
 copy of the container. The setup-only spherical coordinate cache must be
-available for mantle recomputation and can be released afterwards. Inner-core
-recomputation uses the unrotated five-coefficient hexagonal update instead of
-radial rotations: ``c11``, ``c12``, ``c13``, ``c33``, and ``c44`` are shifted from
-``c44`` in both stages, then expanded into all 21 entries. Region metadata is
-passed through both globe model setup and property-file reads. Fictitious
-central-cube elements are excluded. Property-file reads
-supply physical Cartesian coefficients before this step; writes subtract stored
-per-coefficient shift increments to recover the physical model.
+available for globe mantle recomputation and can be released afterwards.
+Acoustic outer-core elements have no attenuation container.
 
-Globe's current ``prepare_elastic_elements.F90`` assigns the final shifted
-radial ``d44`` to ``muvstore``. Accordingly, the memory-variable relaxation
-rates use that component, rounded to storage precision:
-``2 * d44 * (tau_epsilon / tau_sigma - 1) / tau_sigma / one_minus_sum_beta``.
-This includes the final correction to ``factor_common`` in
-``prepare_elastic_elements.F90`` (mantle line 536, inner-core line 754). For full
-anisotropy this is radial ``c44``, rather than the average ``L = (c44+c55)/2``.
-Consequently the memory-variable modulus defect uses the relaxed modulus,
-although the retained ``c44`` is unrelaxed.
-
-Reference tests independently fit Q with globe's vendored Fortran simplex and
-use the solver's original modulus-factor routines (adapted to physical units).
-They compare all 21 shifted stiffnesses and the modulus-weighted memory rates;
-no scale computed by SPECFEM++ is supplied to the reference calculation.
+The tensor shift is tested against SPECFEM3D_GLOBE's vendored Fortran rotations
+and update formulas, given the fit from ``fit_quality_factor``. The fit itself
+is tested against the formulation above: flat Q over the band,
+:math:`M_1(\omega_c)` matching the absorption band, and :math:`M_U/M_R` as the
+high-frequency limit.

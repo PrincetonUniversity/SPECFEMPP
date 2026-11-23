@@ -9,34 +9,37 @@ Setup is split into three layers, each unaware of the one above it.
 
 | Layer | Where | Knows about |
 |---|---|---|
-| **Fit**: Q → `tau_epsilon`, modulus defects, dispersion scales | `core/specfem/attenuation/` | Q, band, `tau_sigma`, formulation |
+| **Fit**: Q → `tau_epsilon`, modulus defects, dispersion scales | `core/specfem/attenuation/` | Q, band, `tau_sigma` |
 | **Shift**: reference → unrelaxed moduli at one GLL point | `assembly/attenuation/impl/attenuation_medium/dim3/modulus_shift.hpp`, `unrelaxed_tensor.hpp` | property tag, radial frame |
 | **Container**: loop over GLL points, memory-variable rates | `assembly/attenuation/impl/attenuation_medium/dim{2,3}/constant_isotropic.tpp` | dimension, element ranges, I/O |
 
 ### Fit
 
-- Two formulations exist today:
-  - 2D: `specfem::attenuation` (1/L-normalized Maxwell model).
-  - 3D: `specfem::attenuation::globe` (port of SPECFEM3D_GLOBE).
-- There is one Q search, `globe::search_tau_eps`: globe's objective and
+- One formulation for every mesh: the 1/L-normalized Maxwell solid of
+  Chapter 5 of Tromp's attenuation notes (§5.4–5.6), in `specfem::attenuation`.
+  See `docs/sections/api/specfem/attenuation/index.rst` for the equations.
+- `compute_tau_eps` is the only Q search: the Fortran codes' objective and
   fminsearch constants on `specfem::optimization::NelderMeadSimplex`, in
-  double precision, throwing on an unconverged fit. The 2D
-  `compute_tau_eps` converts its result with
-  `tau_eps = tau_sigma + N_SLS * (tau_eps_globe - tau_sigma)`, under which
-  the two models have the same loss tangent. It does not clip Q.
+  double precision, throwing on an unconverged fit. It does not clip Q.
+- `fit_quality_factor` returns a `QualityFactorFit`: `tau_eps`, the defects
+  `beta` and `unrelaxed_ratio = M_U/M_R`, and `ModulusScales`
+  (`relaxed = M_R/M_0`, `ratio = M_U/M_R`).
 - `specfem::attenuation::QualityFactorTable` quantizes Q to buckets of
-  `1 / constants::Q_RESOLUTION` and memoizes one fit per bucket. The fit
-  function is supplied by the caller, so the table works with either
-  formulation. Globe additionally clips Q to `constants::Q_MAXIMUM`.
+  `1 / constants::Q_RESOLUTION` and memoizes one fit per bucket.
+  `QualityFactorFitTables` (bulk + shear) clips Q to `constants::Q_MAXIMUM`
+  by default (3D); 2D passes 0 and uses Q as given.
 
 ### Shift
 
 - `IsotropicModulusShift` scales `kappa` and `mu` by their multipliers.
 - `AnisotropicModulusShift` shifts:
   - shear: globe's Love-parameter update in the point's `RadialFrame`
-    (Cartesian z, geocentric, or inner-core hexagonal), in two stages;
+    (Cartesian z, geocentric, or inner-core hexagonal), in two stages
+    (`relaxed`, then `ratio`);
   - bulk: an isotropic Voigt-kappa increment, applied when bulk attenuation
     is on.
+- These go beyond the isotropic theory of the notes; the assumptions are
+  listed under "Assumptions beyond the isotropic theory" in the API docs.
 - Each returns the unrelaxed moduli that drive the relaxation rates.
 
 ### Container
@@ -46,7 +49,9 @@ Setup is split into three layers, each unaware of the one above it.
 1. Look up both Q values in the tables (passed in by the caller, or private
    to the call).
 2. Call the shift.
-3. Call `set_relaxation_rates()`.
+3. Call `set_relaxation_rates()`, which uses
+   `AttenuationPropertyValues::relaxation_rate()` (`M_R * beta_j / tau_sigma_j`,
+   the `delta M_j / tau_sigma_j` of eqs. 5.64-5.65; doubled for shear).
 
 Bulk attenuation is controlled only by the mesh's `bulk_attenuation` flag.
 Globe meshes turn it off.
@@ -70,15 +75,9 @@ existing reference tests passing or states exactly which values move.
    isotropic and anisotropic properties the same way, once, after the
    properties are filled. This removes the fit from the container
    constructor.
-3. **Formulation as a tag.** Replace the
-   `if constexpr (DimensionTag == dim3)` switch in
-   `medium/dim2/elastic/isotropic/material.hpp` with a formulation selected by
-   type: 1/L for SPECFEM2D parity, globe elsewhere. Decide whether 2D keeps
-   its own formulation or moves to globe's, against the 2D benchmark
-   references.
-4. **2D anisotropic attenuation** through the same shift layer, with a 2D
+3. **2D anisotropic attenuation** through the same shift layer, with a 2D
    radial frame. The container loop is shared once the shift is
    dimension-generic.
-5. **Per-GLL scales in 2D.** The dim2 container stores per-element modulus
+4. **Per-GLL scales in 2D.** The dim2 container stores per-element modulus
    scales and keeps the last GLL point's value for GLL-varying Q. Store them
    per GLL point as dim3 does, so a write/read round trip is exact.

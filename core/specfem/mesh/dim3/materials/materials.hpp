@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/attenuation/quality_factor_fit.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/medium_container.hpp"
@@ -394,7 +395,7 @@ public:
                       specfem::element::property_tag::isotropic,
                       specfem::element::attenuation_tag::constant_isotropic>();
     // Q values sharing a table bucket use the first one.
-    specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+    specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
         tables;
     for (auto &material : container.element_materials) {
       material.Qkappa = tables.bulk.representative(material.Qkappa);

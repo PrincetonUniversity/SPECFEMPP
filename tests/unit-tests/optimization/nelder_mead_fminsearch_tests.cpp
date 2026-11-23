@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 // fminsearch semantics of the Nelder-Mead solver: budgets, iteration count,
-// inclusive tolerances, simplex initialization and tie ordering.
+// inclusive tolerances and simplex initialization.
 
 using specfem::optimization::NelderMeadOptions;
 using specfem::optimization::NelderMeadSimplex;
@@ -138,26 +138,4 @@ TEST(Optimization_NelderMeadFminsearch, TinyNonzeroCoordinateIsScaled) {
   EXPECT_EQ(result.function_evaluations, 2);
   EXPECT_EQ(result.iterations, 1);
   EXPECT_FALSE(result.converged);
-}
-
-TEST(Optimization_NelderMeadFminsearch, HeapSortReturnsAscendingPermutation) {
-  std::array<double, 5> x = { 0, 3, 1, 4, 2 }; // 1-based: x[1..4]
-  std::array<int, 5> y{};
-  specfem::optimization_impl::heap_sort<4>(x, y);
-  for (int i = 1; i <= 4; ++i)
-    EXPECT_NEAR(x[i], static_cast<double>(i), 0.0);
-  EXPECT_EQ(y[1], 2);
-  EXPECT_EQ(y[2], 4);
-  EXPECT_EQ(y[3], 1);
-  EXPECT_EQ(y[4], 3);
-}
-
-TEST(Optimization_NelderMeadFminsearch, HeapSortOrdersTiesDeterministically) {
-  std::array<double, 4> x = { 0, 1, 1, 1 };
-  std::array<int, 4> y{};
-  specfem::optimization_impl::heap_sort<3>(x, y);
-  // heap_sort_local's tie order.
-  EXPECT_EQ(y[1], 1);
-  EXPECT_EQ(y[2], 2);
-  EXPECT_EQ(y[3], 3);
 }

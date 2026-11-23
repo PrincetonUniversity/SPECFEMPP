@@ -49,44 +49,19 @@ public:
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const view_type &tau_sigma) {
 
-    // This template is shared with dim3/elastic/isotropic/material.hpp.
-    // 3D uses SPECFEM3D_GLOBE's formulation; 2D keeps the 1/L routines.
-    if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
-      constexpr int N = specfem::constants::N_SLS;
-      const auto kappa = specfem::attenuation::globe::fit_quality_factor<N>(
-          Qkappa, tau_sigma, band, fc, f0);
-      const auto mu = specfem::attenuation::globe::fit_quality_factor<N>(
-          Qmu, tau_sigma, band, fc, f0);
-      this->tau_epsilon_kappa = kappa.tau_eps;
-      this->tau_epsilon_mu = mu.tau_eps;
-      this->kappa_attenuation_properties = kappa.properties;
-      this->mu_attenuation_properties = mu.properties;
-      this->kappa_scale = kappa.scales.unrelaxed();
-      this->mu_scale = mu.scales.unrelaxed();
-      return;
-    }
-
-    this->tau_epsilon_kappa =
-        specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-            Qkappa, tau_sigma, band);
-
-    this->tau_epsilon_mu =
-        specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-            Qmu, tau_sigma, band);
-
-    this->kappa_attenuation_properties =
-        specfem::attenuation::get_attenuation_property_values<
-            specfem::constants::N_SLS>(tau_sigma, tau_epsilon_kappa);
-
-    this->mu_attenuation_properties =
-        specfem::attenuation::get_attenuation_property_values<
-            specfem::constants::N_SLS>(tau_sigma, tau_epsilon_mu);
-
-    this->kappa_scale = specfem::attenuation::get_attenuation_scale_factor<
-        specfem::constants::N_SLS>(fc, tau_epsilon_kappa, tau_sigma, Qkappa,
-                                   f0);
-    this->mu_scale = specfem::attenuation::get_attenuation_scale_factor<
-        specfem::constants::N_SLS>(fc, tau_epsilon_mu, tau_sigma, Qmu, f0);
+    // Shared with dim3/elastic/isotropic/material.hpp: one formulation for
+    // every dimension.
+    constexpr int N = specfem::constants::N_SLS;
+    const auto kappa = specfem::attenuation::fit_quality_factor<N>(
+        Qkappa, tau_sigma, band, fc, f0);
+    const auto mu = specfem::attenuation::fit_quality_factor<N>(Qmu, tau_sigma,
+                                                                band, fc, f0);
+    this->tau_epsilon_kappa = kappa.tau_eps;
+    this->tau_epsilon_mu = mu.tau_eps;
+    this->kappa_attenuation_properties = kappa.properties;
+    this->mu_attenuation_properties = mu.properties;
+    this->kappa_scale = kappa.scales.unrelaxed();
+    this->mu_scale = mu.scales.unrelaxed();
   }
 };
 

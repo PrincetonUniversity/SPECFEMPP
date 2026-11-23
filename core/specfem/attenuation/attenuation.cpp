@@ -7,18 +7,18 @@
 
 template specfem::attenuation::AttenuationPropertyValues<
     specfem::constants::N_SLS>
-    specfem::attenuation::get_attenuation_property_values<
-        specfem::constants::N_SLS>(
-        Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
-                     Kokkos::HostSpace>,
-        Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
-                     Kokkos::HostSpace>);
-
-template type_real specfem::attenuation::get_attenuation_scale_factor<
+specfem::attenuation::get_attenuation_property_values<
     specfem::constants::N_SLS>(
+    const Kokkos::View<type_real[specfem::constants::N_SLS],
+                       Kokkos::LayoutRight, Kokkos::HostSpace> &,
+    const Kokkos::View<type_real[specfem::constants::N_SLS],
+                       Kokkos::LayoutRight, Kokkos::HostSpace> &);
+
+template specfem::attenuation::ModulusScales
+specfem::attenuation::get_attenuation_modulus_scales<specfem::constants::N_SLS>(
     type_real,
-    Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
-                 Kokkos::HostSpace>,
-    Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
-                 Kokkos::HostSpace>,
+    const Kokkos::View<type_real[specfem::constants::N_SLS],
+                       Kokkos::LayoutRight, Kokkos::HostSpace> &,
+    const Kokkos::View<type_real[specfem::constants::N_SLS],
+                       Kokkos::LayoutRight, Kokkos::HostSpace> &,
     type_real, type_real);

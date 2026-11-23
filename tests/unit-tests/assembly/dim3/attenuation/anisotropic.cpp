@@ -1,5 +1,6 @@
 #include "globe_attenuation_reference.h"
 #include "globe_model_evaluator.h"
+#include "reference_fit.hpp"
 #include "specfem/assembly/assembly/dim3/globe_properties.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/unrelaxed_tensor.hpp"
 #include "specfem/globe/model_evaluator.hpp"
@@ -291,13 +292,16 @@ TEST(AnisotropicAttenuation, GlobeGllModelShiftAndPhysicalModelRecovery) {
       EXPECT_NEAR(att.h_Qmu(i, z, y, x), model.qmu[point],
                   tolerance * model.qmu[point]);
       constexpr int n = specfem::constants::N_SLS;
-      double expected_muv, expected_rates[n];
-      // No SPECFEM++ attenuation coefficient enters this reference pipeline.
-      globe_evaluator_attenuate_cij(
-          theta, phi, assembly.attenuation.band.min.raw(),
-          assembly.attenuation.band.max.raw(), model.qmu[point],
-          assembly.attenuation.fc.raw(), assembly.attenuation.f0.raw(),
-          original, expected, &expected_muv, expected_rates);
+      double expected_muv;
+      // The fit of the model's Q; the shift itself is globe's.
+      auto fit = specfem::assembly::attenuation_test_impl::reference_fit(
+          model.qmu[point], assembly.attenuation.band.min.raw(),
+          assembly.attenuation.band.max.raw(), assembly.attenuation.fc.raw(),
+          assembly.attenuation.f0.raw());
+      globe_evaluator_attenuate_cij(theta, phi, fit.relaxed_scale, fit.ratio,
+                                    original, expected, &expected_muv,
+                                    fit.rates.data());
+      const auto &expected_rates = fit.rates;
       test::expect_tensor_near(test::Tensor(actual), test::Tensor(expected),
                                tolerance);
       const double rate_tolerance =

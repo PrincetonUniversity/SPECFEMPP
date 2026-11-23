@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/constants.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/utilities/band.hpp"
 #include <Kokkos_Core.hpp>
@@ -8,27 +9,59 @@ namespace specfem {
 namespace attenuation {
 
 /**
- * @brief Strain relaxation times of the 1/L-normalized model for a target Q.
+ * @brief Misfit of the Q fit, in double precision.
  *
- * Runs the code's single Q search,
- * specfem::attenuation::globe::search_tau_eps(), and converts its result to
- * the 1/L normalization of specfem::attenuation::maxwell():
  * \f[
- *   \tau_{\epsilon_i} = \tau_{\sigma_i}
- *     + N_\text{SLS}\,(\tau^{g}_{\epsilon_i} - \tau_{\sigma_i}),
+ *   \sum_i \frac{|\tan\delta(f_i) - 1/Q|}{1/Q},
  * \f]
- * where \f$\tau^{g}_\epsilon\f$ fits the unnormalized
- * \f$1-N_\text{SLS}+\sum_i\f$ model. Under this map both models have the
- * same loss tangent at every frequency, so the fitted Q is the same.
+ * with \f$\tan\delta = B/A\f$ from specfem::attenuation::maxwell(). A
+ * vanishing storage modulus \f$A\f$ is penalized with a large \f$\tan\delta\f$.
  *
- * Q is used as given: it is not clipped to specfem::constants::Q_MAXIMUM.
+ * @tparam N_SLS Number of standard linear solids
+ */
+template <int N_SLS> struct AttenuationObjective {
+  double iQ = 0; ///< \f$1/Q\f$, the target loss tangent
+  Kokkos::View<double[specfem::constants::NF_ATTENUATION], Kokkos::LayoutRight,
+               Kokkos::HostSpace>
+      f; ///< Evaluation frequencies (Hz)
+  Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+      tau_sigma; ///< Stress relaxation times \f$\tau_\sigma\f$
+
+  /**
+   * @brief Evaluate the misfit for candidate strain relaxation times.
+   * @param tau_eps Candidate \f$\tau_\epsilon\f$
+   * @return Sum of absolute relative \f$1/Q\f$ misfits
+   */
+  double operator()(const Kokkos::View<double[N_SLS], Kokkos::LayoutRight,
+                                       Kokkos::HostSpace> &tau_eps) const;
+};
+
+/**
+ * @brief Strain relaxation times that give a constant Q over the band.
+ *
+ * Fits the generalized Maxwell solid of specfem::attenuation::maxwell() to
+ * \f$Q(\omega) = Q\f$ at specfem::constants::NF_ATTENUATION frequencies
+ * equally spaced in \f$\log_{10}\f$ over the band, with
+ * specfem::optimization::NelderMeadSimplex started from
+ * \f$\tau_\epsilon = \tau_\sigma(1 + 2/Q)\f$. This is the
+ * attenuation_invert_by_simplex of the SPECFEM Fortran codes: the search runs
+ * in double precision with their single-precision fminsearch tolerances and
+ * simplex steps.
+ *
+ * Q is used as given; callers that limit Q do so through
+ * specfem::attenuation::QualityFactorTable.
+ *
+ * @note Stricter than the Fortran codes, which accept a fit that stops on
+ * its iteration budget: here any fit that does not meet the simplex
+ * tolerances throws, so an unconverged \f$\tau_\epsilon\f$ never reaches the
+ * solver.
  *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
  * @param Q Target quality factor, positive and finite
  * @param tau_sigma Stress relaxation times from compute_tau_sigma()
  * @param band Attenuation band
- * @return Strain relaxation times \f$\tau_\epsilon\f$ of the 1/L model
+ * @return Strain relaxation times \f$\tau_\epsilon\f$
  * @throws std::runtime_error if the simplex does not converge
  * @throws std::invalid_argument if Q is not positive and finite
  *

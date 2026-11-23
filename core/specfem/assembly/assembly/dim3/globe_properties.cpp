@@ -1,6 +1,6 @@
 #include "globe_properties.hpp"
 
-#include "specfem/attenuation/globe.hpp"
+#include "specfem/attenuation/quality_factor_fit.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
@@ -248,7 +248,7 @@ void specfem::assembly::dim3_impl::read_globe_properties(
   };
   // One table pair for both containers, so isotropic and anisotropic
   // elements agree on each bucket's representative Q.
-  specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+  specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
       quality_factor_tables;
   if (attenuation_container != nullptr) {
     using specfem::units::unit_symbols::Hz;
