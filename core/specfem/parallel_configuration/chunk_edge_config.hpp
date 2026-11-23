@@ -35,6 +35,7 @@ struct edge_chunk_config {
  * Automatically selects optimal edge chunk sizes based on execution space:
  * - CUDA: 32 edges per chunk
  * - HIP: 64 edges per chunk
+ * - SYCL: 32 edges per chunk
  * - OpenMP/Serial: 1 edge per chunk
  *
  * @tparam DimensionTag Spatial dimension
@@ -60,6 +61,12 @@ struct default_chunk_edge_config<DimensionTag, Kokkos::Cuda>
 template <specfem::element::dimension_tag DimensionTag>
 struct default_chunk_edge_config<DimensionTag, Kokkos::HIP>
     : edge_chunk_config<DimensionTag, 64, Kokkos::HIP> {};
+#endif
+
+#if defined(KOKKOS_ENABLE_SYCL)
+template <specfem::element::dimension_tag DimensionTag>
+struct default_chunk_edge_config<DimensionTag, Kokkos::SYCL>
+    : edge_chunk_config<DimensionTag, 32, Kokkos::SYCL> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)

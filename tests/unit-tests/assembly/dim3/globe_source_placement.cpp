@@ -132,9 +132,9 @@ TEST(GlobeSourcePlacement, GllCenterRoundTrip) {
         specfem::algorithms::locate_point_impl::locate_point(global, mesh);
     SCOPED_TRACE("ispec=" + std::to_string(ispec));
     EXPECT_EQ(lcoord.ispec, ispec);
-    EXPECT_NEAR(lcoord.xi, 0.0, 1e-4);
-    EXPECT_NEAR(lcoord.eta, 0.0, 1e-4);
-    EXPECT_NEAR(lcoord.gamma, 0.0, 1e-4);
+    EXPECT_NEAR(lcoord.xi, 0.0, 1e-5);
+    EXPECT_NEAR(lcoord.eta, 0.0, 1e-5);
+    EXPECT_NEAR(lcoord.gamma, 0.0, 1e-5);
   }
 }
 

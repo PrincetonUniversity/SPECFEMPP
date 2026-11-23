@@ -16,15 +16,6 @@
 namespace specfem::program {
 
 template <specfem::simulation::model ModelTag>
-bool use_geographic_coordinates(const specfem::mesh::mesh<ModelTag> &mesh) {
-  if constexpr (ModelTag == specfem::simulation::model::Cartesian3D) {
-    return !mesh.suppress_utm_projection;
-  } else {
-    return false;
-  }
-}
-
-template <specfem::simulation::model ModelTag>
 void run_program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
@@ -96,9 +87,13 @@ void run_program_3d(
   // --------------------------------------------------------------
   //                   Get receivers
   // --------------------------------------------------------------
-  // A UTM-projected Cartesian mesh implies geographic STATIONS coordinates.
+  // A UTM or globe mesh places stations by latitude/longitude and labels
+  // channels E/N/Z.
+  const auto frame =
+      specfem::assembly::mesh_impl::coordinate_projection(mesh).frame();
   auto receivers = specfem::io::read_3d_receivers(
-      setup.get_stations(), use_geographic_coordinates(mesh));
+      setup.get_stations(),
+      frame == specfem::enums::coordinate_frame::geographic);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -148,26 +143,26 @@ void run_program_3d(
   //                   CFL Condition Check
   // --------------------------------------------------------------
   {
-    const type_real cfl =
-        dt * assembly.info.v.max / assembly.info.gll_distance.min;
+    const type_real suggested_dt = assembly.info.suggested_time_step;
     specfem::Logger::info([&](std::ostringstream &oss) {
       oss << "CFL Condition Check:\n"
           << "-------------------------------\n"
-          << " CFL number: ............. " << cfl << "\n"
-          << " Maximum CFL (Cmax): ..... "
-          << specfem::constants::COURANT_NUMBER_SUGGESTED << "\n";
+          << " DT: ..................... " << dt << "\n"
+          << " Suggested DT: ........... " << suggested_dt << "\n";
     });
-    if (cfl > specfem::constants::COURANT_NUMBER_SUGGESTED) {
+    if (dt > suggested_dt) {
       std::ostringstream msg;
-      msg << "CFL condition violated!\n"
-          << "  CFL = " << cfl
-          << " > Cmax = " << specfem::constants::COURANT_NUMBER_SUGGESTED
-          << "\n"
-          << "  Current dt = " << dt << "\n"
-          << "  Suggested dt (satisfies CFL): "
-          << assembly.info.suggested_time_step << "\n"
-          << "  Please update the 'dt' parameter in your configuration.";
-      specfem_abort(msg.str(), 30);
+      msg << "DT = " << dt << " exceeds the suggested DT = " << suggested_dt
+          << " (Courant number " << specfem::constants::COURANT_NUMBER_SUGGESTED
+          << " in the most restrictive element).\n";
+      if (setup.get_override_cfl()) {
+        specfem::Logger::warning(msg.str() +
+                                 "Continuing because 'override-cfl' is set.");
+      } else {
+        msg << "Reduce 'dt' in the time-scheme section, or set "
+               "'override-cfl: true' to run anyway.";
+        specfem_abort(msg.str(), 1);
+      }
     }
   }
   // Divergence check — runs ~100 times over the full simulation
@@ -259,9 +254,10 @@ void run_program_3d(
   // --------------------------------------------------------------
   //                   Write Seismograms
   // --------------------------------------------------------------
-  // A UTM-projected Cartesian mesh uses geographic E/N/Z seismogram channels.
+  // A UTM or globe mesh places stations by latitude/longitude and labels
+  // channels E/N/Z.
   const auto seismogram_writer =
-      setup.instantiate_seismogram_writer(use_geographic_coordinates(mesh));
+      setup.instantiate_seismogram_writer(assembly.mesh.projection.frame());
   if (seismogram_writer) {
     specfem::Logger::info("Writing seismogram files.");
     seismogram_writer->write(assembly);

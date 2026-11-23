@@ -98,6 +98,13 @@ specfem_add_test(source_frame_rotation_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(enums_tests
+  SOURCES   enums/wavefield_tests.cpp
+  LIBRARIES specfem::enums
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp
@@ -359,6 +366,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
             assembly/dim3/globe_source_placement.cpp
+            assembly/dim3/globe_receiver_rotation.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
@@ -388,6 +396,8 @@ specfem_add_test(assembly_receivers_tests
             assembly/receivers/dim2/receivers_tests.cpp
             assembly/receivers/impl/receiver_iterator_tests.cpp
             assembly/receivers/impl/dim2/seismogram_iterator_tests.cpp
+            assembly/receivers/impl/rotate_components_tests.cpp
+            assembly/receivers/impl/seismogram_types_tests.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -622,6 +632,15 @@ specfem_add_test(frechet_derivatives_tests
             medium/frechet_derivatives/dim3/acoustic.cpp
             medium/frechet_derivatives/dim3/elastic_anisotropic.cpp
   LIBRARIES point
+            gtest_main
+)
+
+specfem_add_test(compute_derivatives_tests
+  SOURCES   compute/derivatives/runner.cpp
+            compute/derivatives/derivatives.cpp
+  LIBRARIES specfem::compute
+            specfem::io
+            specfem_environment
             gtest_main
 )
 

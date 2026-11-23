@@ -1,4 +1,5 @@
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
+#include "specfem/algorithms/inside_outside.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
@@ -115,51 +116,39 @@ std::vector<int> get_best_candidates(
 }
 
 std::tuple<type_real, type_real, type_real> get_local_coordinates(
-    const specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim3> &global,
     const Kokkos::View<specfem::point::global_coordinates<
                            specfem::element::dimension_tag::dim3> *,
-                       Kokkos::HostSpace> &coorg,
+                       Kokkos::HostSpace> &coorg_shifted,
     type_real xi, type_real eta, type_real gamma) {
 
-  const int ngnod = coorg.extent(0);
+  const int ngnod = coorg_shifted.extent(0);
 
-  // Newton inverse mapping (physical -> reference) for a curved hex27 element:
-  // start from the nearest GLL node, take damped Newton steps built from the
-  // full ngnod-node Jacobian, clip to [-1.01, 1.01], and stop once the distance
-  // stops improving. A second refinement pass runs when the point is inside the
-  // element but still far (> 1 m). Convergence on strongly distorted elements
-  // (e.g. the globe central cube) is pinned by the globe placement tests; the
-  // 4 + 4 iteration caps are raised there only if that round-trip fails.
+  // Newton inverse mapping (physical -> reference) for a curved hex27 element
+  // with the target at the origin. The anchors are pre-shifted by the target,
+  // so the residual is element-sized in float. The loop stops on the
+  // reference-coordinate step, which is unit-free.
+  constexpr int max_iterations = 8;
+  constexpr type_real step_tolerance = 1e-6;
   type_real d_min_sq = std::numeric_limits<type_real>::max();
 
-  for (int iter_loop = 0; iter_loop < 4; iter_loop++) {
-    auto loc =
-        specfem::jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
-    auto jacobian =
-        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, eta, gamma);
+  for (int iter_loop = 0; iter_loop < max_iterations; iter_loop++) {
+    auto loc = specfem::jacobian::compute_locations(coorg_shifted, ngnod, xi,
+                                                    eta, gamma);
+    auto jacobian = specfem::jacobian::compute_jacobian(coorg_shifted, ngnod,
+                                                        xi, eta, gamma);
 
-    // Compute the correction to the local coordinates
-    type_real dx = -(loc.x - global.x);
-    type_real dy = -(loc.y - global.y);
-    type_real dz = -(loc.z - global.z);
+    const type_real dx = -loc.x;
+    const type_real dy = -loc.y;
+    const type_real dz = -loc.z;
 
-    // distance squared
-    type_real d_sq = dx * dx + dy * dy + dz * dz;
+    const type_real d_sq = dx * dx + dy * dy + dz * dz;
 
-    // compute increments
     if (d_sq < d_min_sq) {
       d_min_sq = d_sq;
     } else {
-      // new position is worse than old one, no change necessary
-      // stop, no further improvements
-      // dxi = 0.d0
-      // deta = 0.d0
-      // dgamma = 0.d0
       break;
     }
 
-    // Compute the change in local coordinates using the Jacobian
     type_real dxi =
         jacobian.xix() * dx + jacobian.xiy() * dy + jacobian.xiz() * dz;
     type_real deta =
@@ -170,13 +159,12 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
     // decreases step length if step is large
     if ((dxi * dxi + deta * deta + dgamma * dgamma) >
         static_cast<type_real>(1.0)) {
-      type_real scale = 0.33333333333;
+      constexpr type_real scale = 0.33333333333;
       dxi *= scale;
       deta *= scale;
       dgamma *= scale;
     }
 
-    // Update the local coordinates
     xi += dxi;
     eta += deta;
     gamma += dgamma;
@@ -194,75 +182,10 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
       gamma = 1.01;
     if (gamma < -1.01)
       gamma = -1.01;
-  }
 
-  // Position refinement
-  if (d_min_sq > static_cast<type_real>(1.0)) {
-
-    if (std::abs(xi) < static_cast<type_real>(1.0) &&
-        std::abs(eta) < static_cast<type_real>(1.0) &&
-        std::abs(gamma) < static_cast<type_real>(1.0)) {
-
-      for (int iter_loop = 0; iter_loop < 4; iter_loop++) {
-        auto loc =
-            specfem::jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
-        auto jacobian =
-            specfem::jacobian::compute_jacobian(coorg, ngnod, xi, eta, gamma);
-
-        // Compute the correction to the local coordinates
-        type_real dx = -(loc.x - global.x);
-        type_real dy = -(loc.y - global.y);
-        type_real dz = -(loc.z - global.z);
-
-        // distance squared
-        type_real d_sq = dx * dx + dy * dy + dz * dz;
-
-        // compute increments
-        if (d_sq < d_min_sq) {
-          d_min_sq = d_sq;
-        } else {
-          // new position is worse than old one, no change necessary
-          // stop, no further improvements
-          // dxi = 0.d0
-          // deta = 0.d0
-          // dgamma = 0.d0
-          break;
-        }
-
-        // Compute the change in local coordinates using the Jacobian
-        type_real dxi =
-            jacobian.xix() * dx + jacobian.xiy() * dy + jacobian.xiz() * dz;
-        type_real deta =
-            jacobian.etax() * dx + jacobian.etay() * dy + jacobian.etaz() * dz;
-        type_real dgamma = jacobian.gammax() * dx + jacobian.gammay() * dy +
-                           jacobian.gammaz() * dz;
-
-        // decreases step length if step is large
-        if ((dxi * dxi + deta * deta + dgamma * dgamma) >
-            static_cast<type_real>(1.0)) {
-          type_real scale = 0.33333333333;
-          dxi *= scale;
-          deta *= scale;
-          dgamma *= scale;
-        }
-
-        // Update the local coordinates
-        xi += dxi;
-        eta += deta;
-        gamma += dgamma;
-
-        // Clip the local coordinates to the (somewhat) valid range
-        if (std::abs(xi) >= static_cast<type_real>(1.01))
-          break;
-        if (std::abs(eta) >= static_cast<type_real>(1.01))
-          break;
-        if (std::abs(gamma) >= static_cast<type_real>(1.01))
-          break;
-
-        if (d_min_sq < static_cast<type_real>(1e-10))
-          break;
-      }
-    }
+    if (dxi * dxi + deta * deta + dgamma * dgamma <
+        step_tolerance * step_tolerance)
+      break;
   }
 
   return std::make_tuple(xi, eta, gamma);
@@ -278,6 +201,7 @@ locate_point_core(
         &index_mapping,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coordinates,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &gll_points,
     const int ngnod, const int ngllx) {
 
   int ix_guess, iy_guess, iz_guess, ispec_guess;
@@ -288,6 +212,7 @@ locate_point_core(
   const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
 
   type_real final_dist = std::numeric_limits<type_real>::max();
+  bool best_inside = false;
 
   int ispec_selected_point = -1;
   type_real xi_selected = -9999.0;
@@ -299,42 +224,91 @@ locate_point_core(
   const Kokkos::View<specfem::point::global_coordinates<
                          specfem::element::dimension_tag::dim3> *,
                      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
+      coorg_shifted("coorg_shifted", ngnod);
+
+  const int ngllz = global_coordinates.extent(1);
+  const int nglly = global_coordinates.extent(2);
 
   for (auto &ispec : best_candidates) {
-    type_real xi_guess = 0.0; // Start at element center
-    type_real eta_guess = 0.0;
-    type_real gamma_guess = 0.0;
-
-    // Extract control node coordinates for this element
     for (int i = 0; i < ngnod; i++) {
-      coorg(i).x = control_node_coordinates(ispec, i, 0);
-      coorg(i).y = control_node_coordinates(ispec, i, 1);
-      coorg(i).z = control_node_coordinates(ispec, i, 2);
+      coorg_shifted(i).x =
+          control_node_coordinates(ispec, i, 0) - coordinates.x;
+      coorg_shifted(i).y =
+          control_node_coordinates(ispec, i, 1) - coordinates.y;
+      coorg_shifted(i).z =
+          control_node_coordinates(ispec, i, 2) - coordinates.z;
     }
 
-    // Find the best location using Newton-Raphson
-    std::tie(xi_guess, eta_guess, gamma_guess) = get_local_coordinates(
-        coordinates, coorg, xi_guess, eta_guess, gamma_guess);
+    // Start Newton at the GLL point of this element nearest to the target
+    type_real nearest_sq = std::numeric_limits<type_real>::max();
+    int nearest_i = 0, nearest_j = 0, nearest_k = 0;
+    for (int k = 0; k < ngllz; k++) {
+      for (int j = 0; j < nglly; j++) {
+        for (int i = 0; i < ngllx; i++) {
+          const type_real dx =
+              global_coordinates(ispec, k, j, i, 0) - coordinates.x;
+          const type_real dy =
+              global_coordinates(ispec, k, j, i, 1) - coordinates.y;
+          const type_real dz =
+              global_coordinates(ispec, k, j, i, 2) - coordinates.z;
+          const type_real dist_sq = dx * dx + dy * dy + dz * dz;
+          if (dist_sq < nearest_sq) {
+            nearest_sq = dist_sq;
+            nearest_i = i;
+            nearest_j = j;
+            nearest_k = k;
+          }
+        }
+      }
+    }
 
-    // Compute the global coordinates from the found local coordinates
-    auto coord_computed = specfem::jacobian::compute_locations(
-        coorg, ngnod, xi_guess, eta_guess, gamma_guess);
+    type_real xi_guess = gll_points(nearest_i);
+    type_real eta_guess = gll_points(nearest_j);
+    type_real gamma_guess = gll_points(nearest_k);
+
+    // Find the best location using Newton-Raphson
+    std::tie(xi_guess, eta_guess, gamma_guess) =
+        get_local_coordinates(coorg_shifted, xi_guess, eta_guess, gamma_guess);
+
+    // Back-project in the shifted frame; the target is the origin
+    const auto loc_shifted = specfem::jacobian::compute_locations(
+        coorg_shifted, ngnod, xi_guess, eta_guess, gamma_guess);
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3>
-        cart_coord = { coord_computed.x, coord_computed.y, coord_computed.z };
+        cart_coord = { coordinates.x + loc_shifted.x,
+                       coordinates.y + loc_shifted.y,
+                       coordinates.z + loc_shifted.z };
 
-    // Compute the distance from target to found location
-    type_real dist = specfem::point::distance(coordinates, cart_coord);
+    const type_real dist = std::sqrt(loc_shifted.x * loc_shifted.x +
+                                     loc_shifted.y * loc_shifted.y +
+                                     loc_shifted.z * loc_shifted.z);
 
-    // Keep the best result
-    if (dist < final_dist) {
+    const type_real diagonal =
+        specfem::point::distance(coorg_shifted(0), coorg_shifted(6));
+    const type_real equal_tolerance = 1e-5 * diagonal;
+    const type_real close_tolerance = 1e-3 * diagonal;
+    const bool new_inside =
+        specfem::algorithms::inside(specfem::point::local_coordinates<
+                                    specfem::element::dimension_tag::dim3>(
+            ispec, xi_guess, eta_guess, gamma_guess));
+
+    bool better =
+        ispec_selected_point < 0 || dist < final_dist - equal_tolerance;
+    if (ispec_selected_point >= 0) {
+      if (new_inside && !best_inside && dist < close_tolerance)
+        better = true;
+      if (!new_inside && best_inside && dist > final_dist - equal_tolerance)
+        better = false;
+    }
+
+    if (better) {
       ispec_selected_point = ispec;
       xi_selected = xi_guess;
       eta_selected = eta_guess;
       gamma_selected = gamma_guess;
       coord_point = cart_coord;
       final_dist = dist;
+      best_inside = new_inside;
     }
   }
 
@@ -370,8 +344,33 @@ locate_point(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
         &mesh) {
   return locate_point_core(coordinates, mesh.h_coord, mesh.h_index_mapping,
-                           mesh.h_control_node_coordinates, mesh.ngnod,
-                           mesh.element_grid.ngllx);
+                           mesh.h_control_node_coordinates, mesh.h_xi,
+                           mesh.ngnod, mesh.element_grid.ngllx);
+}
+
+type_real back_projection_distance(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &target,
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &lcoord,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+  const int ngnod = mesh.ngnod;
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim3> *,
+                     Kokkos::HostSpace>
+      coorg_shifted("coorg_shifted", ngnod);
+  for (int i = 0; i < ngnod; i++) {
+    coorg_shifted(i).x =
+        mesh.h_control_node_coordinates(lcoord.ispec, i, 0) - target.x;
+    coorg_shifted(i).y =
+        mesh.h_control_node_coordinates(lcoord.ispec, i, 1) - target.y;
+    coorg_shifted(i).z =
+        mesh.h_control_node_coordinates(lcoord.ispec, i, 2) - target.z;
+  }
+  const auto loc = specfem::jacobian::compute_locations(
+      coorg_shifted, ngnod, lcoord.xi, lcoord.eta, lcoord.gamma);
+  return std::sqrt(loc.x * loc.x + loc.y * loc.y + loc.z * loc.z);
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>

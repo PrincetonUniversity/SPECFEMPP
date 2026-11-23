@@ -159,9 +159,11 @@ public:
 /**
  * @brief Communication group for face-shared MPI interfaces.
  *
- * A face interface is a 2D ngll × ngll grid of GLL points. The `theta` index
- * encodes the discrete 90° rotation between the two partitions' coordinate
- * systems: theta=0 (identity), 1 (90° CW), 2 (180°), 3 (270° CW).
+ * A face interface is a 2D ngll × ngll grid of GLL points. Two glued grids
+ * differ by one of the 8 symmetries of a square, stored as a `mirror` flag
+ * (the grids have the same handedness about their outward normals, so one must
+ * be reflected) and a `theta` index for the 90° rotation applied after it:
+ * theta=0 (identity), 1, 2 (180°), 3.
  *
  * @see communication_group
  */
@@ -172,6 +174,9 @@ public:
   ThetaViewType theta; /**< Discrete rotation index ∈ [0,3] aligning face
                           coordinate systems across the MPI boundary */
   ThetaViewType::host_mirror_type h_theta; /**< Host mirror for theta */
+  Kokkos::View<unsigned char *, Kokkos::HostSpace>
+      h_mirror; /**< 1 if the face grid axes are swapped before the theta
+                     rotation, 0 otherwise (host only: used while packing) */
 
   face_communication_group() = default;
   face_communication_group(
@@ -239,6 +244,7 @@ private:
   void send_unpacking_indices(
       Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
       Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
+      Kokkos::View<unsigned char *, Kokkos::HostSpace> mirror,
       Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
       Kokkos::View<int **, Kokkos::HostSpace> edge_index_mapping,
       Kokkos::View<bool *, Kokkos::HostSpace> edge_reflect,
@@ -379,15 +385,24 @@ public:
                 const specfem::mesh_entity::element<dimension_tag> &element);
 
   /**
-   * @brief Phase 2+3: performs blocking sends (packer), then waits for the
-   * receives posted in post_receives() and assembles the unpack mapping.
+   * @brief Phase 2: constructs the packer and performs its blocking sends.
    * Must be called only after post_receives() has been called for ALL
-   * neighbors.
+   * neighbors, and for ALL neighbors before any complete_construction().
+   * Interleaving a send to one neighbor with a wait on that neighbor's data
+   * deadlocks when ranks visit their neighbors in different orders.
+   */
+  void send_indices(const corner_communication_group &corner_group,
+                    const edge_communication_group &edge_group,
+                    const face_communication_group &face_group,
+                    const specfem::mesh_entity::element<dimension_tag> &element,
+                    const specfem::assembly::fields<dimension_tag> &fields);
+
+  /**
+   * @brief Phase 3: waits for the receives posted in post_receives() and
+   * assembles the unpack mapping. Must be called only after send_indices() has
+   * been called for ALL neighbors.
    */
   void complete_construction(
-      const corner_communication_group &corner_group,
-      const edge_communication_group &edge_group,
-      const face_communication_group &face_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::fields<dimension_tag> &fields,
       const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
