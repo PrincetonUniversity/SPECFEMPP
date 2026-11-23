@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/assembly/assembly/dim3/gravity.hpp"
 #include "specfem/assembly/attenuation.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
@@ -86,6 +87,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    * @brief Attenuation properties for the mesh at every quadrature point
    */
   specfem::assembly::Attenuation<dimension_tag> attenuation;
+
+  /// @brief Setup-only gravity precompute for gravity-enabled Globe meshes.
+  specfem::assembly::Gravity<dimension_tag> gravity;
 
   /**
    * @brief Material properties for the mesh at every quadrature point

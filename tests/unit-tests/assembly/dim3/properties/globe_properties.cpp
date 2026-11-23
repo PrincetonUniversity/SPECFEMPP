@@ -347,3 +347,364 @@ TEST(GlobePropertyReader, BypassesOracleInitialization) {
                    mesh, assembly, nullptr),
                std::runtime_error);
 }
+
+TEST(GlobeGravity, PrecomputesReferenceTablesAndDeviceData) {
+  using specfem::assembly::globe_properties_test_impl::GlobeFixture;
+  GlobeFixture fixture(false);
+  auto &assembly = fixture.assembly;
+  auto &globe = fixture.mesh.globe;
+  using Medium = specfem::element::medium_tag;
+  using Field = specfem::simulation::field_type;
+  using Region = specfem::element::region_tag;
+
+  // Combined runs have no forward field. Gravity must share the active field's
+  // numbering regardless of simulation type.
+  assembly.fields = { assembly.mesh, assembly.element_types,
+                      specfem::simulation::type::combined };
+  const auto reader = std::make_shared<
+      specfem::assembly::globe_properties_test_impl::RecordingReader>();
+  specfem::assembly::dim3_impl::read_deferred_properties(fixture.mesh, assembly,
+                                                         reader);
+  EXPECT_TRUE(assembly.gravity.radial.density.empty());
+  EXPECT_EQ(assembly.gravity.gravity_pre_store.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.gravity_h.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.acoustic_gravity_pre_store.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.gravity_rho_g_over_kappa.data(), nullptr);
+
+  globe.model_config.gravity = true;
+  globe.full_gravity = true;
+  const auto &types = assembly.element_types;
+  const auto &field = assembly.fields.get_simulation_field<Field::adjoint>();
+  const auto &coord = assembly.mesh.h_spherical_coord;
+  const int nx = assembly.mesh.element_grid.ngllx;
+  const int ny = assembly.mesh.element_grid.nglly;
+  const int nz = assembly.mesh.element_grid.ngllz;
+
+  // Approach the centre along two axes and straddle the 100 m handoff.
+  // Update every element-local copy of each probe before setup.
+  constexpr std::array<std::array<double, 3>, 6> positions{ { { 0, 0, 0 },
+                                                              { 25, 0, 0 },
+                                                              { 50, 0, 0 },
+                                                              { 0, -50, 0 },
+                                                              { 99.99, 0, 0 },
+                                                              { 100, 0, 0 } } };
+  ASSERT_GE(nx * ny, positions.size());
+  std::array<int, positions.size()> probes;
+  probes.fill(-1);
+  const auto &xyz = assembly.mesh.h_coord;
+  for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+    if (types.get_region_tag(ispec) != Region::inner_core) {
+      continue;
+    }
+    if (probes[0] < 0) {
+      for (int i = 0; i < static_cast<int>(probes.size()); ++i) {
+        probes[i] =
+            field.get_iglob<false, Medium::elastic>(ispec, 0, i / nx, i % nx);
+      }
+    }
+    for (int iz = 0; iz < nz; ++iz) {
+      for (int iy = 0; iy < ny; ++iy) {
+        for (int ix = 0; ix < nx; ++ix) {
+          const int point =
+              field.get_iglob<false, Medium::elastic>(ispec, iz, iy, ix);
+          for (std::size_t i = 0; i < probes.size(); ++i) {
+            if (point == probes[i]) {
+              for (int c = 0; c < 3; ++c) {
+                xyz(ispec, iz, iy, ix, c) = positions[i][c];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ASSERT_GE(probes.front(), 0);
+  assembly.mesh.compute_spherical_coordinates();
+
+  specfem::assembly::dim3_impl::read_deferred_properties(fixture.mesh, assembly,
+                                                         reader);
+  const auto &gravity = assembly.gravity;
+  const auto &radial = gravity.radial;
+  ASSERT_EQ(radial.minus_gravity.size(), 70000);
+  ASSERT_EQ(radial.minus_deriv_gravity.size(), 70000);
+  ASSERT_EQ(radial.density.size(), 70000);
+  ASSERT_EQ(radial.d_ln_density_dr.size(), 70000);
+  ASSERT_EQ(radial.minus_rho_g_over_kappa_fluid.size(), 70000);
+  const double planet_radius = globe.planet_constants->r_planet();
+  const double step = planet_radius * radial.range_max / 70000;
+  EXPECT_NEAR(step * 70000,
+              planet_radius + globe.planet_constants->topo_maximum(), 1.e-8);
+  EXPECT_NEAR(-radial.minus_gravity[std::lround(planet_radius / step) - 1],
+              9.81, 0.1);
+  for (std::size_t i = 0; i < radial.density.size(); ++i) {
+    ASSERT_GT(radial.density[i], 0.0) << i;
+    ASSERT_TRUE(std::isfinite(radial.minus_deriv_gravity[i])) << i;
+    ASSERT_TRUE(std::isfinite(radial.minus_rho_g_over_kappa_fluid[i])) << i;
+    ASSERT_NEAR(radial.d_ln_density_dr[i], 0.0, 0.0) << i;
+    if (i > 0 && (i + 1) * step < 3400000.0) {
+      ASSERT_LT(radial.minus_gravity[i], radial.minus_gravity[i - 1]) << i;
+    }
+  }
+
+  const auto solid = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), gravity.gravity_pre_store);
+  const auto tensor = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
+                                                          gravity.gravity_h);
+  const auto fluid = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), gravity.acoustic_gravity_pre_store);
+  const auto factor = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), gravity.gravity_rho_g_over_kappa);
+  ASSERT_EQ(solid.extent(0), field.get_nglob<Medium::elastic>());
+  ASSERT_EQ(tensor.extent(0), solid.extent(0));
+  ASSERT_EQ(fluid.extent(0), field.get_nglob<Medium::acoustic>());
+  ASSERT_EQ(factor.extent(0), fluid.extent(0));
+  const double center_diagonal = radial.center_gradient * radial.center_density;
+  ASSERT_LT(center_diagonal, 0.0);
+  const double rel_tol = 2.0 * std::numeric_limits<type_real>::epsilon();
+  for (std::size_t i = 0; i + 1 < probes.size(); ++i) {
+    for (int c = 0; c < 3; ++c) {
+      const double expected = center_diagonal * positions[i][c];
+      EXPECT_NEAR(solid(probes[i], c), expected, rel_tol * std::abs(expected));
+      EXPECT_NEAR(tensor(probes[i], c), center_diagonal,
+                  rel_tol * std::abs(center_diagonal));
+      EXPECT_NEAR(tensor(probes[i], c + 3), 0.0, 0.0);
+    }
+  }
+  // At 100 m PREM selects its first radial sample (about 91 m).
+  const int boundary = probes.back();
+  const double weight = radial.density.front() * radial.minus_gravity.front();
+  EXPECT_NEAR(solid(boundary, 0), weight, rel_tol * std::abs(weight));
+  EXPECT_NEAR(solid(boundary, 1), 0.0, 0.0);
+  EXPECT_NEAR(solid(boundary, 2), 0.0, 0.0);
+  EXPECT_NEAR(tensor(boundary, 1), weight / 100.0,
+              rel_tol * std::abs(weight / 100.0));
+  for (std::size_t point = 0; point < factor.extent(0); ++point) {
+    const double norm =
+        std::hypot(fluid(point, 0), fluid(point, 1), fluid(point, 2));
+    ASSERT_LT(factor(point), 0.0);
+    ASSERT_NEAR(norm, -factor(point), 1.e-12) << point;
+  }
+
+  if (const char *path = std::getenv("SPECFEM_GLOBE_GRAVITY_PROFILE")) {
+    std::ofstream profile(path);
+    ASSERT_TRUE(profile.is_open());
+    profile << std::setprecision(17)
+            << "r_m,minus_g,minus_dg,density,d_ln_density_dr,minus_rho_g_over_"
+               "kappa\n";
+    for (std::size_t i = 0; i < radial.density.size(); ++i) {
+      profile << (i + 1) * step << ',' << radial.minus_gravity[i] << ','
+              << radial.minus_deriv_gravity[i] << ',' << radial.density[i]
+              << ',' << radial.d_ln_density_dr[i] << ','
+              << radial.minus_rho_g_over_kappa_fluid[i] << '\n';
+    }
+
+    std::ofstream points(std::string(path) + ".points.csv");
+    ASSERT_TRUE(points.is_open());
+    points << std::setprecision(17)
+           << "region,r,theta,phi,gx,gy,gz,hxx,hyy,hzz,hxy,hxz,hyz\n";
+    std::array<int, 3> count{};
+    std::vector<bool> solid_sampled(solid.extent(0));
+    std::vector<bool> fluid_sampled(fluid.extent(0));
+    for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+      const int region =
+          specfem::globe::to_region_code(types.get_region_tag(ispec));
+      if (region < 1 || region > 3 || count[region - 1] >= 60) {
+        continue;
+      }
+      const int iz = ispec % nz;
+      const int iy = ispec % ny;
+      const int ix = ispec % nx;
+      const double radius = coord(ispec, iz, iy, ix, 0);
+      const bool acoustic = types.get_medium_tag(ispec) == Medium::acoustic;
+      const int point =
+          acoustic ? field.get_iglob<false, Medium::acoustic>(ispec, iz, iy, ix)
+                   : field.get_iglob<false, Medium::elastic>(ispec, iz, iy, ix);
+      auto &sampled = acoustic ? fluid_sampled : solid_sampled;
+      if (radius < 100.0 || sampled[point]) {
+        continue;
+      }
+      sampled[point] = true;
+      ++count[region - 1];
+      points << region << ',' << radius << ',' << coord(ispec, iz, iy, ix, 1)
+             << ',' << coord(ispec, iz, iy, ix, 2);
+      if (acoustic) {
+        for (int c = 0; c < 3; ++c) {
+          points << ',' << fluid(point, c);
+        }
+        points << ",0,0,0,0,0,0\n";
+      } else {
+        for (int c = 0; c < 3; ++c) {
+          points << ',' << solid(point, c);
+        }
+        for (int c = 0; c < 6; ++c) {
+          points << ',' << tensor(point, c);
+        }
+        points << '\n';
+      }
+    }
+    for (int sampled : count) {
+      EXPECT_GE(sampled, 30);
+    }
+    EXPECT_GE(count[0] + count[1] + count[2], 100);
+  }
+}
+
+// Checks every solid vector and tensor component at oblique points against
+// Globe's theta/phi expressions (prepare_gravity.f90), which are written
+// independently of the nn^T form used in setup. Ellipticity is disabled so the
+// expected table sample follows directly from the Cartesian radius.
+TEST(GlobeGravity, SolidTensorMatchesGlobeAtObliquePoints) {
+  using specfem::assembly::globe_properties_test_impl::GlobeFixture;
+  GlobeFixture fixture(false);
+  auto &assembly = fixture.assembly;
+  auto &globe = fixture.mesh.globe;
+  using Medium = specfem::element::medium_tag;
+  using Field = specfem::simulation::field_type;
+  using Region = specfem::element::region_tag;
+
+  assembly.fields = { assembly.mesh, assembly.element_types,
+                      specfem::simulation::type::forward };
+  globe.model_config.gravity = true;
+  const specfem::globe::ModelEvaluator evaluator(globe.model_config);
+  const specfem::assembly::Gravity<specfem::element::dimension_tag::dim3>
+      gravity(evaluator, *globe.planet_constants, false, false, assembly.mesh,
+              assembly.element_types, assembly.fields);
+
+  const auto &radial = gravity.radial;
+  const auto solid = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), gravity.gravity_pre_store);
+  const auto tensor = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
+                                                          gravity.gravity_h);
+  const auto &types = assembly.element_types;
+  const auto &field = assembly.fields.get_simulation_field<Field::forward>();
+  const auto &xyz = assembly.mesh.h_coord;
+  const int nx = assembly.mesh.element_grid.ngllx;
+  const int ny = assembly.mesh.element_grid.nglly;
+  const int nz = assembly.mesh.element_grid.ngllz;
+  const int table_size = static_cast<int>(radial.density.size());
+  const double planet_radius = globe.planet_constants->r_planet();
+  const double rel_tol = 8.0 * std::numeric_limits<type_real>::epsilon();
+
+  constexpr int max_samples = 20;
+  int crust_mantle = 0;
+  int inner_core = 0;
+  std::vector<bool> checked(solid.extent(0));
+  for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+    if (types.get_medium_tag(ispec) != Medium::elastic) {
+      continue;
+    }
+    const bool is_inner_core =
+        types.get_region_tag(ispec) == Region::inner_core;
+    int &count = is_inner_core ? inner_core : crust_mantle;
+    if (count >= max_samples) {
+      continue;
+    }
+    for (int iz = 0; iz < nz && count < max_samples; ++iz) {
+      for (int iy = 0; iy < ny && count < max_samples; ++iy) {
+        for (int ix = 0; ix < nx && count < max_samples; ++ix) {
+          const int point =
+              field.get_iglob<false, Medium::elastic>(ispec, iz, iy, ix);
+          const double x = xyz(ispec, iz, iy, ix, 0);
+          const double y = xyz(ispec, iz, iy, ix, 1);
+          const double z = xyz(ispec, iz, iy, ix, 2);
+          const double radius = std::hypot(x, y, z);
+          // Require every Cartesian direction component to be sizeable, so
+          // each off-diagonal entry and the slope term are exercised.
+          if (checked[point] || radius < 1000.0 ||
+              std::min({ std::abs(x), std::abs(y), std::abs(z) }) <
+                  0.2 * radius) {
+            continue;
+          }
+          checked[point] = true;
+          ++count;
+
+          const int sample =
+              std::clamp(
+                  static_cast<int>(std::lround(radius / planet_radius /
+                                               radial.range_max * table_size)),
+                  1, table_size) -
+              1;
+          const double rho = radial.density[sample];
+          const double minus_g = radial.minus_gravity[sample];
+          const double minus_dg = radial.minus_deriv_gravity[sample];
+          ASSERT_LT(minus_g, 0.0);
+
+          const double theta = std::acos(z / radius);
+          const double phi = std::atan2(y, x);
+          const double ct = std::cos(theta);
+          const double st = std::sin(theta);
+          const double cp = std::cos(phi);
+          const double sp = std::sin(phi);
+          const double g_over_r = minus_g / radius;
+          const double dg_plus = minus_dg - g_over_r;
+          const std::array<double, 3> vector{ minus_g * st * cp * rho,
+                                              minus_g * st * sp * rho,
+                                              minus_g * ct * rho };
+          const std::array<double, 6> h{
+            (g_over_r * (cp * cp * ct * ct + sp * sp) +
+             cp * cp * minus_dg * st * st) *
+                rho,
+            (g_over_r * (cp * cp + ct * ct * sp * sp) +
+             minus_dg * sp * sp * st * st) *
+                rho,
+            (ct * ct * minus_dg + g_over_r * st * st) * rho,
+            (cp * dg_plus * sp * st * st) * rho,
+            (cp * ct * dg_plus * st) * rho,
+            (ct * dg_plus * sp * st) * rho
+          };
+
+          const double vector_scale = rho * std::abs(minus_g);
+          const double tensor_scale =
+              rho * std::max(std::abs(g_over_r), std::abs(minus_dg));
+          for (int c = 0; c < 3; ++c) {
+            EXPECT_NEAR(solid(point, c), vector[c], rel_tol * vector_scale)
+                << "point " << point << " component " << c;
+          }
+          for (int c = 0; c < 6; ++c) {
+            EXPECT_NEAR(tensor(point, c), h[c], rel_tol * tensor_scale)
+                << "point " << point << " component " << c;
+          }
+        }
+      }
+    }
+  }
+  EXPECT_EQ(crust_mantle, max_samples);
+  EXPECT_EQ(inner_core, max_samples);
+}
+
+TEST(GlobeGravity, AssemblyReleasesSphericalCache) {
+  using specfem::assembly::globe_properties_test_impl::Assembly;
+  constexpr auto dim = Assembly::dimension_tag;
+  auto mesh = specfem::io::read_globe_mesh(
+      "data/dim3_globe/GlobalSmallMesh/DATABASES_MPI/"
+      "proc000000_specfempp_database.bin",
+      specfem::attenuation::Setup{});
+  mesh.globe.model_config.gravity = true;
+  const specfem::quadrature::quadratures quadrature(
+      specfem::quadrature::gll::gll{});
+  std::vector<std::shared_ptr<specfem::sources::source<dim>>> sources;
+  const Assembly assembly(mesh, quadrature, sources, {}, {}, 0.0, 0.1, 1, 1, 1,
+                          specfem::simulation::type::forward, false, nullptr);
+  EXPECT_EQ(assembly.mesh.h_spherical_coord.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.radial.minus_gravity.size(), 70000);
+  EXPECT_GT(assembly.gravity.gravity_pre_store.extent(0), 0);
+  EXPECT_GT(assembly.gravity.acoustic_gravity_pre_store.extent(0), 0);
+  EXPECT_EQ(assembly.gravity.gravity_rho_g_over_kappa.data(), nullptr);
+}
+
+TEST(GlobeGravity, CartesianAssemblyLeavesGravityEmpty) {
+  using specfem::assembly::globe_properties_test_impl::Assembly;
+  constexpr auto dim = Assembly::dimension_tag;
+  const auto mesh = specfem::io::read_3d_mesh(
+      "data/dim3/EightNodeElastic/database.bin", specfem::attenuation::Setup{});
+  const specfem::quadrature::quadratures quadrature(
+      specfem::quadrature::gll::gll{});
+  std::vector<std::shared_ptr<specfem::sources::source<dim>>> sources;
+  const Assembly assembly(mesh, quadrature, sources, {}, {}, 0.0, 0.1, 1, 1, 1,
+                          specfem::simulation::type::forward, false, nullptr);
+  EXPECT_TRUE(assembly.gravity.radial.density.empty());
+  EXPECT_EQ(assembly.gravity.gravity_pre_store.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.gravity_h.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.acoustic_gravity_pre_store.data(), nullptr);
+  EXPECT_EQ(assembly.gravity.gravity_rho_g_over_kappa.data(), nullptr);
+}

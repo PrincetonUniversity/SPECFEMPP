@@ -35,11 +35,8 @@ void read_deferred_properties(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
     const std::shared_ptr<specfem::io::reader> &property_reader) {
-  if (property_reader != nullptr) {
-    property_reader->read(assembly);
-    return;
-  }
-  specfem::assembly::dim3_impl::read_globe_properties(mesh, assembly);
+  specfem::assembly::dim3_impl::read_globe_properties(mesh, assembly,
+                                                      property_reader);
 }
 
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>

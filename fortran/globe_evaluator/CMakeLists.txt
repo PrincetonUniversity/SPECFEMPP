@@ -14,7 +14,11 @@ endif()
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)
 
-add_library(globe_evaluator globe_model_evaluator.F90)
+add_library(globe_evaluator
+  globe_model_evaluator.F90
+  gravity_tables.f90
+  make_gravity.f90
+)
 add_library(globe_evaluator::globe_evaluator ALIAS globe_evaluator)
 
 # The C ABI header, for consumers.
