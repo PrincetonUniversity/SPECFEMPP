@@ -127,10 +127,53 @@ preconditions has undefined behavior. Type-known invalid configurations receive
 compile-time diagnostics in either build mode. Invalid operations during
 constant evaluation fail compilation.
 
-Inputs must describe an injective mapping on valid coordinates. This indexing
-module does not yet certify uniqueness. Broadcasts and overlapping valid
-coordinates are prohibited preconditions, not supported layout families.
 Negative strides and general composed offset functions are excluded.
+
+Uniqueness certification
+------------------------
+
+``make_layout`` certifies that distinct valid coordinates map to distinct
+element offsets, so a layout introduces no hidden write aliasing. The rule
+flattens the shape leaves, ignores leaves with extent one, and sorts the rest by
+stride. Each stride must then be larger than the largest offset that the leaves
+before it can reach, ``sum((extent - 1) * stride)``. Two coordinates that differ
+then differ at a highest sorted leaf whose stride exceeds every lower
+contribution, so their offsets differ.
+
+The rule is sufficient, not necessary. It never accepts a broadcast (a zero
+stride on a leaf with extent above one) or an overlap. It rejects some injective
+layouts, for example shape ``(2, 3)`` with strides ``(3, 2)``. Gaps between
+offsets are allowed, so padded storage certifies. Empty domains have no valid
+coordinate and are always certified. Disabled domains skip runtime
+certification, but a fully static descriptor must certify whatever the enabled
+flag, because no runtime value can make it valid.
+
+These layout families in current use are accepted. The certification tests
+compare each one with the production code that produces it:
+
+- contiguous ``Kokkos::LayoutLeft`` and ``Kokkos::LayoutRight`` views, including
+  the CPU ``DomainView``;
+- the CUDA (32 lanes) and HIP (64 lanes) ``DomainView`` storage tiles, written as
+  ``((T, tiles), E1, ...) : ((1, T * E1 * ...), T, T * E1, ...)``, including
+  the padded lanes of the last tile;
+- static scratch views of element and chunk data in either array layout;
+- strided Kokkos subviews with a fixed leading index or a leading range, as
+  used by the forward displacement buffer, the wavefield helper, element
+  intersections, and the chunked domain iterators.
+
+A fully static descriptor that fails certification does not compile, with or
+without an ``enabled`` flag. Constant evaluation of any failing descriptor
+fails compilation. Other descriptors are checked on host and device in builds
+without ``NDEBUG``.
+In release builds no certification code runs, and constructing an uncertified
+layout has undefined behavior.
+
+Future transformations build derived layouts through an internal path that does
+not certify again. Each transformation must guarantee that every valid derived
+coordinate corresponds to exactly one valid parent coordinate with the same
+offset, so the parent's certificate carries over. Certifying again would
+wrongly reject some valid results. For example, tiling seven elements by four
+leaves a padding slot whose offset can equal a valid element of the next row.
 
 Reference
 ---------
