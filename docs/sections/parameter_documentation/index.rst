@@ -318,6 +318,25 @@ Parameter definitions
                             time-scheme:
                                 t0: 0.0
 
+
+                    .. dropdown:: ``override-cfl`` [optional]
+
+                        By default the run aborts if ``dt`` exceeds the
+                        suggested time step, which is the smallest
+                        element-wise estimate at Courant number 0.5. Setting
+                        this to ``true`` logs a warning instead and runs
+                        anyway. The simulation may become unstable.
+
+                        :default value: false
+
+                        :possible values: [true, false]
+
+                        .. code-block:: yaml
+                            :caption: Example
+
+                            time-scheme:
+                                override-cfl: true
+
         .. dropdown:: ``simulation-mode``
 
             Defines the type of simulation to run (e.g. forward, adjoint, combined,
@@ -983,7 +1002,9 @@ Parameter definitions
 
     .. dropdown:: ``sources``
 
-        Define sources
+        Define sources. Required, except in a 3D run with an ``injection``
+        section, where it may be omitted when the incident field comes
+        entirely from the injection plugin.
 
         :default value: None
 
@@ -1126,3 +1147,66 @@ Parameter definitions
                 attenuation-frequency-band:
                     - 0.1 Hz
                     - 10.0 Hz
+
+    .. dropdown:: ``injection`` [optional]
+
+        Apply an incident wavefield provided by an injection plugin (3D forward
+        simulations only). The plugin is selected on the command line with
+        ``--injection-plugin`` and receives its own configuration file through
+        ``--injection-config``; this section is required exactly when a plugin
+        is given.
+
+        This section describes how SPECFEM++ applies and buffers the incident
+        field. Everything about the field itself (wave type, incidence, source
+        time function, background model, time origin) belongs in the plugin's
+        configuration file, so unknown keys are rejected. Plugin step
+        :math:`s` is simulation time :math:`t_0 + s\,\Delta t`.
+
+        The mesh must declare injection faces (``STACEY_AS_INJECTION_BOUNDARY``
+        or ``INJECTION_XMIN/XMAX/YMIN/YMAX/BOTTOM/TOP`` in the mesher's
+        parameter file).
+
+        .. code-block:: yaml
+            :caption: Example injection section
+
+            injection:
+                method: stacey
+                window-steps: 64
+
+        .. dropdown:: ``method``
+
+            Injection method: how the solver applies the incident field.
+
+            :default value: None
+
+            :possible values: [string] Name of a registered method. Built
+                in: ``stacey``, which injects through the Stacey absorbing
+                boundary at elastic isotropic and anisotropic points; the
+                injection faces must be Stacey faces.
+
+        .. dropdown:: ``window-steps`` [optional]
+
+            Number of time steps the plugin fills per call.
+
+            :default value: As many as fit in ``memory-budget``, at most the
+                number of time steps.
+
+            :possible values: [int] At least 1.
+
+        .. dropdown:: ``memory-budget`` [optional]
+
+            Memory for the host staging and device buffers of the incident
+            field, in MiB. Used to choose ``window-steps`` when it is not set.
+
+            :default value: 256
+
+            :possible values: [int] At least 1.
+
+        .. dropdown:: ``validate`` [optional]
+
+            Reject non-finite values (NaN, Inf) returned by the plugin, naming
+            the point, component and step.
+
+            :default value: True in debug builds, false otherwise.
+
+            :possible values: [bool]

@@ -140,6 +140,10 @@ end module constants
   ! .true. : write top (zmax) faces as free-surface section in database
   logical :: TOP_FREE_SURFACE
 
+  logical :: STACEY_AS_INJECTION_BOUNDARY = .false.
+  ! xmin, xmax, ymin, ymax, bottom, top
+  logical, dimension(6) :: INJECTION_SIDES = .false.
+
   ! sources and receivers Z coordinates given directly instead of with depth
   logical :: USE_SOURCES_RECEIVERS_Z
 

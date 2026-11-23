@@ -82,19 +82,19 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
         const int ix = index(2);
 
         PointFieldType result;
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
         for (int icomp = 0; icomp < ncomp; icomp++) {
           result(icomp) = 0;
         }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
         for (int iquad = 0; iquad < nquad_intersection; iquad++) {
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
           for (int icomp = 0; icomp < ncomp; icomp++) {

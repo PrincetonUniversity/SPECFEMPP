@@ -1,114 +1,86 @@
-pipeline{
+// What each axis value means.
+
+def compiler_module = [GCC11: 'gcc/11', GCC14: 'gcc-toolset/14']
+def simd_flags = [
+    SIMD_NONE  : '-DSPECFEM_ENABLE_SIMD=OFF',
+    SIMD_NATIVE: '-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+]
+def host = [
+    SERIAL: [cmake: '-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON', ctest: '-j'],
+    OPENMP: [cmake: '-DKokkos_ENABLE_OPENMP=ON', ctest: '-j 1']
+]
+
+pipeline {
     agent {
         node {
             label 'della-rse_specfempp'
         }
     }
-    stages{
-        stage(' GNU Host Compiler Check '){
+    options {
+        // Each pull request is its own multibranch sub-job, so this only aborts
+        // the superseded build of the same pull request.
+        disableConcurrentBuilds(abortPrevious: true)
+    }
+    stages {
+        stage('Reset Reporting') {
+            steps {
+                // Every matrix cell shares one workspace and workspaces are reused between
+                // builds, so a junit/ left by an earlier build would be archived as if it
+                // belonged to this one.
+                sh 'rm -rf junit && mkdir -p junit'
+            }
+        }
+        stage('GNU Host Compiler Check') {
             matrix {
                 axes {
-                    axis{
+                    axis {
                         name 'GNUCompiler'
-                        values 'GCC8;gcc/11', 'GCC14;gcc-toolset/14'
+                        values 'GCC11', 'GCC14'
                     }
-                    axis{
+                    axis {
                         name 'SIMD'
-                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+                        values 'SIMD_NONE', 'SIMD_NATIVE'
                     }
-                    axis{
+                    axis {
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 4;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 4;-j 1'
+                        values 'SERIAL', 'OPENMP'
                     }
                 }
+                // Read by .jenkins/cell.sh
+                environment {
+                    CELL            = "cpu_${GNUCompiler}_${HostSpace}_${SIMD}"
+                    MODULES         = "${compiler_module[GNUCompiler]}"
+                    CMAKE_FLAGS     = "${host[HostSpace].cmake} ${simd_flags[SIMD]}"
+                    SLURM_FLAGS     = '-n 1 -c 4 -t 00:15:00 --constraint=intel'
+                    CTEST_FLAGS     = "${host[HostSpace].ctest}"
+                    OMP_NUM_THREADS = '20'
+                }
                 stages {
-                    stage ('Build and Clean '){
-                        environment {
-                            // CMAKE build flags
-                            GNU_COMPILER_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${GNUCompiler}"'
-                                                ).trim()}"""
-                            GNU_COMPILER_MODULE = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${GNUCompiler}"'
-                                                ).trim()}"""
-                            CMAKE_HOST_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            CMAKE_HOST_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            CTEST_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f4 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            HOST_RUN_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f3 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            SIMD_NAME = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f1 <<<"${SIMD}"'
-                                                ).trim()}"""
-                            SIMD_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${SIMD}"'
-                                                ).trim()}"""
+                    stage('Build') {
+                        steps {
+                            sh '.jenkins/cell.sh build'
                         }
-                        stages {
-                            stage (' Build '){
-                                steps {
-                                    echo "Building ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} with ${GNU_COMPILER_NAME}"
-                                    sh """
-                                        module load cmake/3.30.8
-                                        module load boost/1.85.0
-                                        module load ${GNU_COMPILER_MODULE}
-                                        cmake3 -S . -B build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} \
-                                          -DCMAKE_BUILD_TYPE=Release \
-                                          -D CMAKE_INSTALL_PREFIX=install_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/bin \
-                                          ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} \
-                                          -D SPECFEM_BUILD_TESTS=ON \
-                                          -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} \
-                                          -D SPECFEM_BUILD_BENCHMARKS=OFF
-                                        cmake3 --build build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                    """
-                                    echo ' Build completed '
-                                }
-                            }
-                            stage (' Test '){
-                                steps {
-                                    echo ' Testing '
-                                    sh """
-                                        module load cmake/3.30.8
-                                        module load boost/1.85.0
-                                        module load ${GNU_COMPILER_MODULE}
-                                        cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
-                                        srun -t 00:15:00 --account rse ${HOST_RUN_FLAGS} \
-                                            --constraint="intel" \
-                                            bash -c 'export OMP_PROC_BIND=spread; \
-                                            export OMP_PLACES=threads; \
-                                            export OMP_NUM_THREADS=20; \
-                                            hostname; \
-                                            ctest ${CTEST_FLAGS} --output-on-failure --no-tests=error;'
-                                    """
-                                    echo ' Testing completed '
-                                }
-                            }
+                    }
+                    stage('Test') {
+                        steps {
+                            sh '.jenkins/cell.sh test'
                         }
-                        post {
-                            always {
-                                echo 'Executing cleanup of build and test artifacts'
-                                sh "rm -rf build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                sh "rm -rf install_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                            }
-                        }
+                    }
+                }
+                post {
+                    always {
+                        sh '.jenkins/cell.sh clean'
                     }
                 }
             }
+        }
+    }
+    post {
+        always {
+            junit testResults: 'junit/*.xml',
+                  allowEmptyResults: true,
+                  skipPublishingChecks: true
+            archiveArtifacts artifacts: 'junit/*.xml', allowEmptyArchive: true
         }
     }
 }

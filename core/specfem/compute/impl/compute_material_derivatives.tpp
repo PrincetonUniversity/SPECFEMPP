@@ -45,7 +45,7 @@ void specfem::compute::impl::compute_material_derivatives(
     return;
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver

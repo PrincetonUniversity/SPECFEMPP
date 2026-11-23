@@ -130,26 +130,26 @@ void program_2d(
   //                   CFL Condition Check
   // --------------------------------------------------------------
   {
-    const type_real cfl =
-        dt * assembly.info.v.max / assembly.info.gll_distance.min;
+    const type_real suggested_dt = assembly.info.suggested_time_step;
     specfem::Logger::info([&](std::ostringstream &oss) {
       oss << "CFL Condition Check:\n"
           << "-------------------------------\n"
-          << " CFL number: ............. " << cfl << "\n"
-          << " Maximum CFL (Cmax): ..... "
-          << specfem::constants::COURANT_NUMBER_SUGGESTED << "\n";
+          << " DT: ..................... " << dt << "\n"
+          << " Suggested DT: ........... " << suggested_dt << "\n";
     });
-    if (cfl > specfem::constants::COURANT_NUMBER_SUGGESTED) {
+    if (dt > suggested_dt) {
       std::ostringstream msg;
-      msg << "CFL condition violated!\n"
-          << "  CFL = " << cfl
-          << " > Cmax = " << specfem::constants::COURANT_NUMBER_SUGGESTED
-          << "\n"
-          << "  Current dt = " << dt << "\n"
-          << "  Suggested dt (satisfies CFL): "
-          << assembly.info.suggested_time_step << "\n"
-          << "  Please update the 'dt' parameter in your configuration.";
-      specfem_abort(msg.str(), 30);
+      msg << "DT = " << dt << " exceeds the suggested DT = " << suggested_dt
+          << " (Courant number " << specfem::constants::COURANT_NUMBER_SUGGESTED
+          << " in the most restrictive element).\n";
+      if (setup.get_override_cfl()) {
+        specfem::Logger::warning(msg.str() +
+                                 "Continuing because 'override-cfl' is set.");
+      } else {
+        msg << "Reduce 'dt' in the time-scheme section, or set "
+               "'override-cfl: true' to run anyway.";
+        specfem_abort(msg.str(), 1);
+      }
     }
   }
   // Divergence check — runs ~100 times over the full simulation

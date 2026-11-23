@@ -1,0 +1,11 @@
+# Plane-wave plugin configuration: SV wave crossing the box centre at t = 7 s.
+material: {rho: 2300, vp: 2800, vs: 1500}
+wave:
+  type: SV
+  take-off: 25
+  azimuth: 120
+  origin: [5000, 5000, -5000]
+  origin-time: 7.0
+  amplitude: 1.0e-3
+source-time-function: {type: ricker, f0: 0.4}
+material-tolerance: 1.0e-4
