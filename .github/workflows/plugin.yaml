@@ -1,0 +1,57 @@
+name: Injection plugins
+
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '*' # All branches should run on PRs
+
+jobs:
+  # Install the plugin SDK once; every plugin is built against this install,
+  # exactly as an external plugin author would.
+  sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # The SDK is header-only, so configuring is enough to install it.
+      - name: Configure
+        run: cmake --preset release
+      - name: Install the plugin SDK
+        run: cmake --install build/release --component plugin_sdk --prefix sdk-install
+      - name: Upload the SDK
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-sdk
+          path: sdk-install
+
+  plugins:
+    needs: sdk
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # To test another plugin, add an entry. Its project must use
+        # find_package(SpecfemPluginSDK) and register its tests with CTest.
+        plugin:
+          - name: plane_wave
+            path: examples/plugins/plane_wave
+    name: plugin (${{ matrix.plugin.name }})
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download the SDK
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-sdk
+          path: sdk-install
+      - name: Configure
+        run: cmake -S ${{ matrix.plugin.path }} -B build/${{ matrix.plugin.name }}
+          -DCMAKE_PREFIX_PATH=$PWD/sdk-install -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build/${{ matrix.plugin.name }} -j 2
+      - name: Test
+        run: ctest --test-dir build/${{ matrix.plugin.name }} --output-on-failure

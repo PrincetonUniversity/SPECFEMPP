@@ -25,6 +25,7 @@
     ellipticity/index
     enums/index
     execution/index
+    injection/index
     io/index
     jacobian/index
     linear_system/index
@@ -37,6 +38,7 @@
     optimization/index
     parallel_configuration/index
     periodic_tasks/index
+    plugin/index
     point/index
     program/index
     quadrature/index

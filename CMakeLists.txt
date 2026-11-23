@@ -312,6 +312,9 @@ endif()
 # Add module subdirectories
 add_subdirectory(core)
 
+# Header-only SDK for injection plugins (independent of core targets)
+add_subdirectory(sdk)
+
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")

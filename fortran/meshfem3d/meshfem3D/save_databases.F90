@@ -47,7 +47,8 @@ subroutine save_databases(nspec,nglob, &
     nspec_CPML,is_CPML,CPML_to_spec,CPML_regions, &
     SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, &
     xadj_adj, adjncy_adj, adj_types_local, nb_adj_edges, &
-    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
+    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+    STACEY_AS_INJECTION_BOUNDARY, INJECTION_SIDES
 
   use assemble_MPI_par, only: mpi_adjacency, num_mpi_adjacencies
 
@@ -98,6 +99,8 @@ subroutine save_databases(nspec,nglob, &
   integer :: n_abs_xmin, n_abs_xmax, n_abs_ymin, n_abs_ymax
   ! Z boundary face counts: present whenever the face has any BC applied
   integer :: n_bottom, n_top
+  logical, dimension(6) :: injection_sides_resolved
+  integer :: injection_surface_kind
   ! there was a potential bug here if nspec is big
   !integer,dimension(2,nspec) :: material_index
   integer,dimension(:,:),allocatable :: material_index
@@ -333,8 +336,11 @@ subroutine save_databases(nspec,nglob, &
   n_top = 0
   if (TOP_FREE_SURFACE .or. STACEY_ABSORBING_CONDITIONS) n_top = NSPEC2D_TOP
 
-  ! Write boundary condition flags so the C++ reader can classify sections 5 and 6
-  write(IIN_database) TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
+  call resolve_injection_sides(STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+                               STACEY_AS_INJECTION_BOUNDARY, INJECTION_SIDES, &
+                               injection_sides_resolved, injection_surface_kind)
+  call write_boundary_header(IIN_database, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+                             injection_sides_resolved, injection_surface_kind)
 
   write(IIN_database) 1,n_abs_xmin
   write(IIN_database) 2,n_abs_xmax

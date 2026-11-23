@@ -7,6 +7,7 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -178,29 +179,72 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
     const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes) {
 
+  using InjectionSurface =
+      specfem::mesh::InjectionSurface<specfem::element::dimension_tag::dim3>;
+  using specfem::mesh::InjectionSurfaceKind;
+
   int boundary_number;
   std::array<int, 6> nfaces_per_direction;
 
-  // New databases write boundary-condition flags before the section headers.
-  // Legacy databases start directly with section 1; keep supporting them so
-  // checked-in fixtures and older decomposed meshes remain readable.
+  // Older layouts (flags only, or no header) start with two 4-byte values too,
+  // so the first record can always be read as two ints.
   const auto boundary_start = stream.tellg();
   bool top_free_surface = true;
   bool bottom_free_surface = false;
   bool has_boundary_flags = true;
-  specfem::io::fortran_read_line(stream, &top_free_surface,
-                                 &bottom_free_surface);
-  specfem::io::fortran_read_line(stream, &boundary_number,
-                                 &nfaces_per_direction[0]);
+  int injection_kind = static_cast<int>(InjectionSurfaceKind::none);
+  std::array<bool, InjectionSurface::nsides> injection_sides = {};
 
-  if (boundary_number != 1) {
-    has_boundary_flags = false;
-    top_free_surface = true;
-    bottom_free_surface = false;
-    stream.clear();
-    stream.seekg(boundary_start);
+  int header_magic = 0;
+  int header_version = 0;
+  specfem::io::fortran_read_line(stream, &header_magic, &header_version);
+
+  if (header_magic ==
+      specfem::io::mesh::impl::fortran::dim3_impl::boundary_header_magic) {
+    if (header_version !=
+        specfem::io::mesh::impl::fortran::dim3_impl::boundary_header_version)
+      throw std::runtime_error(
+          "Unsupported database boundary header version " +
+          std::to_string(header_version) + " (this reader supports version " +
+          std::to_string(specfem::io::mesh::impl::fortran::dim3_impl::
+                             boundary_header_version) +
+          "). Regenerate the database with a matching mesher.");
+
+    specfem::io::fortran_read_line(stream, &top_free_surface,
+                                   &bottom_free_surface);
+    specfem::io::fortran_read_line(stream, &injection_kind, &injection_sides[0],
+                                   &injection_sides[1], &injection_sides[2],
+                                   &injection_sides[3], &injection_sides[4],
+                                   &injection_sides[5]);
     specfem::io::fortran_read_line(stream, &boundary_number,
                                    &nfaces_per_direction[0]);
+  } else {
+    stream.clear();
+    stream.seekg(boundary_start);
+    specfem::io::fortran_read_line(stream, &top_free_surface,
+                                   &bottom_free_surface);
+    specfem::io::fortran_read_line(stream, &boundary_number,
+                                   &nfaces_per_direction[0]);
+
+    if (boundary_number != 1) {
+      has_boundary_flags = false;
+      top_free_surface = true;
+      bottom_free_surface = false;
+      stream.clear();
+      stream.seekg(boundary_start);
+      specfem::io::fortran_read_line(stream, &boundary_number,
+                                     &nfaces_per_direction[0]);
+    }
+  }
+
+  if (injection_kind == static_cast<int>(InjectionSurfaceKind::none)) {
+    injection_sides = {};
+  } else if (injection_kind !=
+             static_cast<int>(InjectionSurfaceKind::box_sides)) {
+    throw std::runtime_error(
+        "Unsupported injection surface kind " + std::to_string(injection_kind) +
+        " in database boundary header. Only box sides (kind 1) are "
+        "supported.");
   }
 
   if (boundary_number != 1)
@@ -224,6 +268,12 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
   std::vector<specfem::mesh_entity::dim3::type> abs_faces;
   std::vector<int> fs_elements;
   std::vector<specfem::mesh_entity::dim3::type> fs_faces;
+  std::vector<int> inj_elements;
+  std::vector<specfem::mesh_entity::dim3::type> inj_faces;
+
+  constexpr std::array<const char *, 6> section_names = { "XMIN",   "XMAX",
+                                                          "YMIN",   "YMAX",
+                                                          "BOTTOM", "TOP" };
 
   for (int dir = 0; dir < 6; ++dir) {
     const int num_faces = nfaces_per_direction[dir];
@@ -231,6 +281,12 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
                                      ? ((dir == 4 && bottom_free_surface) ||
                                         (dir == 5 && top_free_surface))
                                      : (dir == 5);
+    const bool is_injection = injection_sides[dir];
+
+    if (is_injection && is_free_surface)
+      throw std::runtime_error(
+          std::string("Invalid database: side ") + section_names[dir] +
+          " is marked for injection but is a free surface");
 
     if (num_faces > 0) {
       for (int iface = 0; iface < num_faces; ++iface) {
@@ -249,6 +305,10 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
         } else {
           abs_elements.push_back(element_index - 1);
           abs_faces.push_back(face);
+        }
+        if (is_injection) {
+          inj_elements.push_back(element_index - 1);
+          inj_faces.push_back(face);
         }
       }
     }
@@ -271,5 +331,14 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
     free_surf.type(i) = fs_faces[i];
   }
 
-  return { absorbing, free_surf };
+  InjectionSurface injection(static_cast<InjectionSurfaceKind>(injection_kind),
+                             injection_sides,
+                             static_cast<int>(inj_elements.size()));
+  for (int i = 0; i < static_cast<int>(inj_elements.size()); ++i) {
+    injection.index_mapping(i) = inj_elements[i];
+    injection.type(i) = inj_faces[i];
+    injection.side(i) = 1;
+  }
+
+  return { absorbing, free_surf, injection };
 }
