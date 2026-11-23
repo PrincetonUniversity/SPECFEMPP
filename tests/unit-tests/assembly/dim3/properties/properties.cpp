@@ -392,6 +392,7 @@ TEST_P(Assembly3DTest, KernelsIOLayout) {
                   view(range(e) - base, iz, iy, ix) = range(e) + offset;
         });
       });
+  assembly.kernels.copy_to_device();
 
   specfem::io::kernel_writer<specfem::io_backends::NPY<specfem::io::write>>
       writer(temp_io_directory);
