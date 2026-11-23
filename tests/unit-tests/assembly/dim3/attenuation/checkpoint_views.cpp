@@ -1,4 +1,5 @@
 #include "../../../io/layout_oracle.hpp"
+#include "../../../mismatch_recorder.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/datatype/domain_view.hpp"
@@ -132,8 +133,10 @@ TEST(AttenuationCheckpointViews, BaseViewsRoundTripThroughNpy) {
             dir + "/" + name + ".npy");
         ASSERT_EQ(raw.shape.size(), 1u) << name;
         ASSERT_EQ(raw.shape[0], base.extent(0)) << name;
+        specfem_test::MismatchRecorder mismatches;
         for (std::size_t i = 0; i < base.extent(0); ++i)
-          EXPECT_NEAR(raw.data[i], base(i), 1e-3) << name << " i=" << i;
+          mismatches.near(raw.data[i], base(i), 1e-3, i);
+        EXPECT_TRUE(mismatches.result()) << name;
         Kokkos::deep_copy(base, type_real(0));
       });
 
@@ -149,11 +152,12 @@ TEST(AttenuationCheckpointViews, BaseViewsRoundTripThroughNpy) {
   medium.for_each_checkpoint_view(
       [&](const std::string &name, const auto &view) {
         const int s = salt++;
+        specfem_test::MismatchRecorder mismatches;
         impl::visit(view, [&](int e, int iz, int iy, int ix, int j, auto &v) {
-          EXPECT_NEAR(v, impl::pattern(s, e, iz, iy, ix, j), 1e-3)
-              << name << " (" << e << "," << iz << "," << iy << "," << ix << ","
-              << j << ")";
+          mismatches.near(v, impl::pattern(s, e, iz, iy, ix, j), 1e-3, e, iz,
+                          iy, ix, j);
         });
+        EXPECT_TRUE(mismatches.result()) << name;
       });
 
   boost::filesystem::remove_all(dir);

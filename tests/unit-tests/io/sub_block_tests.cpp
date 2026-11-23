@@ -1,3 +1,4 @@
+#include "../mismatch_recorder.hpp"
 #include "SPECFEM_Environment.hpp"
 #include "layout_oracle.hpp"
 #include "specfem/datatype/domain_view.hpp"
@@ -79,12 +80,14 @@ TEST(SubBlockTest, ExtractSubBlockMatchesHeader) {
         static_cast<std::size_t>(count), 3, 2
       };
       ASSERT_EQ(raw.shape, expected);
+      specfem_test::MismatchRecorder mismatches;
       for (std::size_t e = 0; e < expected[0]; ++e)
         for (std::size_t iz = 0; iz < 3; ++iz)
           for (std::size_t ix = 0; ix < 2; ++ix)
-            EXPECT_NEAR(raw.at({ e, iz, ix }), value3(offset + e, iz, ix),
-                        1e-12)
-                << "nelem=" << nelem << " offset=" << offset;
+            mismatches.near(raw.at({ e, iz, ix }), value3(offset + e, iz, ix),
+                            1e-12, e, iz, ix);
+      EXPECT_TRUE(mismatches.result())
+          << "nelem=" << nelem << " offset=" << offset;
     }
   }
 }
@@ -111,12 +114,14 @@ TEST(SubBlockTest, ExtractSubBlockRank4) {
     EXPECT_FALSE(raw.fortran_order);
     const std::vector<std::size_t> expected = { nelem, 3, 2, 2 };
     ASSERT_EQ(raw.shape, expected);
+    specfem_test::MismatchRecorder mismatches;
     for (std::size_t e = 0; e < nelem; ++e)
       for (std::size_t iz = 0; iz < 3; ++iz)
         for (std::size_t iy = 0; iy < 2; ++iy)
           for (std::size_t ix = 0; ix < 2; ++ix)
-            EXPECT_NEAR(raw.at({ e, iz, iy, ix }), value4(e, iz, iy, ix),
-                        1e-12);
+            mismatches.near(raw.at({ e, iz, iy, ix }), value4(e, iz, iy, ix),
+                            1e-12, e, iz, iy, ix);
+    EXPECT_TRUE(mismatches.result()) << "nelem=" << nelem;
   }
 }
 
@@ -136,14 +141,15 @@ TEST(SubBlockTest, InsertSubBlockRoundTrip) {
 
   specfem::io::impl::insert_sub_block(dst, sub, offset);
 
+  specfem_test::MismatchRecorder mismatches;
   for (int e = 0; e < 7; ++e)
     for (std::size_t iz = 0; iz < 3; ++iz)
       for (std::size_t ix = 0; ix < 2; ++ix) {
         const bool inserted = e >= offset && e < offset + count;
         const double expected = inserted ? value3(e - offset, iz, ix) : 0.0;
-        EXPECT_NEAR(dst(e, iz, ix), expected, 1e-12)
-            << e << "," << iz << "," << ix;
+        mismatches.near(dst(e, iz, ix), expected, 1e-12, e, iz, ix);
       }
+  EXPECT_TRUE(mismatches.result());
 }
 
 TEST(StorageOrderTest, DomainViewIsWritableOnlyAsOneFullTile) {
@@ -155,10 +161,13 @@ TEST(StorageOrderTest, DomainViewIsWritableOnlyAsOneFullTile) {
   FixedChunkView<3> one_tile("one_tile", 4, 3, 2);
   EXPECT_EQ(specfem::io_backends::impl::contiguous_storage_order(one_tile),
             specfem::io_backends::impl::StorageOrder::column_major);
+  specfem_test::MismatchRecorder mismatches;
   for (std::size_t e = 0; e < 4; ++e)
     for (std::size_t iz = 0; iz < 3; ++iz)
       for (std::size_t ix = 0; ix < 2; ++ix)
-        EXPECT_EQ(&one_tile(e, iz, ix), one_tile.data() + e + 4 * iz + 12 * ix);
+        mismatches.equal(&one_tile(e, iz, ix),
+                         one_tile.data() + e + 4 * iz + 12 * ix, e, iz, ix);
+  EXPECT_TRUE(mismatches.result());
 }
 
 TEST(StorageOrderTest, KokkosViewsAreClassifiedByStrides) {

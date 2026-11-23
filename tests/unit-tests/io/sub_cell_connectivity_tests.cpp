@@ -1,3 +1,4 @@
+#include "../mismatch_recorder.hpp"
 #include "SPECFEM_Environment.hpp"
 #include "specfem/io/impl/sub_cell_connectivity.hpp"
 #include <gtest/gtest.h>
@@ -26,6 +27,9 @@ TEST(SubCellConnectivity, QuadrilateralsSpanNeighbouringGllPoints) {
     ASSERT_EQ(connectivity.extent(1), 4);
 
     std::set<std::tuple<int, int, int>> corners;
+    specfem_test::MismatchRecorder element_mismatches;
+    specfem_test::MismatchRecorder z_mismatches;
+    specfem_test::MismatchRecorder x_mismatches;
     for (std::size_t icell = 0; icell < connectivity.extent(0); ++icell) {
       const int corner = connectivity(icell, 0);
       const int element = corner / (ngll * ngll);
@@ -39,13 +43,16 @@ TEST(SubCellConnectivity, QuadrilateralsSpanNeighbouringGllPoints) {
         const int node = connectivity(icell, inode);
         ASSERT_GE(node, 0);
         ASSERT_LT(node, number_of_points);
-        EXPECT_EQ(node / (ngll * ngll), element) << "cell " << icell;
-        EXPECT_EQ((node / ngll) % ngll, corner_z + node_offsets[inode][1])
-            << "cell " << icell << " node " << inode;
-        EXPECT_EQ(node % ngll, corner_x + node_offsets[inode][0])
-            << "cell " << icell << " node " << inode;
+        element_mismatches.equal(node / (ngll * ngll), element, icell, inode);
+        z_mismatches.equal((node / ngll) % ngll,
+                           corner_z + node_offsets[inode][1], icell, inode);
+        x_mismatches.equal(node % ngll, corner_x + node_offsets[inode][0],
+                           icell, inode);
       }
     }
+    EXPECT_TRUE(element_mismatches.result()) << "ngll=" << ngll << " element";
+    EXPECT_TRUE(z_mismatches.result()) << "ngll=" << ngll << " z";
+    EXPECT_TRUE(x_mismatches.result()) << "ngll=" << ngll << " x";
     EXPECT_EQ(corners.size(), connectivity.extent(0));
   }
 }
@@ -77,6 +84,10 @@ TEST(SubCellConnectivity, HexahedraSpanNeighbouringGllPoints) {
     ASSERT_EQ(connectivity.extent(1), 8);
 
     std::set<std::tuple<int, int, int, int>> corners;
+    specfem_test::MismatchRecorder element_mismatches;
+    specfem_test::MismatchRecorder z_mismatches;
+    specfem_test::MismatchRecorder y_mismatches;
+    specfem_test::MismatchRecorder x_mismatches;
     for (std::size_t icell = 0; icell < connectivity.extent(0); ++icell) {
       const int corner = connectivity(icell, 0);
       const int element = corner / points_per_element;
@@ -92,16 +103,20 @@ TEST(SubCellConnectivity, HexahedraSpanNeighbouringGllPoints) {
         const int node = connectivity(icell, inode);
         ASSERT_GE(node, 0);
         ASSERT_LT(node, number_of_points);
-        EXPECT_EQ(node / points_per_element, element) << "cell " << icell;
-        EXPECT_EQ((node / (ngll * ngll)) % ngll,
-                  corner_z + node_offsets[inode][2])
-            << "cell " << icell << " node " << inode;
-        EXPECT_EQ((node / ngll) % ngll, corner_y + node_offsets[inode][1])
-            << "cell " << icell << " node " << inode;
-        EXPECT_EQ(node % ngll, corner_x + node_offsets[inode][0])
-            << "cell " << icell << " node " << inode;
+        element_mismatches.equal(node / points_per_element, element, icell,
+                                 inode);
+        z_mismatches.equal((node / (ngll * ngll)) % ngll,
+                           corner_z + node_offsets[inode][2], icell, inode);
+        y_mismatches.equal((node / ngll) % ngll,
+                           corner_y + node_offsets[inode][1], icell, inode);
+        x_mismatches.equal(node % ngll, corner_x + node_offsets[inode][0],
+                           icell, inode);
       }
     }
+    EXPECT_TRUE(element_mismatches.result()) << "ngll=" << ngll << " element";
+    EXPECT_TRUE(z_mismatches.result()) << "ngll=" << ngll << " z";
+    EXPECT_TRUE(y_mismatches.result()) << "ngll=" << ngll << " y";
+    EXPECT_TRUE(x_mismatches.result()) << "ngll=" << ngll << " x";
     EXPECT_EQ(corners.size(), connectivity.extent(0));
   }
 }

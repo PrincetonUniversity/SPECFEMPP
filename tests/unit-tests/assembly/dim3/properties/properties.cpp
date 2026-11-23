@@ -18,6 +18,7 @@
  * @see specfem::point::properties for individual point property access
  */
 #include "../../../io/layout_oracle.hpp"
+#include "../../../mismatch_recorder.hpp"
 #include "../test_fixture.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
@@ -430,14 +431,16 @@ TEST_P(Assembly3DTest, KernelsIOLayout) {
           const auto raw = specfem_test::layout_oracle::read_npy_raw<type_real>(
               group + n + ".npy");
           check_shape(raw, n);
+          specfem_test::MismatchRecorder mismatches;
           for (int e = 0; e < nelem; ++e)
             for (std::size_t iz = 0; iz < ngllz; ++iz)
               for (std::size_t iy = 0; iy < nglly; ++iy)
                 for (std::size_t ix = 0; ix < ngllx; ++ix)
-                  EXPECT_NEAR(raw.at({ std::size_t(e), iz, iy, ix }),
-                              assembly.mesh.h_coord(range(e), iz, iy, ix, c),
-                              1e-4)
-                      << n << " e=" << e;
+                  mismatches.near(
+                      raw.at({ std::size_t(e), iz, iy, ix }),
+                      assembly.mesh.h_coord(range(e), iz, iy, ix, c), 1e-4, e,
+                      iz, iy, ix);
+          EXPECT_TRUE(mismatches.result()) << n;
         }
 
         assembly.kernels.template get_container<medium_tag, property_tag>()
@@ -446,13 +449,14 @@ TEST_P(Assembly3DTest, KernelsIOLayout) {
                   specfem_test::layout_oracle::read_npy_raw<type_real>(
                       group + view_name + ".npy");
               check_shape(raw, view_name);
+              specfem_test::MismatchRecorder mismatches;
               for (int e = 0; e < nelem; ++e)
                 for (std::size_t iz = 0; iz < ngllz; ++iz)
                   for (std::size_t iy = 0; iy < nglly; ++iy)
                     for (std::size_t ix = 0; ix < ngllx; ++ix)
-                      EXPECT_NEAR(raw.at({ std::size_t(e), iz, iy, ix }),
-                                  range(e) + offset, 1e-4)
-                          << view_name << " e=" << e;
+                      mismatches.near(raw.at({ std::size_t(e), iz, iy, ix }),
+                                      range(e) + offset, 1e-4, e, iz, iy, ix);
+              EXPECT_TRUE(mismatches.result()) << view_name;
               ++n_checked;
             });
       });

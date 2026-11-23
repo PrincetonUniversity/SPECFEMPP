@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
+#include "../mismatch_recorder.hpp"
 #include "layout_oracle.hpp"
 #include "specfem/io.hpp"
 
@@ -551,12 +552,18 @@ TYPED_TEST(IOFrameworkTest, LayoutDataOperations) {
     LOCAL_EXPECT_NO_THROW(
         file.template openDataset<LeftView>("left", read_left).read());
 
+    specfem_test::MismatchRecorder right_mismatches;
+    specfem_test::MismatchRecorder left_mismatches;
     for (int i = 0; i < n0; ++i)
       for (int j = 0; j < n1; ++j)
         for (int k = 0; k < n2; ++k) {
-          EXPECT_NEAR(read_right(i, j, k), value(i, j, k), 1e-12);
-          EXPECT_NEAR(read_left(i, j, k), value(i, j, k), 1e-12);
+          right_mismatches.near(read_right(i, j, k), value(i, j, k), 1e-12, i,
+                                j, k);
+          left_mismatches.near(read_left(i, j, k), value(i, j, k), 1e-12, i, j,
+                               k);
         }
+    EXPECT_TRUE(right_mismatches.result()) << "right";
+    EXPECT_TRUE(left_mismatches.result()) << "left";
 
 #ifndef NO_HDF5
     if constexpr (std::is_same_v<
@@ -863,14 +870,15 @@ TYPED_TEST(IOFrameworkTest, OracleMatchesLayoutHeader) {
       EXPECT_EQ(raw.shape, reversed ? reversed_shape : logical_shape) << name;
       ASSERT_EQ(raw.shape.size(), 3u) << name;
       ASSERT_EQ(raw.data.size(), n0 * n1 * n2) << name;
+      specfem_test::MismatchRecorder mismatches;
       for (std::size_t i = 0; i < n0; ++i)
         for (std::size_t j = 0; j < n1; ++j)
           for (std::size_t k = 0; k < n2; ++k) {
             const double stored =
                 reversed ? raw.at({ k, j, i }) : raw.at({ i, j, k });
-            EXPECT_NEAR(stored, value(i, j, k), 1e-12)
-                << name << " (" << i << "," << j << "," << k << ")";
+            mismatches.near(stored, value(i, j, k), 1e-12, i, j, k);
           }
+      EXPECT_TRUE(mismatches.result()) << name;
     }
   }
 }

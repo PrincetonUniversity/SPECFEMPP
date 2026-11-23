@@ -1,4 +1,5 @@
 #include "../../io/layout_oracle.hpp"
+#include "../../mismatch_recorder.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "specfem/datatype/domain_view.hpp"
 #include "specfem/io.hpp"
@@ -141,13 +142,14 @@ TEST_F(Assembly2D, AttenuationCheckpointRoundTrip) {
               [&](const std::string &name, const auto &view) {
                 const int s = salt++;
                 std::size_t n_entries = 0;
+                specfem_test::MismatchRecorder mismatches;
                 impl::visit(view, [&](std::size_t e, std::size_t iz,
                                       std::size_t ix, std::size_t j, auto &v) {
-                  EXPECT_NEAR(v, impl::pattern(s, e, iz, ix, j), 1e-3)
-                      << Test.name << " " << name << " (" << e << "," << iz
-                      << "," << ix << "," << j << ")";
+                  mismatches.near(v, impl::pattern(s, e, iz, ix, j), 1e-3, e,
+                                  iz, ix, j);
                   ++n_entries;
                 });
+                EXPECT_TRUE(mismatches.result()) << Test.name << " " << name;
                 EXPECT_GT(n_entries, 0u) << name;
               });
           ++n_checked;
@@ -318,25 +320,32 @@ TEST_F(Assembly2D, WavefieldCoordinatesLayout) {
           ASSERT_EQ(indices.shape.size(), 1u);
           ASSERT_EQ(indices.data.size(), n_elements);
 
+          specfem_test::MismatchRecorder element_mismatches;
+          specfem_test::MismatchRecorder x_mismatches;
+          specfem_test::MismatchRecorder z_mismatches;
           for (std::size_t e = 0; e < n_elements; ++e) {
             const int ispec = indices.data[e];
             ASSERT_GE(ispec, 0);
             ASSERT_LT(ispec, nspec);
-            EXPECT_EQ(ispec, elements(e));
+            element_mismatches.equal(ispec, elements(e), e);
             for (int iz = 0; iz < ngllz; ++iz)
               for (int ix = 0; ix < ngllx; ++ix) {
                 const int iglob = mapping.at({ e, static_cast<std::size_t>(iz),
                                                static_cast<std::size_t>(ix) });
                 ASSERT_GE(iglob, 0);
                 ASSERT_LT(iglob, nglob);
-                EXPECT_NEAR(x.data[iglob],
-                            assembly.mesh.h_coord(0, ispec, iz, ix), 1e-4)
-                    << Test.name << " e=" << e << " iz=" << iz << " ix=" << ix;
-                EXPECT_NEAR(z.data[iglob],
-                            assembly.mesh.h_coord(1, ispec, iz, ix), 1e-4)
-                    << Test.name << " e=" << e << " iz=" << iz << " ix=" << ix;
+                x_mismatches.near(x.data[iglob],
+                                  assembly.mesh.h_coord(0, ispec, iz, ix), 1e-4,
+                                  e, iz, ix);
+                z_mismatches.near(z.data[iglob],
+                                  assembly.mesh.h_coord(1, ispec, iz, ix), 1e-4,
+                                  e, iz, ix);
               }
           }
+          EXPECT_TRUE(element_mismatches.result())
+              << Test.name << " element_indices";
+          EXPECT_TRUE(x_mismatches.result()) << Test.name << " X";
+          EXPECT_TRUE(z_mismatches.result()) << Test.name << " Z";
           ++n_media;
         });
 

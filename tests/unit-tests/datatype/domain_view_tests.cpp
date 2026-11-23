@@ -1,3 +1,4 @@
+#include "../mismatch_recorder.hpp"
 #include "specfem/datatype/domain_view.hpp"
 #include "specfem/datatype/simd.hpp"
 #include <Kokkos_Core.hpp>
@@ -194,14 +195,18 @@ TEST(DomainView, StorageViewAndTileWidth) {
   EXPECT_EQ(specfem::datatype::storage_tile_width(tiled), 4u);
   EXPECT_EQ(specfem::datatype::storage_tile_width(native), 7u);
 
+  specfem_test::MismatchRecorder tiled_mismatches;
+  specfem_test::MismatchRecorder native_mismatches;
   for (int e = 0; e < 7; ++e)
     for (int z = 0; z < 3; ++z)
       for (int x = 0; x < 2; ++x) {
-        EXPECT_NEAR(tiled_storage(tiled.mapping()(e, z, x)), tiled(e, z, x),
-                    1.e-6);
-        EXPECT_NEAR(native_storage(single_tile.mapping()(e, z, x)),
-                    native(e, z, x), 1.e-6);
+        tiled_mismatches.near(tiled_storage(tiled.mapping()(e, z, x)),
+                              tiled(e, z, x), 1.e-6, e, z, x);
+        native_mismatches.near(native_storage(single_tile.mapping()(e, z, x)),
+                               native(e, z, x), 1.e-6, e, z, x);
       }
+  EXPECT_TRUE(tiled_mismatches.result()) << "tiled storage";
+  EXPECT_TRUE(native_mismatches.result()) << "native storage";
 }
 
 int main(int argc, char **argv) {

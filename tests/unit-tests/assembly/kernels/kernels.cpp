@@ -1,4 +1,5 @@
 #include "../../io/layout_oracle.hpp"
+#include "../../mismatch_recorder.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
@@ -138,7 +139,8 @@ add_value(const ViewType elements,
   Kokkos::fence();
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename ExecutionSpace, typename ViewType>
@@ -515,33 +517,36 @@ TEST_F(Assembly2D, kernels_io_layout) {
                 specfem_test::layout_oracle::read_npy_raw<type_real>(group + n +
                                                                      ".npy");
             check_shape(raw, n);
+            specfem_test::MismatchRecorder mismatches;
             for (int e = 0; e < nelem; ++e)
               for (std::size_t iz = 0; iz < ngllz; ++iz)
                 for (std::size_t ix = 0; ix < ngllx; ++ix)
-                  EXPECT_NEAR(
+                  mismatches.near(
                       raw.at({ std::size_t(e), iz, ix }),
-                      assembly.mesh.h_coord(c, element_range(e), iz, ix), 1e-4)
-                      << n << " e=" << e;
+                      assembly.mesh.h_coord(c, element_range(e), iz, ix), 1e-4,
+                      e, iz, ix);
+            EXPECT_TRUE(mismatches.result()) << n;
           }
 
           // Kernels
           const auto &container =
               assembly.kernels
                   .template get_container<medium_tag, property_tag>();
-          container.for_each_host_view(
-              [&](const auto, const std::string view_name) {
-                const auto raw =
-                    specfem_test::layout_oracle::read_npy_raw<type_real>(
-                        group + view_name + ".npy");
-                check_shape(raw, view_name);
-                for (int e = 0; e < nelem; ++e)
-                  for (std::size_t iz = 0; iz < ngllz; ++iz)
-                    for (std::size_t ix = 0; ix < ngllx; ++ix)
-                      EXPECT_NEAR(raw.at({ std::size_t(e), iz, ix }),
-                                  element_range(e) + offset, 1e-4)
-                          << view_name << " e=" << e;
-                ++n_checked;
-              });
+          container.for_each_host_view([&](const auto,
+                                           const std::string view_name) {
+            const auto raw =
+                specfem_test::layout_oracle::read_npy_raw<type_real>(
+                    group + view_name + ".npy");
+            check_shape(raw, view_name);
+            specfem_test::MismatchRecorder mismatches;
+            for (int e = 0; e < nelem; ++e)
+              for (std::size_t iz = 0; iz < ngllz; ++iz)
+                for (std::size_t ix = 0; ix < ngllx; ++ix)
+                  mismatches.near(raw.at({ std::size_t(e), iz, ix }),
+                                  element_range(e) + offset, 1e-4, e, iz, ix);
+            EXPECT_TRUE(mismatches.result()) << view_name;
+            ++n_checked;
+          });
         });
     EXPECT_GT(n_checked, 0);
     boost::filesystem::remove_all(temp_io_directory);
