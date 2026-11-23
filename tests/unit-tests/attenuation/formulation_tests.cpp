@@ -6,6 +6,7 @@
 #include <limits>
 #include <numbers>
 #include <stdexcept>
+#include <utility>
 
 // The attenuation formulation against its defining relations: a 1/L
 // generalized Maxwell solid with flat Q(omega) over the band, the storage
@@ -173,12 +174,11 @@ TEST(Attenuation_FormulationFit, RejectsUnconvergedFit) {
 TEST(Attenuation_QualityFactorFitTables, ClipsToMaximumByDefault) {
   const type_real inf = std::numeric_limits<type_real>::infinity();
   specfem::attenuation::QualityFactorFitTables<3> clipped;
-  for (const auto &[q, expected] : { std::pair<type_real, type_real>{ 80, 80 },
-                                     { 9000, 9000 },
-                                     { 0, 9000 },
-                                     { -5, 9000 },
-                                     { 9999, 9000 },
-                                     { inf, 9000 } }) {
+  const std::pair<type_real, type_real> cases[] = {
+    { 80, 80 },   { 9000, 9000 }, { 0, 9000 },
+    { -5, 9000 }, { 9999, 9000 }, { inf, 9000 }
+  };
+  for (const auto &[q, expected] : cases) {
     EXPECT_NEAR(clipped.bulk.clip(q), expected, 0.0);
     EXPECT_NEAR(clipped.shear.clip(q), expected, 0.0);
   }
