@@ -41,11 +41,11 @@ struct TestCase {
 
 // Build a full assembly + time scheme from a Newmark displacement-test
 // dataset. Paths are relative to TEST_OUTPUT_DIR, where the
-// displacement_tests data tree is linked (see SERIAL_LINK_DIRS in
+// configurations data tree is linked (see SERIAL_LINK_DIRS in
 // serial.cmake).
 TestCase build_case_3d(const std::string &test_name) {
   const std::string test_path =
-      "displacement_tests/Newmark/serial/dim3/" + test_name;
+      "configurations/dim3/explicit_solver/" + test_name;
 
   specfem::runtime_configuration::setup setup(test_path +
                                               "/specfem_config.yaml");

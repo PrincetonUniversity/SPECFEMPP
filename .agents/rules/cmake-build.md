@@ -53,7 +53,7 @@ specfem_add_test(my_tests
   launcher. A `TEST_P` therefore collapses to a single entry covering all its instances. When
   the instances come from a data file read at runtime, list them with
   `PARAM_CASES <Suite>.<Case>/<instance>...` to get one entry each (MPI targets only; see
-  `tests/integration-tests/mpi.cmake` for the pattern).
+  `tests/integration-tests/runner.cmake` for the pattern).
 - Test data directories are exposed to the tests' working directory with
   `specfem_add_test_data(<dir>...)`.
 

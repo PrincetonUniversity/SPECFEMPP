@@ -7,11 +7,13 @@
 #include "specfem/mesh.hpp"
 #include "specfem/periodic_tasks/stability_check.hpp"
 #include "specfem/program/abort.hpp"
+#include "specfem/program/injection.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/source.hpp"
 #include "specfem/timescheme.hpp"
 #include <algorithm>
+#include <optional>
 
 namespace specfem::program {
 
@@ -20,7 +22,9 @@ void run_program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
-        tasks) {
+        tasks,
+    const std::optional<specfem::injection::PluginOptions> &injection,
+    const specfem::injection::MethodRegistry &registry) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -33,6 +37,23 @@ void run_program_3d(
     oss << print_header<specfem::element::dimension_tag::dim3>(setup,
                                                                start_time);
   });
+
+  // Injection is checked before the mesh is read, so mistakes fail fast.
+  std::optional<specfem::injection::PluginLibrary> injection_plugin;
+  if (injection) {
+    if (setup.get_simulation_type() != specfem::simulation::type::forward)
+      throw std::runtime_error(
+          "Wavefield injection is supported for forward simulations only.");
+    if (!setup.get_injection())
+      throw std::runtime_error("Injection plugin '" + injection->plugin +
+                               "' was given, but the parameter file has no "
+                               "'injection' section.");
+    if (!registry.contains(setup.get_injection()->method()))
+      throw std::runtime_error(
+          registry.unknown_method_message(setup.get_injection()->method()));
+    injection_plugin.emplace(
+        specfem::program_impl::load_injection_plugin(*injection));
+  }
 
   // Get simulation parameters
   const type_real dt = setup.get_dt();
@@ -77,9 +98,14 @@ void run_program_3d(
   //                   Get Sources
   // --------------------------------------------------------------
   auto [sources, t0, starttime] =
-      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
-          setup.get_source_entries(), nsteps, setup.get_t0(), setup.get_dt(),
-          simulation_type);
+      setup.has_sources()
+          ? specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+                setup.get_source_entries(), nsteps, setup.get_t0(),
+                setup.get_dt(), simulation_type)
+          : std::make_tuple(
+                std::vector<std::shared_ptr<specfem::sources::source<
+                    specfem::element::dimension_tag::dim3>>>(),
+                setup.get_t0(), std::optional<specfem::datetime::type>());
   setup.update_t0(t0); // Update t0 in case it was changed
   setup.set_starttime(starttime);
   // --------------------------------------------------------------
@@ -115,6 +141,14 @@ void run_program_3d(
   // because it requires collective communication
   specfem::Logger::info(assembly.print());
 
+  std::shared_ptr<specfem::injection::InjectionMethod<
+      specfem::element::dimension_tag::dim3>>
+      injection_method;
+  if (injection_plugin)
+    injection_method = specfem::program_impl::make_injection_method(
+        std::move(*injection_plugin), *injection, *setup.get_injection(),
+        assembly, nsteps, registry);
+
   // Sources and receivers are printed after assembly so that resolved
   // coordinates, the owning partition, and the location error are populated.
   specfem::Logger::info([&](std::ostringstream &oss) {
@@ -143,26 +177,26 @@ void run_program_3d(
   //                   CFL Condition Check
   // --------------------------------------------------------------
   {
-    const type_real cfl =
-        dt * assembly.info.v.max / assembly.info.gll_distance.min;
+    const type_real suggested_dt = assembly.info.suggested_time_step;
     specfem::Logger::info([&](std::ostringstream &oss) {
       oss << "CFL Condition Check:\n"
           << "-------------------------------\n"
-          << " CFL number: ............. " << cfl << "\n"
-          << " Maximum CFL (Cmax): ..... "
-          << specfem::constants::COURANT_NUMBER_SUGGESTED << "\n";
+          << " DT: ..................... " << dt << "\n"
+          << " Suggested DT: ........... " << suggested_dt << "\n";
     });
-    if (cfl > specfem::constants::COURANT_NUMBER_SUGGESTED) {
+    if (dt > suggested_dt) {
       std::ostringstream msg;
-      msg << "CFL condition violated!\n"
-          << "  CFL = " << cfl
-          << " > Cmax = " << specfem::constants::COURANT_NUMBER_SUGGESTED
-          << "\n"
-          << "  Current dt = " << dt << "\n"
-          << "  Suggested dt (satisfies CFL): "
-          << assembly.info.suggested_time_step << "\n"
-          << "  Please update the 'dt' parameter in your configuration.";
-      specfem_abort(msg.str(), 30);
+      msg << "DT = " << dt << " exceeds the suggested DT = " << suggested_dt
+          << " (Courant number " << specfem::constants::COURANT_NUMBER_SUGGESTED
+          << " in the most restrictive element).\n";
+      if (setup.get_override_cfl()) {
+        specfem::Logger::warning(msg.str() +
+                                 "Continuing because 'override-cfl' is set.");
+      } else {
+        msg << "Reduce 'dt' in the time-scheme section, or set "
+               "'override-cfl: true' to run anyway.";
+        specfem_abort(msg.str(), 1);
+      }
     }
   }
   // Divergence check — runs ~100 times over the full simulation
@@ -228,8 +262,10 @@ void run_program_3d(
   //                   Instantiate Solver
   // --------------------------------------------------------------
   specfem::Logger::info("Instantiate solver\n-------------------------------");
-  std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
-      dt, assembly, time_scheme, simulation_type, tasks, wavefield_reader);
+  std::shared_ptr<specfem::solver::solver> solver =
+      setup.instantiate_solver<5, specfem::element::dimension_tag::dim3>(
+          dt, assembly, time_scheme, simulation_type, tasks, wavefield_reader,
+          injection_method);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -291,12 +327,15 @@ void program_3d(
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
         tasks,
-    const bool globe) {
+    const bool globe,
+    const std::optional<specfem::injection::PluginOptions> &injection,
+    const specfem::injection::MethodRegistry &registry) {
   if (globe) {
-    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks);
+    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks,
+                                                        injection, registry);
   } else {
-    run_program_3d<specfem::simulation::model::Cartesian3D>(parameter_dict,
-                                                            tasks);
+    run_program_3d<specfem::simulation::model::Cartesian3D>(
+        parameter_dict, tasks, injection, registry);
   }
 }
 

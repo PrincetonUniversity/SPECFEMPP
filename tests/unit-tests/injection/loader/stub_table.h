@@ -1,0 +1,66 @@
+/* Shared, do-nothing ABI functions for the deliberately broken loader test
+ * plugins. Each plugin includes this once and only varies the manifest, the
+ * table, or the entry point. */
+
+#pragma once
+
+#include "specfem/plugin/injection_abi.h"
+
+static void *stub_create(const char *config_path,
+                         const specfem_simulation_info *info,
+                         const specfem_communicator *communicator) {
+  static int state;
+  (void)config_path;
+  (void)info;
+  (void)communicator;
+  return &state;
+}
+
+static int32_t stub_supports(void *self, specfem_medium medium,
+                             specfem_property property,
+                             specfem_quantity quantity) {
+  (void)self;
+  (void)medium;
+  (void)property;
+  (void)quantity;
+  return 0;
+}
+
+static specfem_status stub_setup(void *self, const specfem_points *points) {
+  (void)self;
+  (void)points;
+  return specfem_status_ok;
+}
+
+static specfem_status stub_fill(void *self, int32_t first_step,
+                                int32_t nbuffers,
+                                const specfem_buffer *const *buffers) {
+  (void)self;
+  (void)first_step;
+  (void)nbuffers;
+  (void)buffers;
+  return specfem_status_ok;
+}
+
+static const char *stub_last_error(const void *self) {
+  (void)self;
+  return "";
+}
+
+static void stub_destroy(void *self) { (void)self; }
+
+/* Defines `stub_table` with the given ABI version and name. */
+#define STUB_TABLE(ABI_VERSION, NAME)                                          \
+  static const specfem_injection_plugin_table stub_table = {                   \
+    sizeof(specfem_injection_plugin_table),                                    \
+    ABI_VERSION,                                                               \
+    0u,                                                                        \
+    NAME,                                                                      \
+    "0.0.0",                                                                   \
+    stub_create,                                                               \
+    stub_supports,                                                             \
+    stub_setup,                                                                \
+    stub_fill,                                                                 \
+    stub_last_error,                                                           \
+    stub_destroy                                                               \
+  }

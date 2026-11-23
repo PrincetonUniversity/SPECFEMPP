@@ -26,6 +26,7 @@
     enums/index
     execution/index
     experimental/index
+    injection/index
     io/index
     jacobian/index
     linear_system/index
@@ -38,6 +39,7 @@
     optimization/index
     parallel_configuration/index
     periodic_tasks/index
+    plugin/index
     point/index
     program/index
     quadrature/index

@@ -6,6 +6,7 @@
 #include "electromagnetic_wave.hpp"
 #include "flux_schemes.hpp"
 #include "header.hpp"
+#include "injection.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
@@ -155,6 +156,13 @@ public:
   type_real get_dt() const { return time_scheme->get_dt(); }
 
   /**
+   * @brief Whether to run even if dt exceeds the suggested time step
+   *
+   * @return true if the CFL check should only warn
+   */
+  bool get_override_cfl() const { return time_scheme->get_override_cfl(); }
+
+  /**
    * @brief Get the path to mesh database and source yaml file
    *
    * @return std::tuple<std::string, std::string> std::tuple specifying the path
@@ -169,8 +177,18 @@ public:
    */
   const std::vector<specfem::enums::source_file_entry> &
   get_source_entries() const {
-    return this->sources->get_source_entries();
+    static const std::vector<specfem::enums::source_file_entry> no_entries;
+    return this->sources ? this->sources->get_source_entries() : no_entries;
   }
+
+  /**
+   * @brief Whether the configuration has a @c sources entry.
+   *
+   * Only a run with an injection section may omit it.
+   *
+   * @return true if sources are configured
+   */
+  bool has_sources() const { return static_cast<bool>(this->sources); }
 
   /**
    * @brief Get the path to stations file
@@ -210,7 +228,6 @@ public:
           specfem::enums::coordinate_frame::cartesian) const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples(), this->starttime_,
           frame);
@@ -445,6 +462,8 @@ public:
    * @param assembly Assembly containing mesh and field data
    * @param time_scheme Time integration scheme
    * @param tasks Periodic tasks to execute during simulation
+   * @param checkpoint_reader Checkpoint reader for undo-attenuation runs
+   * @param injection Wavefield-injection method; forward simulations only
    * @return Shared pointer to configured solver
    */
   template <int NGLL, specfem::element::dimension_tag DimensionTag>
@@ -458,9 +477,12 @@ public:
           &tasks,
       const std::shared_ptr<
           specfem::periodic_tasks::periodic_task<DimensionTag>>
-          checkpoint_reader = nullptr) const {
+          checkpoint_reader = nullptr,
+      const std::shared_ptr<specfem::injection::CouplingMethod<DimensionTag>>
+          injection = nullptr) const {
     return this->solver->instantiate<NGLL, DimensionTag>(
-        dt, assembly, time_scheme, simulation_type, tasks, checkpoint_reader);
+        dt, assembly, time_scheme, simulation_type, tasks, checkpoint_reader,
+        injection);
   }
 
   auto get_flux_scheme_configuration() const {
@@ -501,9 +523,22 @@ public:
     return *(this->header);
   }
 
+  /**
+   * @brief Get the wavefield-injection configuration.
+   * @return The @c parameters.injection section, or null if absent
+   */
+  const specfem::runtime_configuration::Injection *get_injection() const {
+    return this->injection.get();
+  }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header>
       header; ///< Simulation header configuration
+  std::unique_ptr<specfem::runtime_configuration::Injection>
+      injection; ///< Wavefield-injection
+                 ///< configuration,
+                 ///< if
+                 ///< any
   std::unique_ptr<specfem::runtime_configuration::Attenuation>
       attenuation; ///< Attenuation configuration
   std::unique_ptr<specfem::runtime_configuration::elastic_wave>

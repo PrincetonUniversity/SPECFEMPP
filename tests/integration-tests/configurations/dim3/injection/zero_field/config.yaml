@@ -1,0 +1,17 @@
+id : "zero_field"
+name : "Injected plane wave: zero_field"
+description: >
+  The plane-wave plugin at amplitude 0 with a force source: the seismograms
+  must be bit-identical to the same run without injection.
+# How the seismograms are checked: no-injection | analytic | serial
+compare: no-injection
+config:
+  nproc : 1
+  tolerance : 0
+injection:
+  plugin-config: "../plugin/zero.yaml"
+  # Start time of the run, needed to sample the analytic reference.
+  t0: -3.0
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: ""

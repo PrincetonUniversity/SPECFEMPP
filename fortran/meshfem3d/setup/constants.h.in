@@ -271,6 +271,13 @@
   integer, parameter :: INJECTION_TECHNIQUE_IS_AXISEM = 2
   integer, parameter :: INJECTION_TECHNIQUE_IS_FK     = 3
 
+! negative so the C++ reader cannot mistake it for an older boundary layout
+  integer, parameter :: BOUNDARY_HEADER_MAGIC   = -2154
+  integer, parameter :: BOUNDARY_HEADER_VERSION = 1
+
+  integer, parameter :: INJECTION_SURFACE_NONE      = 0
+  integer, parameter :: INJECTION_SURFACE_BOX_SIDES = 1
+
 ! Big storage version of coupling with DSM (will always set to .false. after the light storage version will be validated)
   logical, parameter :: old_DSM_coupling_from_Vadim = .true.
 
