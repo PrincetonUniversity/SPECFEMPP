@@ -4,6 +4,9 @@
 .. doxygennamespace:: specfem::optimization
     :desc-only:
 
+The result scalar type defaults to ``type_real`` and can be selected explicitly
+for setup calculations that require double precision.
+
 .. doxygenstruct:: specfem::optimization::OptimizationResult
 
 

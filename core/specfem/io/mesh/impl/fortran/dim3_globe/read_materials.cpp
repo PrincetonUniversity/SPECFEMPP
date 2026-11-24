@@ -115,18 +115,28 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
     attenuating_elastic_index = materials.add_material(attenuating_elastic);
   }
 
+  std::optional<int> attenuating_anisotropic_index;
+  if (attenuation_enabled) {
+    specfem::medium_container::material<Dimension::dim3, Medium::elastic,
+                                        Property::anisotropic,
+                                        Attenuation::constant_isotropic>
+        material(1.0, 3.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.0, 1.0, 0.0, 0.0, 0.0,
+                 3.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0);
+    attenuating_anisotropic_index = materials.add_material(material);
+  }
+
   for (int ispec = 0; ispec < materials.nspec; ++ispec) {
     if (property_tags[ispec] == Property::anisotropic) {
       if (medium_tags[ispec] != Medium::elastic) {
         throw std::runtime_error("Anisotropic globe elements must be elastic");
       }
-      if (attenuation_enabled) {
-        throw std::runtime_error("Attenuation is not implemented for 3-D "
-                                 "anisotropic elastic elements");
-      }
       materials.material_index_mapping[ispec] = {
-        Medium::elastic, Property::anisotropic, Attenuation::none,
-        anisotropic_elastic_index, ispec
+        Medium::elastic, Property::anisotropic,
+        attenuation_enabled ? Attenuation::constant_isotropic
+                            : Attenuation::none,
+        attenuation_enabled ? *attenuating_anisotropic_index
+                            : anisotropic_elastic_index,
+        ispec
       };
     } else if (property_tags[ispec] != Property::isotropic) {
       throw std::runtime_error("Unknown property tag in globe mesh database");

@@ -237,7 +237,10 @@ TEST_F(GlobeAttenuation, RejectsASecondRecompute) {
   const auto &properties =
       attenuating->properties
           .get_container<test::Medium::elastic, test::Property::isotropic>();
-  EXPECT_THROW(container.recompute(properties, attenuation.fc, attenuation.f0,
-                                   attenuation.band, attenuation.tau_sigma),
+  EXPECT_THROW(container.recompute(
+                   properties, attenuation.fc, attenuation.f0, attenuation.band,
+                   attenuation.tau_sigma, attenuating->mesh.h_spherical_coord,
+                   specfem::assembly::impl::AssemblyAttenuationContext{
+                       attenuating->element_types }),
                std::runtime_error);
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/attenuation/quality_factor_fit.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/element_group.hpp"
 #include "specfem/io/property/reader.hpp"
@@ -45,6 +47,11 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
       specfem::MPI::format_proc_filename(input_folder + "/Properties");
 
   typename InputLibrary::File file(path.string());
+
+  // One table pair for every attenuating container read here, so they agree
+  // on each bucket's representative Q and fit each bucket once.
+  specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
+      quality_factor_tables;
 
   specfem::tag_dispatch::for_each(
       properties.combinations * ATTENUATION_SET(none, constant_isotropic),
@@ -93,7 +100,11 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
           }
           att.recompute(container, assembly.attenuation.fc,
                         assembly.attenuation.f0, assembly.attenuation.band,
-                        assembly.attenuation.tau_sigma);
+                        assembly.attenuation.tau_sigma,
+                        assembly.mesh.h_spherical_coord,
+                        specfem::assembly::impl::AssemblyAttenuationContext{
+                            assembly.element_types },
+                        quality_factor_tables);
         }
       });
 

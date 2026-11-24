@@ -156,6 +156,8 @@ specfem_add_test(attenuation_tests
             attenuation/compute_tau_eps_tests.cpp
             attenuation/compute_factors_tests.cpp
             attenuation/compute_integration_factors_tests.cpp
+            attenuation/formulation_tests.cpp
+            attenuation/quality_factor_table_tests.cpp
   LIBRARIES gtest_main
             specfem::attenuation
             Kokkos::kokkos
@@ -164,6 +166,7 @@ specfem_add_test(attenuation_tests
 specfem_add_test(optimization_tests
   SOURCES   optimization/runner.cpp
             optimization/neldermead_tests.cpp
+            optimization/nelder_mead_fminsearch_tests.cpp
             optimization/steepestdescent_tests.cpp
   LIBRARIES gtest_main
             Kokkos::kokkos
@@ -320,6 +323,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/globe_reader.cpp
             mesh/dim3/globe_checks.cpp
             mesh/dim3/model_aniso.cpp
+            mesh/dim3/anisotropic_materials.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh
@@ -403,6 +407,7 @@ specfem_add_test(assembly_tests
             assembly/attenuation/wavefield_checkpoint.cpp
             assembly/dim3_globe/assembly.cpp
             assembly/dim3/attenuation/recompute.cpp
+            assembly/dim3/attenuation/cartesian_setup.cpp
             assembly/dim3/attenuation/checkpoint_views.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
@@ -416,6 +421,7 @@ specfem_add_test(assembly_tests
             specfem::enums
             specfem::element
             shape_functions
+            globe_evaluator::test_reference
             ${BOOST_LIBS}
             -lpthread -lm
             gtest_main
@@ -1022,7 +1028,14 @@ specfem_add_test(seismogram_sampling_tests
 specfem_add_test(globe_properties_tests
   LABELS unit assembly globe
   SOURCES assembly/dim3/properties/globe_properties.cpp
+          assembly/dim3/attenuation/anisotropic.cpp
           assembly/element_types/runner.cpp
   LIBRARIES specfem::assembly specfem::globe specfem::io
-            specfem::mesh specfem::quadrature specfem_environment gtest_main
+            specfem::mesh specfem::quadrature specfem_environment
+            globe_evaluator::test_reference gtest_main
+)
+
+specfem_add_test(tag_dispatch_tests
+  SOURCES tag_dispatch/is_valid_tests.cpp
+  LIBRARIES specfem::element gtest_main
 )
