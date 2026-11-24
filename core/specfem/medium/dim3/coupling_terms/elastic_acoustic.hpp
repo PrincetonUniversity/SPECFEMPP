@@ -1,7 +1,5 @@
 #pragma once
 
-#include "specfem/algorithms.hpp"
-#include "specfem/algorithms/transfer_interpolate.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
@@ -13,13 +11,10 @@ namespace specfem::medium_physics::impl {
 
 template <typename CoupledInterfaceType, typename CoupledFieldType,
           typename SelfFieldType>
-KOKKOS_INLINE_FUNCTION void compute_coupling(
+KOKKOS_INLINE_FUNCTION void compute_interface_flux(
     const std::integral_constant<
         specfem::element::dimension_tag,
         specfem::element::dimension_tag::dim3> /*dimension_dispatch*/,
-    const std::integral_constant<specfem::element_connections::type,
-                                 specfem::element_connections::type::
-                                     weakly_conforming> /*connection_dispatch*/,
     const std::integral_constant<specfem::element_coupling::interface_tag,
                                  specfem::element_coupling::interface_tag::
                                      elastic_acoustic> /*interface_dispatch*/,
@@ -39,36 +34,4 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
                   coupled_field(0);
 }
 
-template <typename IndexType, typename CoupledInterfaceType,
-          typename CoupledFieldType, typename IntersectionFieldViewType>
-KOKKOS_INLINE_FUNCTION void compute_coupling(
-    const std::integral_constant<
-        specfem::element::dimension_tag,
-        specfem::element::dimension_tag::dim3> /*dimension_dispatch*/,
-    const std::integral_constant<specfem::element_connections::type,
-                                 specfem::element_connections::type::
-                                     nonconforming> /*connection_dispatch*/,
-    const std::integral_constant<specfem::element_coupling::interface_tag,
-                                 specfem::element_coupling::interface_tag::
-                                     elastic_acoustic> /*interface_dispatch*/,
-    const IndexType &point_index, const CoupledInterfaceType &interface_data,
-    const CoupledFieldType &coupled_field,
-    IntersectionFieldViewType &intersection_field) {
-
-  static_assert(specfem::data_access::is_acceleration<CoupledFieldType>::value,
-                "CoupledFieldType must be a acceleration type");
-
-  specfem::datatype::VectorPointViewType<
-      type_real, CoupledFieldType::components, CoupledFieldType::using_simd>
-      self_mapped_field;
-
-  specfem::algorithms::transfer_interpolate(point_index, interface_data,
-                                            coupled_field, self_mapped_field);
-  intersection_field(0) = interface_data.face_factor *
-                          interface_data.face_normal(0) * self_mapped_field(0);
-  intersection_field(1) = interface_data.face_factor *
-                          interface_data.face_normal(1) * self_mapped_field(0);
-  intersection_field(2) = interface_data.face_factor *
-                          interface_data.face_normal(2) * self_mapped_field(0);
-}
 } // namespace specfem::medium_physics::impl

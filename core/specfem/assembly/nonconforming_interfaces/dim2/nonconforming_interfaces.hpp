@@ -14,6 +14,9 @@
 
 namespace specfem::assembly {
 
+template <specfem::element::dimension_tag DimensionTag>
+struct nonconforming_interfaces;
+
 template <>
 class nonconforming_interfaces<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<

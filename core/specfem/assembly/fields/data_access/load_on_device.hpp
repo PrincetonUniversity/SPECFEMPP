@@ -22,7 +22,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
                                                 AccessorTypes &...accessors) {
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   fields_impl::check_accessor_compatibility<AccessorTypes...>();
@@ -40,7 +40,8 @@ template <typename IndexType, typename ContainerType, typename... AccessorTypes,
               ((specfem::data_access::is_index_type<IndexType>::value) &&
                (specfem::data_access::is_point<IndexType>::value ||
                 specfem::data_access::is_chunk_element<IndexType>::value ||
-                specfem::data_access::is_chunk_edge<IndexType>::value) &&
+                specfem::data_access::is_chunk_edge<IndexType>::value ||
+                specfem::data_access::is_chunk_face<IndexType>::value) &&
                (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
@@ -48,7 +49,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
                                                 AccessorTypes &...accessors) {
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   fields_impl::check_accessor_compatibility<AccessorTypes...>();

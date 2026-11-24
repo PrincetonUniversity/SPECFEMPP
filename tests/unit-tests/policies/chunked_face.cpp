@@ -118,8 +118,8 @@ public:
                                                      this->faces);
     specfem::execution::for_all(
         "test_chunked_face_iterator", iterator,
-        KOKKOS_CLASS_LAMBDA(const typename decltype(
-            iterator)::base_index_type &iterator_index) {
+        KOKKOS_CLASS_LAMBDA(const typename decltype(iterator)::base_index_type
+                                &iterator_index) {
           const auto index = iterator_index.get_index();
           Kokkos::atomic_add(&view(index.iface, index.ipoint_i, index.ipoint_j),
                              1);
@@ -411,6 +411,237 @@ TEST_F(FaceViewTest, FaceAccess) {
 
   // point should be (iz=0, iy=2, ix=3) for bottom face at (2,3)
   EXPECT_EQ(result, 3 + 2 * 10 + 0 * 100);
+}
+
+namespace chunked_face_test_impl {
+
+using point_index_type =
+    specfem::point::face_index<specfem::element::dimension_tag::dim3>;
+
+/// Face type for face f, cycling through the six dim3 types.
+KOKKOS_INLINE_FUNCTION
+specfem::mesh_entity::dim3::type face_type_for(const int f) {
+  switch (f % 6) {
+  case 0:
+    return specfem::mesh_entity::dim3::type::bottom;
+  case 1:
+    return specfem::mesh_entity::dim3::type::top;
+  case 2:
+    return specfem::mesh_entity::dim3::type::front;
+  case 3:
+    return specfem::mesh_entity::dim3::type::back;
+  case 4:
+    return specfem::mesh_entity::dim3::type::left;
+  default:
+    return specfem::mesh_entity::dim3::type::right;
+  }
+}
+
+/// Maps a flat index over N * n_points * n_points to (f, i, j).
+KOKKOS_INLINE_FUNCTION
+void decode_point(const int linear, const int n_points, int &f, int &i,
+                  int &j) {
+  const int points_per_face = n_points * n_points;
+  f = linear / points_per_face;
+  const int rem = linear % points_per_face;
+  i = rem / n_points;
+  j = rem % n_points;
+}
+
+/// Number of fields of a that differ from b.
+KOKKOS_INLINE_FUNCTION
+int count_field_mismatches(const point_index_type &a,
+                           const point_index_type &b) {
+  int mismatches = 0;
+  mismatches += (a.ispec != b.ispec);
+  mismatches += (a.iface != b.iface);
+  mismatches += (a.ipoint_i != b.ipoint_i);
+  mismatches += (a.ipoint_j != b.ipoint_j);
+  mismatches += (a.iz != b.iz);
+  mismatches += (a.iy != b.iy);
+  mismatches += (a.ix != b.ix);
+  mismatches += (a.face_type != b.face_type);
+  return mismatches;
+}
+
+/// Number of fields of a that differ from the closed-form fill formula.
+KOKKOS_INLINE_FUNCTION
+int count_formula_mismatches(const point_index_type &a, const int f,
+                             const int i, const int j) {
+  int mismatches = 0;
+  mismatches += (a.ispec != 100 + f);
+  mismatches += (a.iface != f);
+  mismatches += (a.ipoint_i != i);
+  mismatches += (a.ipoint_j != j);
+  mismatches += (a.iz != f + 10 * i + 100 * j);
+  mismatches += (a.iy != 1000 + f + 10 * i + 100 * j);
+  mismatches += (a.ix != 2000 + f + 10 * i + 100 * j);
+  mismatches += (a.face_type != face_type_for(f));
+  return mismatches;
+}
+
+/// Fills every face and point with a distinct, formula-defined value.
+template <typename FaceViewType> struct FillDistinctFaceViewFunctor {
+  FaceViewType faces;
+  int n_points;
+
+  FillDistinctFaceViewFunctor(FaceViewType faces_, int n_points_)
+      : faces(faces_), n_points(n_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int f) const {
+    faces.element_index(f) = 100 + f;
+    faces.face_index(f) = f;
+    faces.face_types(f) = face_type_for(f);
+    for (int i = 0; i < n_points; ++i) {
+      for (int j = 0; j < n_points; ++j) {
+        faces.iz(f, i, j) = f + 10 * i + 100 * j;
+        faces.iy(f, i, j) = 1000 + f + 10 * i + 100 * j;
+        faces.ix(f, i, j) = 2000 + f + 10 * i + 100 * j;
+      }
+    }
+  }
+};
+
+/// Counts mismatches between faces(f, i, j) and faces(f)(i, j).
+template <typename FaceViewType> struct CompareFaceAccessFunctor {
+  FaceViewType faces;
+  int n_points;
+
+  CompareFaceAccessFunctor(FaceViewType faces_, int n_points_)
+      : faces(faces_), n_points(n_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int linear, int &mismatches) const {
+    int f, i, j;
+    decode_point(linear, n_points, f, i, j);
+    const point_index_type a = faces(f, i, j);
+    const point_index_type b = faces(f)(i, j);
+    mismatches += count_field_mismatches(a, b);
+  }
+};
+
+/// Counts mismatches between faces(f, i, j) and the fill formula.
+template <typename FaceViewType> struct CompareFormulaFunctor {
+  FaceViewType faces;
+  int n_points;
+
+  CompareFormulaFunctor(FaceViewType faces_, int n_points_)
+      : faces(faces_), n_points(n_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int linear, int &mismatches) const {
+    int f, i, j;
+    decode_point(linear, n_points, f, i, j);
+    const point_index_type a = faces(f, i, j);
+    mismatches += count_formula_mismatches(a, f, i, j);
+  }
+};
+
+/// Records (range.first, range.second, nfaces) for each chunk, one row per
+/// league rank. Written as a functor rather than a lambda because TEST
+/// bodies are private member functions, which CUDA extended lambdas reject.
+template <typename ChunkIndexType> struct RecordChunkRangeFunctor {
+  Kokkos::View<int *[3], Kokkos::DefaultExecutionSpace> out;
+
+  RecordChunkRangeFunctor(
+      const Kokkos::View<int *[3], Kokkos::DefaultExecutionSpace> &out_)
+      : out(out_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const ChunkIndexType &chunk_index) const {
+    const auto &team = chunk_index.get_policy_index();
+    const auto range = chunk_index.get_range();
+    const int row = team.league_rank();
+    out(row, 0) = static_cast<int>(range.first);
+    out(row, 1) = static_cast<int>(range.second);
+    out(row, 2) = chunk_index.nfaces();
+  }
+};
+
+} // namespace chunked_face_test_impl
+
+/**
+ * @brief Point access face_view(f, i, j) must agree with face_view(f)(i, j)
+ * and with the closed-form fill values.
+ */
+TEST_F(FaceViewTest, PointAccessMatchesFaceAccess) {
+  using FaceViewType =
+      specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  using namespace chunked_face_test_impl;
+  FaceViewType faces("test_faces", N, n_points);
+
+  Kokkos::parallel_for(
+      "fill_distinct_faces",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+      FillDistinctFaceViewFunctor<FaceViewType>(faces, n_points));
+  Kokkos::fence();
+
+  const int total = N * n_points * n_points;
+
+  int mismatches_against_face_access = 0;
+  Kokkos::parallel_reduce(
+      "compare_point_access_vs_face_access",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, total),
+      CompareFaceAccessFunctor<FaceViewType>(faces, n_points),
+      mismatches_against_face_access);
+  Kokkos::fence();
+
+  int mismatches_against_formula = 0;
+  Kokkos::parallel_reduce(
+      "compare_point_access_vs_formula",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, total),
+      CompareFormulaFunctor<FaceViewType>(faces, n_points),
+      mismatches_against_formula);
+  Kokkos::fence();
+
+  EXPECT_EQ(mismatches_against_face_access, 0)
+      << "faces(f, i, j) differs from faces(f)(i, j) in some field";
+  EXPECT_EQ(mismatches_against_formula, 0)
+      << "faces(f, i, j) differs from the closed-form fill formula";
+}
+
+/**
+ * @brief Chunk ranges for 10 faces with chunk size 4 must be
+ * (0,4), (4,8), (8,10) with nfaces 4, 4, 2.
+ */
+TEST(ChunkFaceIndexTest, RangeWithTail) {
+  using FaceViewType =
+      specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  using Config = specfem::parallel_configuration::face_chunk_config<
+      specfem::element::dimension_tag::dim3, 4, Kokkos::DefaultExecutionSpace>;
+
+  constexpr int n_faces = 10;
+  constexpr int n_points = 5;
+
+  FaceViewType faces("test_chunk_faces", n_faces, n_points);
+  Kokkos::parallel_for(
+      "init_chunk_faces",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, n_faces),
+      InitFaceViewFullFunctor<FaceViewType>(faces, n_points));
+  Kokkos::fence();
+
+  specfem::execution::ChunkedFaceIterator iterator(Config(), faces);
+  using IteratorType = decltype(iterator);
+
+  Kokkos::View<int *[3], Kokkos::DefaultExecutionSpace> out("out", 3);
+  specfem::execution::for_each_level(
+      "test_chunk_face_range", iterator,
+      chunked_face_test_impl::RecordChunkRangeFunctor<
+          typename IteratorType::index_type>(out));
+  Kokkos::fence();
+
+  auto h_out = Kokkos::create_mirror_view(out);
+  Kokkos::deep_copy(h_out, out);
+
+  const int expected[3][3] = { { 0, 4, 4 }, { 4, 8, 4 }, { 8, 10, 2 } };
+  for (int chunk = 0; chunk < 3; ++chunk) {
+    for (int k = 0; k < 3; ++k) {
+      EXPECT_EQ(h_out(chunk, k), expected[chunk][k])
+          << "chunk " << chunk << " field " << k
+          << " (0 = range.first, 1 = range.second, 2 = nfaces)";
+    }
+  }
 }
 
 int main(int argc, char *argv[]) {
