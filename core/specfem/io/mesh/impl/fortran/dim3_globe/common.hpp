@@ -1,5 +1,7 @@
 #pragma once
 
+#include "specfem/globe/database_format.hpp"
+
 #include <fstream>
 #include <string>
 #include <utility>
@@ -7,11 +9,17 @@
 
 namespace specfem::io::mesh::impl::fortran::dim3_globe {
 
-/** @brief Oldest thin globe database format this reader accepts. */
+/**
+ * @brief Oldest thin globe database format this reader still accepts.
+ *
+ * Reader policy, not a writer constant: the format the mesher currently writes
+ * is specfem::globe::database_version.
+ */
 inline constexpr int globe_database_version_min = 5;
 
 /** @brief Newest thin globe database format this reader accepts. */
-inline constexpr int globe_database_version_max = 5;
+inline constexpr int globe_database_version_max =
+    specfem::globe::database_version;
 
 /** @brief Database material mode indicating properties come from the oracle. */
 inline constexpr int material_oracle = 1;

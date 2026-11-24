@@ -129,6 +129,8 @@ void program_2d(
   // --------------------------------------------------------------
   //                   CFL Condition Check
   // --------------------------------------------------------------
+  // suggested_time_step is the element-wise CFL bound
+  // (COURANT_NUMBER_SUGGESTED * min_e h_e / v_e), so dt is checked against it.
   {
     const type_real suggested_dt = assembly.info.suggested_time_step;
     specfem::Logger::info([&](std::ostringstream &oss) {

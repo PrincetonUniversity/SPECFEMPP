@@ -48,7 +48,7 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
  * source/receiver configuration, assembly, time integration, and seismogram and
  * wavefield/kernel outputs.
  *
- * @param dimension Simulation dimension: "2d" or "3d"
+ * @param dimension Simulation dimension: "2d", "3d" or "globe"
  * @param parameter_dict User-provided YAML configuration overriding defaults
  * @param injection Injection plugin selected for the run, if any. Required
  * exactly when the configuration has a @c parameters.injection section;

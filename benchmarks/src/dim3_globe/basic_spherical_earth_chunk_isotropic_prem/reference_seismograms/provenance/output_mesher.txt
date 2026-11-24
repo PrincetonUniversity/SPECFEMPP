@@ -1,0 +1,319 @@
+
+ ****************************
+ *** Specfem3D MPI Mesher ***
+ ****************************
+
+ Version: v8.1.0-327-g4c92448d
+
+
+ Planet: Earth
+
+
+ There are            1  MPI processes
+ Processes are numbered from 0 to            0
+
+ There are           32  elements along xi in each chunk
+ There are           32  elements along eta in each chunk
+
+ There are            1  slices along xi in each chunk
+ There are            1  slices along eta in each chunk
+ There is a total of            1  slices in each chunk
+ There are            1  chunks in the global mesh
+ There is a total of            1  slices in the global mesh
+
+ NGLLX =            5
+ NGLLY =            5
+ NGLLZ =            5
+
+ Shape functions defined by NGNOD =           27  control nodes
+ Surface shape functions defined by NGNOD2D =            9  control nodes
+
+ model: 1D_isotropic_prem
+   no oceans
+   no ellipticity
+   no surface topography
+   no self-gravitation
+   no rotation
+   no attenuation
+
+   no 3-D lateral variations in the mantle
+   no heterogeneities in the mantle
+   no crustal variations
+   using unmodified 1D crustal model with two layers
+   no transverse isotropy
+   no inner-core anisotropy
+   no general mantle anisotropy
+
+
+ Reference radius of the globe used is    6371.0000000000000       km
+
+ Central cube is at a radius of    950.00000000000000       km
+ creating global slice addressing
+
+
+ additional mesh optimizations
+
+ moho:
+   no element stretching for 3-D moho surface
+
+ internal topography 410/660:
+   no element stretching for 3-D internal surfaces
+
+
+ Radial Meshing parameters:
+   NCHUNKS                =            1
+
+   CENTER LAT/LON:            -12.4137497     /  -65.8018036
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
+
+   CHUNK WIDTH XI/ETA:         90.0000000     /   90.0000000
+   NEX XI/ETA:                        32 /          32
+
+   NER_CRUST:                          2
+   NER_80_MOHO:                        1
+   NER_220_80:                         2
+   NER_400_220:                        2
+   NER_600_400:                        2
+   NER_670_600:                        1
+   NER_771_670:                        1
+   NER_TOPDDOUBLEPRIME_771:            0
+   NER_CMB_TOPDDOUBLEPRIME:            0
+   NER_OUTER_CORE:                     0
+   NER_TOP_CENTRAL_CUBE_ICB:           0
+   SUPPRESS_CRUSTAL_MESH:    F
+
+   R_CENTRAL_CUBE =    950.000000      km
+
+ Mesh resolution:
+   DT =   0.10000000000000001
+   Minimum period =    138.993652      (s)
+
+ Regional mesh cutoff:
+   cut-off depth          =    770.00000000000000      (km)
+
+
+
+ *******************************************
+ creating mesh in region            1
+ this region is the crust and mantle
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   current clock time is: 11h 10min 02sec
+
+   creating layer            1 out of            8
+     number of regular elements  =          256
+     12.5%    elapsed time:     0.0 s - estimated total time:     0.1 s
+   creating layer            2 out of            8
+     number of regular elements  =          256
+     25.0%    elapsed time:     0.0 s - estimated total time:     0.2 s
+   creating layer            3 out of            8
+     number of regular elements  =          512
+     37.5%    elapsed time:     0.0 s - estimated total time:     0.2 s
+   creating layer            4 out of            8
+     number of regular elements  =          512
+     50.0%    elapsed time:     0.0 s - estimated total time:     0.1 s
+   creating layer            5 out of            8
+     number of regular elements  =          512
+     62.5%    elapsed time:     0.0 s - estimated total time:     0.1 s
+   creating layer            6 out of            8
+     number of regular elements  =            0
+     number of doubling elements =         1792
+     75.0%    elapsed time:     0.1 s - estimated total time:     0.1 s
+   creating layer            7 out of            8
+     number of regular elements  =         1024
+     87.5%    elapsed time:     0.2 s - estimated total time:     0.2 s
+   creating layer            8 out of            8
+     number of regular elements  =         1024
+    100.0%    elapsed time:     0.2 s - estimated total time:     0.2 s
+   layers done
+
+   number of elements (per slice)        =         5888
+   total number of elements (all slices) =         5888
+
+
+   ...creating global addressing
+     total number of points            :       736000
+     array memory required per process :    16.8457031     MB
+     getting global points             : npointot =       736000  nspec =         5888
+     creating indirect addressing
+     ibool ok
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   current clock time is: 11h 10min 03sec
+
+   creating layer            1 out of            8
+     number of regular elements  =          256
+     12.5%    elapsed time:     0.0 s - estimated total time:     0.8 s
+   creating layer            2 out of            8
+     number of regular elements  =          256
+     25.0%    elapsed time:     0.1 s - estimated total time:     0.7 s
+   creating layer            3 out of            8
+     number of regular elements  =          512
+     37.5%    elapsed time:     0.1 s - estimated total time:     0.7 s
+   creating layer            4 out of            8
+     number of regular elements  =          512
+     50.0%    elapsed time:     0.2 s - estimated total time:     0.7 s
+   creating layer            5 out of            8
+     number of regular elements  =          512
+     62.5%    elapsed time:     0.2 s - estimated total time:     0.7 s
+   creating layer            6 out of            8
+     number of regular elements  =            0
+     number of doubling elements =         1792
+     75.0%    elapsed time:     0.5 s - estimated total time:     0.8 s
+   creating layer            7 out of            8
+     number of regular elements  =         1024
+     87.5%    elapsed time:     0.6 s - estimated total time:     0.7 s
+   creating layer            8 out of            8
+     number of regular elements  =         1024
+    100.0%    elapsed time:     0.7 s - estimated total time:     0.7 s
+   layers done
+
+   number of elements (per slice)        =         5888
+   total number of elements (all slices) =         5888
+
+
+   ...fills global mesh points
+
+   ...checking mesh resolution and time step
+
+ ----------------------------------
+   Verification of mesh parameters:
+ ----------------------------------
+   Region is crust/mantle
+
+   Min Vs =    3.19999981      (km/s)
+   Max Vp =    11.0655842      (km/s)
+
+   Max element edge size =    619.114929      (km)
+   Min element edge size =    9.39957237      (km)
+   Max/min ratio =    65.8662872
+
+   Max Jacobian eigenvalue ratio =   0.183784083
+   Min Jacobian eigenvalue ratio =    2.06236169E-02
+
+   Minimum period resolved =    25.3421192      (s)
+   Minimum period resolved (empirical) =    138.993652      (s)
+   Maximum suggested time step =   0.129999995      (s)
+
+   for DT :   0.100000001      (s)
+   Max stability for wave velocities =   0.418963283
+ ----------------------------------
+
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are            1  slices along xi in each chunk
+ There are            1  slices along eta in each chunk
+ There is a total of            1  slices in each chunk
+ There are            1  chunks
+ There is a total of            1  slices in all the chunks
+
+ There is a total of            1  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ crust/mantle region:
+   no MPI buffers needed
+
+ crust mantle MPI:
+   maximum interfaces:           0
+   MPI addressing maximum interfaces:           0
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :            0
+   unique MPI interface points:            0
+   maximum valence            :            0
+   total unique MPI interface points:           0
+
+
+   ...element inner/outer separation
+
+   for overlapping of communications with calculations:
+   percentage of edge elements in crust/mantle    0.00000000     %
+   percentage of volume elements in crust/mantle    100.000000     %
+
+
+   ...element mesh permutation
+
+   ...creating mass matrix
+
+   ...saving binary files
+
+ calculated region volume:   0.224022418
+                 top area:    2.09439516
+              bottom area:    1.61815214
+
+ *******************************************
+ creating mesh in region            2
+ this region is the outer core
+ *******************************************
+
+ region is empty, skipping this one..
+
+
+ *******************************************
+ creating mesh in region            3
+ this region is the inner core
+ *******************************************
+
+ region is empty, skipping this one..
+
+
+ all mesh regions created - done
+
+ *******************************************
+
+ finalizing simulation:
+
+ calculated volume:   0.22402242135509925
+
+ Repartition of elements in regions:
+ ----------------------------------
+
+ number of elements in each slice      :         5888
+ total number of elements in all slices:         5888
+
+  - crust and mantle       :    100.000000      %
+  - outer core             :    0.00000000      %
+  - inner core             :    0.00000000      %
+
+ for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h
+
+ Load balancing = 100 % by definition
+
+
+ the time step of the solver will be DT =   0.100000001
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+
+ Elapsed time for mesh generation and buffer creation in seconds =    1.95153105
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 01 s
+
+ End of mesh generation
