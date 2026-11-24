@@ -28,8 +28,7 @@ struct TestConfig {
     TestConfig config;
 
     // Create the test path by concatenating the base path with the test name
-    std::string test_path =
-        "displacement_tests/Newmark/serial/dim2/" + test_name;
+    std::string test_path = "configurations/dim2/" + test_name;
 
     // Load config.yaml from the test directory
     std::string config_file = test_path + "/config.yaml";
@@ -360,6 +359,12 @@ TEST_P(Newmark, 2D) {
           computed_norm += computed_value * computed_value;
         }
 
+        // The kernel zeroes unused slots, so exact comparison is intended.
+        for (int icomp = ncomponents; icomp < static_cast<int>(value.size());
+             icomp++) {
+          EXPECT_EQ(value[icomp], 0);
+        }
+
         count++;
       }
     }
@@ -395,7 +400,7 @@ TEST_P(Newmark, 2D) {
 
 // Load test directories and create parameterized test instances
 std::vector<std::string> GetTestDirectories() {
-  std::string tests_filename = "displacement_tests/Newmark/dim2/tests.yaml";
+  std::string tests_filename = "configurations/dim2/tests.yaml";
   return parse_test_directories(tests_filename);
 }
 

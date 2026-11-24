@@ -6,6 +6,8 @@
 #include "specfem/utilities/band.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
+#include <limits>
+#include <stdexcept>
 
 using specfem::attenuation::compute_tau_eps;
 using specfem::attenuation::compute_tau_sigma;
@@ -611,5 +613,34 @@ TEST(Attenuation_ComputeTauEps, ValuesAreFiniteAndPositive) {
     EXPECT_TRUE(std::isfinite(tau_eps(j)))
         << "tau_eps(" << j << ") should be finite";
     EXPECT_GT(tau_eps(j), 0.0) << "tau_eps(" << j << ") should be positive";
+  }
+}
+
+// Q is not clipped: 9999 fits a weaker attenuation than the 3D 9000 limit.
+TEST(Attenuation_ComputeTauEps, DoesNotClipQ) {
+  constexpr int N_SLS = 3;
+  const specfem::utilities::Band<specfem::units::Hertz> band(0.1 * Hz,
+                                                             10.0 * Hz);
+  const auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  const auto at_limit = compute_tau_eps<N_SLS>(9000.0, tau_sigma, band);
+  const auto above = compute_tau_eps<N_SLS>(9999.0, tau_sigma, band);
+  type_real defect_limit = 0, defect_above = 0;
+  for (int i = 0; i < N_SLS; ++i) {
+    defect_limit += at_limit(i) / tau_sigma(i) - 1;
+    defect_above += above(i) / tau_sigma(i) - 1;
+  }
+  EXPECT_LT(defect_above, defect_limit);
+}
+
+TEST(Attenuation_ComputeTauEps, RejectsInvalidQ) {
+  constexpr int N_SLS = 3;
+  const specfem::utilities::Band<specfem::units::Hertz> band(0.1 * Hz,
+                                                             10.0 * Hz);
+  const auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  for (const type_real q : { type_real(0), type_real(-5),
+                             std::numeric_limits<type_real>::infinity(),
+                             std::numeric_limits<type_real>::quiet_NaN() }) {
+    EXPECT_THROW(compute_tau_eps<N_SLS>(q, tau_sigma, band),
+                 std::invalid_argument);
   }
 }

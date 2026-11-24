@@ -4,6 +4,8 @@
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
+#include <numbers>
+#include <type_traits>
 
 namespace specfem {
 namespace attenuation {
@@ -12,12 +14,14 @@ namespace attenuation {
  * @brief Result containing real (\f$A\f$) and imaginary (\f$B\f$) moduli from
  * Maxwell solid computation
  *
- * For a standard linear solid (SLS), the complex modulus can be written as:
+ * For \f$L\f$ standard linear solids in parallel, the complex modulus is:
  * \f[
- *   M^*(\omega) = M_R \left( 1 + \sum_i \frac{(\tau_{\epsilon_i} -
+ *   M^*(\omega) = M_R \left( 1 + \frac{1}{L} \sum_{i=1}^{L}
+ * \frac{(\tau_{\epsilon_i} -
  * \tau_{\sigma_i}) \omega^2 \tau_{\sigma_i}}{1 + \omega^2 \tau_{\sigma_i}^2}
  * \right)
- *              + i M_R \sum_i \frac{(\tau_{\epsilon_i} - \tau_{\sigma_i})
+ *              + i \frac{M_R}{L} \sum_{i=1}^{L}
+ * \frac{(\tau_{\epsilon_i} - \tau_{\sigma_i})
  * \omega}{1 + \omega^2 \tau_{\sigma_i}^2}
  * \f]
  *
@@ -26,11 +30,13 @@ namespace attenuation {
  * The quality factor \f$Q = real / imag = 1 / \tan\delta\f$.
  *
  * @tparam NF Number of frequencies
- *
+ * @tparam ValueType Scalar type of the moduli
  */
-template <int NF> struct MaxwellFactors {
-  Kokkos::View<type_real[NF], Kokkos::LayoutRight, Kokkos::HostSpace> real;
-  Kokkos::View<type_real[NF], Kokkos::LayoutRight, Kokkos::HostSpace> imag;
+template <int NF, typename ValueType = type_real> struct MaxwellFactors {
+  Kokkos::View<ValueType[NF], Kokkos::LayoutRight, Kokkos::HostSpace>
+      real; ///< \f$A(\omega)\f$
+  Kokkos::View<ValueType[NF], Kokkos::LayoutRight, Kokkos::HostSpace>
+      imag; ///< \f$B(\omega)\f$
 };
 
 /**
@@ -67,6 +73,8 @@ template <int NF> struct MaxwellFactors {
  *
  * @tparam NF Number of frequencies to evaluate
  * @tparam N_SLS Number of standard linear solids
+ * @tparam ValueType Scalar type, given explicitly (not deduced; defaults to
+ * type_real)
  *
  * @param f View containing \f$N_F\f$ frequencies \f$f\f$ (in Hz, not
  * \f$\log_{10}\f$)
@@ -89,35 +97,39 @@ template <int NF> struct MaxwellFactors {
  * frequency i is approximately moduli.real(i) / moduli.imag(i)
  * @endcode
  */
-template <int NF, int N_SLS>
-MaxwellFactors<NF>
-maxwell(Kokkos::View<type_real[NF], Kokkos::LayoutRight, Kokkos::HostSpace> f,
-        Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-            tau_s,
-        Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-            tau_eps) {
+template <int NF, int N_SLS, typename ValueType = type_real>
+MaxwellFactors<NF, ValueType> maxwell(
+    std::type_identity_t<
+        Kokkos::View<ValueType[NF], Kokkos::LayoutRight, Kokkos::HostSpace>>
+        f,
+    std::type_identity_t<
+        Kokkos::View<ValueType[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>>
+        tau_s,
+    std::type_identity_t<
+        Kokkos::View<ValueType[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>>
+        tau_eps) {
 
-  MaxwellFactors<NF> result;
+  MaxwellFactors<NF, ValueType> result;
   result.real =
-      Kokkos::View<type_real[NF], Kokkos::LayoutRight, Kokkos::HostSpace>(
+      Kokkos::View<ValueType[NF], Kokkos::LayoutRight, Kokkos::HostSpace>(
           "real");
   result.imag =
-      Kokkos::View<type_real[NF], Kokkos::LayoutRight, Kokkos::HostSpace>(
+      Kokkos::View<ValueType[NF], Kokkos::LayoutRight, Kokkos::HostSpace>(
           "imag");
 
   for (int i = 0; i < NF; ++i) {
     // Angular frequency: w = 2 * pi * f
-    const type_real w = 2.0 * specfem::constants::pi * f(i);
-    const type_real w2 = w * w;
+    const ValueType w = 2 * std::numbers::pi_v<ValueType> * f(i);
+    const ValueType w2 = w * w;
 
-    type_real A_sum = 0.0;
-    type_real B_sum = 0.0;
+    ValueType A_sum = 0;
+    ValueType B_sum = 0;
 
     for (int j = 0; j < N_SLS; ++j) {
-      const type_real tau_s_j = tau_s(j);
-      const type_real tau_eps_j = tau_eps(j);
-      const type_real tau_s_j_sq = tau_s_j * tau_s_j;
-      const type_real denom = 1.0 + w2 * tau_s_j_sq;
+      const ValueType tau_s_j = tau_s(j);
+      const ValueType tau_eps_j = tau_eps(j);
+      const ValueType tau_s_j_sq = tau_s_j * tau_s_j;
+      const ValueType denom = 1 + w2 * tau_s_j_sq;
 
       // Real part: (1 + w^2 * tau_eps * tau_s) / denom
       A_sum += (1.0 + w2 * tau_eps_j * tau_s_j) / denom;

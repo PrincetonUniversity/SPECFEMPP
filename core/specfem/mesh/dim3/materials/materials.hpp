@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/attenuation/quality_factor_fit.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/medium_container.hpp"
@@ -393,9 +394,24 @@ public:
         get_container<specfem::element::medium_tag::elastic,
                       specfem::element::property_tag::isotropic,
                       specfem::element::attenuation_tag::constant_isotropic>();
+    // Q values sharing a table bucket use the first one.
+    specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
+        tables;
     for (auto &material : container.element_materials) {
+      material.Qkappa = tables.bulk.representative(material.Qkappa);
+      material.Qmu = tables.shear.representative(material.Qmu);
       material.compute_attenuation_properties(config.f0.raw(), fc.raw(),
                                               config.band, config.tau_sigma);
+    }
+    // Anisotropic elements share the tables; their moduli are shifted later
+    // by the attenuation container.
+    auto &anisotropic =
+        get_container<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic,
+                      specfem::element::attenuation_tag::constant_isotropic>();
+    for (auto &material : anisotropic.element_materials) {
+      material.Qkappa = tables.bulk.representative(material.Qkappa);
+      material.Qmu = tables.shear.representative(material.Qmu);
     }
   }
 

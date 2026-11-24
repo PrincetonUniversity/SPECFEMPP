@@ -1,0 +1,83 @@
+# Provenance of the injection test cases (see ../dim3/injection/README.md).
+#
+# Run from this directory with:
+#     SPECFEMPP_BINDIR=<MPI build>/bin PLANE_WAVE_PLUGIN=<.../libplane_wave.so> \
+#         snakemake -s Snakefile_injection --cores 4
+#
+# SPECFEMPP_BINDIR must hold an MPI build: the mpi2 and mpi4 meshes are
+# partitioned with `mpirun -np <cores> xmeshfem3D`.
+
+envvars:
+    "SPECFEMPP_BINDIR",
+    "PLANE_WAVE_PLUGIN",
+
+injection = "../dim3/injection"
+meshes = {"serial": 1, "mpi2": 2, "mpi4": 4}
+analytic_cases = ["p_wave", "sv_wave"]
+serial_cases = ["p_wave", "sv_wave"]
+
+
+def database(mesh, cores):
+    if cores == 1:
+        return [f"{injection}/mesh/{mesh}/database.bin"]
+    return [f"{injection}/mesh/{mesh}/database/proc_{rank}.bin" for rank in range(cores)]
+
+
+rule all:
+    input:
+        [db for mesh, cores in meshes.items() for db in database(mesh, cores)],
+        expand(injection + "/traces/{case}/trace_list.txt", case=analytic_cases),
+        expand(injection + "/traces_serial/{case}/trace_list.txt", case=serial_cases),
+    localrule: True
+
+
+for mesh, cores in meshes.items():
+    module_name = f"mesh_{mesh}"
+    alias = f"mesh_{mesh}_"
+
+    module:
+        name: module_name
+        snakefile: f"{injection}/mesh/{mesh}/Snakefile"
+        pathvars:
+            cwd=f"{injection}/mesh/{mesh}"
+        config: {"cores": cores}
+
+    use rule * from module_name as alias*
+
+
+rule analytic_traces:
+    input:
+        config=injection + "/{case}/config.yaml",
+        parameters=injection + "/{case}/specfem_config.yaml",
+        stations=injection + "/plugin/STATIONS",
+        script="injection_cases.py",
+    output:
+        injection + "/traces/{case}/trace_list.txt",
+    localrule: True
+    params:
+        directory=injection + "/traces/{case}",
+    shell:
+        "python injection_cases.py analytic {wildcards.case} {params.directory}"
+
+
+rule serial_traces:
+    input:
+        database("serial", 1),
+        config=injection + "/{case}/config.yaml",
+        parameters=injection + "/{case}/specfem_config.yaml",
+        stations=injection + "/plugin/STATIONS",
+        script="injection_cases.py",
+    output:
+        injection + "/traces_serial/{case}/trace_list.txt",
+    params:
+        directory=injection + "/traces_serial/{case}",
+    shell:
+        "python injection_cases.py simulate {wildcards.case} {params.directory}"
+
+
+rule clean:
+    shell:
+        """
+            rm -rf {injection}/mesh/*/workdir {injection}/mesh/*/database {injection}/mesh/*/database.bin
+            rm -rf {injection}/traces {injection}/traces_serial
+        """

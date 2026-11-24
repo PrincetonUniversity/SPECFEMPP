@@ -12,22 +12,28 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 
 namespace specfem::assembly::mpi_impl {
 
-/// Find position of anchor in face corner array
-int find_anchor_position(
-    const std::array<specfem::mesh_entity::dim3::type, 4> &corners,
+/// Grid position (i, j) = (ipoint, jpoint) of the corner @p anchor on @p face.
+std::pair<int, int> anchor_grid_corner(
+    const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
+        &element,
+    const specfem::mesh_entity::dim3::type face,
     const specfem::mesh_entity::dim3::type anchor) {
-  for (int i = 0; i < 4; i++) {
-    if (corners[i] == anchor)
-      return i;
+  const auto target = element.map_coordinates(anchor);
+  for (const int j : { 0, element.ngll - 1 }) {
+    for (const int i : { 0, element.ngll - 1 }) {
+      if (element.map_coordinates(face, j * element.ngll + i) == target)
+        return { i, j };
+    }
   }
   std::string msg =
-      "Anchor point not found among face corners: anchor=" +
-      std::to_string(static_cast<int>(anchor)) +
-      " not in corners_of_face() array. "
-      "Check that the mesh database was generated with correct anchor point "
+      "Anchor point " + specfem::mesh_entity::dim3::to_string(anchor) +
+      " is not a corner of face " +
+      specfem::mesh_entity::dim3::to_string(face) +
+      ". Check that the mesh database was generated with correct anchor point "
       "encoding (expected element-absolute corner IDs 19-26).";
   specfem::Logger::error(msg);
   specfem::program::abort(msg);
@@ -73,30 +79,33 @@ filter_indices_by_medium_tag(
 }
 
 /**
- * @brief Apply rotation permutation to a 2D GLL grid based on theta value.
+ * @brief Map a point of my face grid to the glued neighbor's face grid.
  *
- * Theta encodes discrete 90° rotations as [0,3]:
+ * If @p mirror is set the grid axes are first swapped, then the grid is
+ * rotated by theta in [0,3]:
  *   theta=0: identity [i][j] → [i][j]
- *   theta=1: 90° CW [i][j] → [ngll-1-j][i]
- *   theta=2: 180° [i][j] → [ngll-1-i][ngll-1-j]
- *   theta=3: 270° CW [i][j] → [j][ngll-1-i]
+ *   theta=1: [i][j] → [ngll-1-j][i]
+ *   theta=2: [i][j] → [ngll-1-i][ngll-1-j]
+ *   theta=3: [i][j] → [j][ngll-1-i]
  *
  * @param theta Rotation index [0,3]
+ * @param mirror Whether the two grids have the same handedness
  * @param ngll Grid dimension (ngll × ngll)
- * @return Pair of rotated (i, j) indices
+ * @return Pair of transformed (i, j) indices
  */
-std::pair<unsigned int, unsigned int> apply_rotation(unsigned char theta,
-                                                     unsigned int i,
-                                                     unsigned int j,
-                                                     unsigned int ngll) {
+std::pair<unsigned int, unsigned int>
+apply_rotation(unsigned char theta, bool mirror, unsigned int i, unsigned int j,
+               unsigned int ngll) {
+  if (mirror)
+    std::swap(i, j);
   switch (theta) {
   case 0: // Identity
     return { i, j };
-  case 1: // 90° CW
+  case 1:
     return { ngll - 1 - j, i };
   case 2: // 180°
     return { ngll - 1 - i, ngll - 1 - j };
-  case 3: // 270° CW
+  case 3:
     return { j, ngll - 1 - i };
   default: // Should not reach here; silently use identity
     specfem::Logger::error("Invalid rotation index theta: " +
@@ -170,12 +179,11 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
 // ---------------------------------------------------------------------------
 // face_communication_group constructor
 //
-// Calls the base constructor for common fields, then computes the discrete
-// rotation index theta ∈ [0,3] for each face using anchor points. The anchor
-// point uniquely identifies one corner of the shared face in both elements,
-// allowing the relative 90°-rotation step to be computed as:
-//   r = (neigh_anchor_pos - my_anchor_pos) mod 4
-// Stored as unsigned char (1 byte vs 8 bytes for a floating-point angle).
+// Calls the base constructor for common fields, then computes, for each face,
+// the transformation taking my face grid onto the neighbor's: a mirror flag
+// (the grids have the same handedness about their outward normals) and a
+// rotation index theta ∈ [0,3] chosen so that my anchor corner lands on the
+// neighbor's anchor corner. Both are stored as unsigned char.
 // ---------------------------------------------------------------------------
 specfem::assembly::mpi_impl::face_communication_group::face_communication_group(
     const unsigned int my_rank, const unsigned int neighbor_rank,
@@ -191,22 +199,43 @@ specfem::assembly::mpi_impl::face_communication_group::face_communication_group(
 
   theta = ThetaViewType("face_communication_group::theta", n);
   h_theta = Kokkos::create_mirror_view(theta);
+  h_mirror = Kokkos::View<unsigned char *, Kokkos::HostSpace>(
+      "face_communication_group::h_mirror", n);
+
+  const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
+      element(ngllz, nglly, ngllx);
 
   for (unsigned int iface = 0; iface < n; iface++) {
     const auto &edge = edges[iface];
 
-    const auto my_corners =
-        specfem::mesh_entity::corners_of_face(edge.orientation);
-    const auto neigh_corners =
-        specfem::mesh_entity::corners_of_face(edge.neighbor_orientation);
+    const bool do_mirror =
+        specfem::mesh_entity::dim3::face_grid_handedness(edge.orientation) ==
+        specfem::mesh_entity::dim3::face_grid_handedness(
+            edge.neighbor_orientation);
 
-    const int my_anchor_pos =
-        find_anchor_position(my_corners, edge.local_anchor_point);
-    const int neigh_anchor_pos =
-        find_anchor_position(neigh_corners, edge.neighbor_anchor_point);
+    const auto [my_i, my_j] =
+        anchor_grid_corner(element, edge.orientation, edge.local_anchor_point);
+    const auto neighbor_anchor = anchor_grid_corner(
+        element, edge.neighbor_orientation, edge.neighbor_anchor_point);
 
-    h_theta(iface) =
-        static_cast<unsigned char>((neigh_anchor_pos - my_anchor_pos + 4) % 4);
+    int found = -1;
+    for (int t = 0; t < 4 && found < 0; ++t) {
+      const auto mapped = apply_rotation(static_cast<unsigned char>(t),
+                                         do_mirror, my_i, my_j, ngll);
+      if (static_cast<int>(mapped.first) == neighbor_anchor.first &&
+          static_cast<int>(mapped.second) == neighbor_anchor.second)
+        found = t;
+    }
+    if (found < 0) {
+      const std::string msg =
+          "No face transformation maps the local anchor corner onto the "
+          "neighbor's anchor corner.";
+      specfem::Logger::error(msg);
+      specfem::program::abort(msg);
+    }
+
+    h_theta(iface) = static_cast<unsigned char>(found);
+    h_mirror(iface) = static_cast<unsigned char>(do_mirror);
   }
 
   Kokkos::deep_copy(theta, h_theta);
@@ -385,6 +414,8 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   Kokkos::View<unsigned char *, Kokkos::HostSpace> filtered_theta(
       "packer::face_theta", this->nfaces);
+  Kokkos::View<unsigned char *, Kokkos::HostSpace> filtered_mirror(
+      "packer::face_mirror", this->nfaces);
   Kokkos::View<int *, Kokkos::HostSpace> filtered_face_neighbors(
       "packer::face_neighbors", this->nfaces);
 
@@ -404,6 +435,7 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
     const int ielem = face_group.h_my_element(face_indices[iface]);
     const auto face_type = face_group.h_my_orientation(face_indices[iface]);
     filtered_theta(iface) = face_group.h_theta(face_indices[iface]);
+    filtered_mirror(iface) = face_group.h_mirror(face_indices[iface]);
     filtered_face_neighbors(iface) =
         face_group.h_neighbor_element(face_indices[iface]);
 
@@ -489,10 +521,10 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   this->nglob = unique_iglobs.size();
 
-  this->send_unpacking_indices(face_index_mapping, filtered_theta,
-                               filtered_face_neighbors, edge_index_mapping,
-                               filtered_reflect, filtered_edge_neighbors,
-                               filtered_corner_neighbors, corner_index_mapping);
+  this->send_unpacking_indices(
+      face_index_mapping, filtered_theta, filtered_mirror,
+      filtered_face_neighbors, edge_index_mapping, filtered_reflect,
+      filtered_edge_neighbors, filtered_corner_neighbors, corner_index_mapping);
 
   // Allocate views sized to the number of unique points
   const unsigned int n_unique = unique_iglobs.size();
@@ -532,6 +564,7 @@ void specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::
     send_unpacking_indices(
         Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
         Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
+        Kokkos::View<unsigned char *, Kokkos::HostSpace> mirror,
         Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
         Kokkos::View<int **, Kokkos::HostSpace> edge_index_mapping,
         Kokkos::View<bool *, Kokkos::HostSpace> edge_reflect,
@@ -558,11 +591,11 @@ void specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
     const unsigned char theta_val = theta(iface);
 
-    // Apply rotation permutation based on theta value
+    // Apply mirror and rotation permutation
     for (unsigned int i = 0; i < this->ngll; i++) {
       for (unsigned int j = 0; j < this->ngll; j++) {
         const auto [rotated_i, rotated_j] =
-            apply_rotation(theta_val, i, j, this->ngll);
+            apply_rotation(theta_val, mirror(iface) != 0, i, j, this->ngll);
 
         // Copy from original position to rotated position
         rotated_indices(iface, rotated_j, rotated_i) =
@@ -909,6 +942,36 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
     specfem::program::abort(msg);
   }
 
+  // The sender's neighbor indices are this rank's elements in mesh ordering.
+  // Mesh readers cannot bound them because slices may differ in size, so
+  // validate them here against the local element count.
+  const int nspec = static_cast<int>(h_mesh_to_compute.extent(0));
+  for (const auto &[label, elements, expected] :
+       { std::make_tuple("face", face_elements, h_face_elements),
+         std::make_tuple("edge", edge_elements, h_edge_elements),
+         std::make_tuple("corner", corner_elements, h_corner_elements) }) {
+    for (std::size_t i = 0; i < elements.extent(0); ++i) {
+      if (elements(i) < 0 || elements(i) >= nspec) {
+        std::string msg =
+            "unpacker::assemble_unpacking_mapping: neighbor rank " +
+            std::to_string(this->neighbor_rank) + " sent " + label +
+            " element " + std::to_string(elements(i)) +
+            " outside local range [0, " + std::to_string(nspec) + ")";
+        specfem::Logger::error(msg);
+        specfem::program::abort(msg);
+      }
+      if (h_mesh_to_compute(elements(i)) != expected(i)) {
+        const std::string msg =
+            "unpacker::assemble_unpacking_mapping: neighbor rank " +
+            std::to_string(this->neighbor_rank) + " sent unexpected " + label +
+            " element " + std::to_string(elements(i)) +
+            "; expected compute element " + std::to_string(expected(i));
+        specfem::Logger::error(msg);
+        specfem::program::abort(msg);
+      }
+    }
+  }
+
   const int nglob = static_cast<int>(metadata_buf[4]);
   this->nglob = static_cast<unsigned int>(nglob);
   mapping = IndexMappingView("unpacker::mapping", nglob);
@@ -1003,12 +1066,23 @@ specfem::assembly::mpi_impl::
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
-void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
-                                                        MediumTag>::
-    complete_construction(
+void specfem::assembly::mpi_impl::
+    communication_pattern<FieldType, DimensionTag, MediumTag>::send_indices(
         const corner_communication_group &corner_group,
         const edge_communication_group &edge_group,
         const face_communication_group &face_group,
+        const specfem::mesh_entity::element<dimension_tag> &element,
+        const specfem::assembly::fields<dimension_tag> &fields) {
+  // Send unpacking indices to neighbor (blocking sends)
+  pack = { corner_group, edge_group, face_group, element, fields };
+}
+
+template <specfem::simulation::field_type FieldType,
+          specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag>
+void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
+                                                        MediumTag>::
+    complete_construction(
         const specfem::mesh_entity::element<dimension_tag> &element,
         const specfem::assembly::fields<dimension_tag> &fields,
         const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
@@ -1017,9 +1091,6 @@ void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
   auto &[requests, metadata_buf, recv_face_indices, face_elements,
          recv_edge_indices, edge_elements, corner_nglob_idx, corner_elements] =
       pending;
-
-  // Send unpacking indices to neighbor (blocking sends)
-  pack = { corner_group, edge_group, face_group, element, fields };
 
   // Wait for receives and assemble the unpacking mapping
   unpack.assemble_unpacking_mapping(
@@ -1176,15 +1247,15 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
   specfem::tag_dispatch::for_each(
       medium_combinations, [&]<typename TagsType>() {
         auto build_map = [&]<specfem::simulation::field_type FT>(auto &map) {
-          // Build communication patterns using three-phase approach:
-          // Phase 1 (per neighbor): Construct unpacker and post all MPI_Irecv
-          // calls Phase 2 (per neighbor): Construct packer and send blocking
-          // MPI_Send messages Phase 3 (per neighbor): Wait for receives and
-          // assemble unpacking mapping
+          // Build communication patterns using three phases, each completed
+          // for all neighbors before the next starts:
+          // Phase 1: Construct unpackers and post all MPI_Irecv calls
+          // Phase 2: Construct packers and send blocking MPI_Send messages
+          // Phase 3: Wait for receives and assemble unpacking mappings
           //
           // This ordering prevents deadlock under circular connectivity: all
-          // Irecv calls are posted globally before any MPI_Send, ensuring
-          // receiver buffers exist before sender data arrives.
+          // Irecv calls are posted globally before any MPI_Send, and no rank
+          // waits for data until it has sent to every neighbor.
           using PatternType =
               mpi_impl::communication_pattern<FT, dimension_tag,
                                               TagsType::medium_tag>;
@@ -1209,7 +1280,10 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
             map.emplace(nr, std::move(pattern));
           }
 
-          // Phase 2+3: send then wait+assemble for each neighbor
+          // Phase 2: send to every neighbor. This must finish for all
+          // neighbors before any wait: ranks visit neighbors in different
+          // orders, so waiting on one neighbor's data before sending to the
+          // rest can form a cycle of ranks each waiting on the next.
           for (unsigned int nr : all_neighbors) {
             const auto &fg =
                 face_idx.count(nr) ? face_groups[face_idx.at(nr)] : empty_face;
@@ -1218,8 +1292,12 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
             const auto &cg = corner_idx.count(nr)
                                  ? corner_groups[corner_idx.at(nr)]
                                  : empty_corner;
-            map.at(nr).complete_construction(cg, eg, fg, element, fields,
-                                             h_mesh_to_compute,
+            map.at(nr).send_indices(cg, eg, fg, element, fields);
+          }
+
+          // Phase 3: wait for every neighbor's data and assemble the mapping
+          for (unsigned int nr : all_neighbors) {
+            map.at(nr).complete_construction(element, fields, h_mesh_to_compute,
                                              std::move(pending.at(nr)));
           }
         };

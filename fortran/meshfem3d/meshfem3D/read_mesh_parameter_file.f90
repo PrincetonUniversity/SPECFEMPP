@@ -38,7 +38,8 @@
     THICKNESS_OF_X_PML,THICKNESS_OF_Y_PML,THICKNESS_OF_Z_PML, &
     myrank,sizeprocs,NUMBER_OF_MATERIAL_PROPERTIES, &
     SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, CHUNK_MESH_PAR_FILE, &
-    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
+    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+    STACEY_AS_INJECTION_BOUNDARY, INJECTION_SIDES
 
   use constants, only: IIN,MAX_STRING_LEN,IMAIN, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, IDOMAIN_COSSERAT, &
@@ -64,6 +65,8 @@
   integer :: ireg,imat,ndef,nundef
   integer :: mat_id,domain_id
   integer :: ner_value,ner_max,idoub
+  integer :: iside, injection_kind_check
+  logical, dimension(6) :: injection_sides_check
   logical :: found
   character(len=MAX_STRING_LEN) :: filename
 
@@ -348,6 +351,36 @@
     write(IMAIN,*) '    BOTTOM_FREE_SURFACE         = ',BOTTOM_FREE_SURFACE
     call flush_IMAIN()
   endif
+
+  ! optional trailing keys: ier < 0 is end of file, ier > 0 a parse error
+  STACEY_AS_INJECTION_BOUNDARY = .false.
+  INJECTION_SIDES(:) = .false.
+  call read_value_logical_mesh_optional(IIN,IGNORE_JUNK,STACEY_AS_INJECTION_BOUNDARY, &
+                                        'STACEY_AS_INJECTION_BOUNDARY',ier)
+  if (ier > 0) stop 'Error reading STACEY_AS_INJECTION_BOUNDARY in Mesh_Par_file'
+  if (ier < 0) then
+    STACEY_AS_INJECTION_BOUNDARY = .false.
+  else
+    do iside = 1, 6
+      call read_value_logical_mesh_optional(IIN,IGNORE_JUNK,INJECTION_SIDES(iside),'INJECTION_SIDE',ier)
+      if (ier > 0) stop 'Error reading INJECTION_XMIN/XMAX/YMIN/YMAX/BOTTOM/TOP in Mesh_Par_file'
+      if (ier < 0) then
+        INJECTION_SIDES(iside:) = .false.
+        exit
+      endif
+    enddo
+  endif
+
+  if (myrank == 0) then
+    write(IMAIN,*) '    STACEY_AS_INJECTION_BOUNDARY = ',STACEY_AS_INJECTION_BOUNDARY
+    if (.not. STACEY_AS_INJECTION_BOUNDARY) &
+      write(IMAIN,*) '    INJECTION_XMIN/XMAX/YMIN/YMAX/BOTTOM/TOP = ',INJECTION_SIDES(:)
+    call flush_IMAIN()
+  endif
+
+  call resolve_injection_sides(STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+                               STACEY_AS_INJECTION_BOUNDARY, INJECTION_SIDES, &
+                               injection_sides_check, injection_kind_check)
 
   ! close parameter file
   call close_parameter_file_mesh()

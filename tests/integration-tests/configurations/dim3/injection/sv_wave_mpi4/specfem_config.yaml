@@ -1,0 +1,44 @@
+parameters:
+
+  header:
+    title: Injected plane wave (sv_wave_mpi4)
+    description: |
+      Homogeneous box with Stacey absorbing boundaries on all six faces, all of
+      them wavefield-injection faces, driven by the plane-wave example plugin.
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.01
+          nstep: 1751
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+  receivers:
+    stations: "configurations/dim3/injection/plugin/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - velocity
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 4
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "configurations/dim3/injection/mesh/mpi4/database.bin"
+
+  sources: "configurations/dim3/injection/plugin/silent_force.yaml"
+
+  injection:
+    method: stacey

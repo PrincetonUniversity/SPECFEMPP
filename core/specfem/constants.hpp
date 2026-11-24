@@ -82,6 +82,21 @@ constexpr int NF_ATTENUATION = 100;
  */
 constexpr int N_SLS = 3;
 
+/**
+ * @brief Quality factors per unit Q in the attenuation fit table
+ *
+ * Q is quantized to buckets of width 1/Q_RESOLUTION before fitting, as in
+ * SPECFEM3D_GLOBE (10**ATTENUATION_COMP_RESOLUTION).
+ */
+constexpr int Q_RESOLUTION = 10;
+
+/**
+ * @brief Largest quality factor fitted by formulations that clip Q
+ *
+ * SPECFEM3D_GLOBE's ATTENUATION_COMP_MAXIMUM.
+ */
+constexpr type_real Q_MAXIMUM = 9000;
+
 /// Default ellipsoid model for UTM and geodetic conversions.
 constexpr auto default_ellipsoid = specfem::ellipticity::model::wgs84;
 

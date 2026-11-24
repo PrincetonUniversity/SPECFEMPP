@@ -62,6 +62,9 @@ class LayeredBuilder3D:
         self.domain_boundary_type_back = set_back_boundary
 
     def create_model(self) -> Model:
+        e = NotImplementedError("Use create_model_gmsh_bypass")
+        raise e
+
         with GmshContext() as gmsh:
             # generate geometry of layer boundaries in gmsh
             built_layerbds = [
@@ -185,3 +188,23 @@ class LayeredBuilder3D:
                 gmsh=gmsh,
                 physical_group_captures=bdry_by_name.keys(),
             )
+
+    def create_model_gmsh_bypass(self, outfol) -> None:
+        from .gmsh_bypass_3d.flatgen import Mesher
+
+        mesher = Mesher(
+            mesh_min_x=self.xlow,
+            mesh_max_x=self.xhigh,
+            mesh_min_y=self.ylow,
+            mesh_max_y=self.yhigh,
+            boundaries=self.boundaries,
+            layers=self.layers,
+            export_bdry_left=self.domain_boundary_type_left != "neumann",
+            export_bdry_right=self.domain_boundary_type_right != "neumann",
+            export_bdry_top=self.domain_boundary_type_top != "neumann",
+            export_bdry_bottom=self.domain_boundary_type_bottom != "neumann",
+            export_bdry_front=self.domain_boundary_type_front != "neumann",
+            export_bdry_back=self.domain_boundary_type_back != "neumann",
+        )
+        mesher.export_mesh(outfol)
+        ...
