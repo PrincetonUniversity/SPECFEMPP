@@ -10,24 +10,14 @@
 namespace specfem::assembly {
 
 /**
- * @brief 3D assembly receiver specialization for seismic simulations
+ * @brief 3D assembly receivers: element location, Lagrange interpolants and
+ * per-receiver rotation matrices.
  *
- * Specialized implementation of receivers for 3D spectral element simulations.
- * This class manages seismic receivers located within 3D finite element meshes,
- * handling Lagrange interpolation for accurate field sampling and coordinate
- * transformations using full 3x3 rotation matrices for proper seismogram
- * orientation in three-dimensional space.
- *
- * Key features for 3D:
- * - Currently supports elastic medium type only
- * - Uses full 3x3 rotation matrices for coordinate transformations
- * - Records 3-component seismograms (X, Y, Z or North, East, Up)
- * - Advanced rotation capabilities for arbitrary receiver orientations
- * - Efficient Kokkos-based data structures for GPU computations
- *
- * The class inherits from both StationIterator (for station metadata) and
- * SeismogramIterator (for time-series data access), providing a unified
- * interface for receiver management and seismogram recording.
+ * Each receiver holds a 3x3 matrix from mesh Cartesian components to the local
+ * (East, North, Up) frame: the spherical frame at the station on a globe mesh,
+ * the identity on a UTM/Cartesian mesh. It is applied on the device at
+ * sampling time to vector seismograms. Output slots are (East, North, Up),
+ * which the writer labels E/N/Z (X/Y/Z on a Cartesian mesh).
  */
 template <>
 struct receivers<specfem::element::dimension_tag::dim3>
@@ -82,18 +72,6 @@ public:
     return seismogram_types_;
   }
 
-  /**
-   * @brief Set rotation matrix for a receiver
-   * @param irec Receiver index
-   * @param rotation_matrix 3x3 rotation matrix (nrec, 3, 3) layout
-   */
-  void set_rotation_matrix(
-      int irec,
-      const std::array<std::array<type_real, 3>, 3> &rotation_matrix) {
-    static_cast<receivers_impl::SeismogramIterator<dimension_tag> &>(*this)
-        .set_rotation_matrix(irec, rotation_matrix);
-  }
-
 private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the
@@ -116,7 +94,7 @@ private:
   friend KOKKOS_FUNCTION void
   store_on_device(const ChunkIndexType &chunk_index,
                   const SiesmogramViewType &seismogram_components,
-                  const receivers &receivers);
+                  const receivers &receivers, const bool rotate);
 };
 
 /**
@@ -198,12 +176,18 @@ KOKKOS_FUNCTION void load_on_device(
  * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information
+ * @param rotate Apply the receiver's stored rotation; false for scalar
+ * seismograms that occupy component 0 only
  */
 template <typename ChunkIndexType, typename SeismogramViewType>
 KOKKOS_FUNCTION void store_on_device(
     const ChunkIndexType &chunk_index,
     const SeismogramViewType &seismogram_components,
-    const receivers<specfem::element::dimension_tag::dim3> &receivers) {
+    const receivers<specfem::element::dimension_tag::dim3> &receivers,
+    const bool rotate) {
+
+  constexpr int ncomponents =
+      specfem::element::dimension<specfem::element::dimension_tag::dim3>::dim;
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();
@@ -227,13 +211,25 @@ KOKKOS_FUNCTION void store_on_device(
 
 #endif
 
-        // Store all three components for 3D
-        receivers.seismogram_components(isig_step, iseis, irec, 0) =
-            seismogram_components(ielement, 0);
-        receivers.seismogram_components(isig_step, iseis, irec, 1) =
-            seismogram_components(ielement, 1);
-        receivers.seismogram_components(isig_step, iseis, irec, 2) =
-            seismogram_components(ielement, 2);
+        type_real mesh_frame[ncomponents];
+        for (int icomp = 0; icomp < ncomponents; ++icomp) {
+          mesh_frame[icomp] = seismogram_components(ielement, icomp);
+        }
+
+        type_real output[ncomponents];
+        if (rotate) {
+          specfem::assembly::receivers_impl::rotate_components<ncomponents>(
+              receivers.rotation_matrices, irec, mesh_frame, output);
+        } else {
+          for (int icomp = 0; icomp < ncomponents; ++icomp) {
+            output[icomp] = mesh_frame[icomp];
+          }
+        }
+
+        for (int icomp = 0; icomp < ncomponents; ++icomp) {
+          receivers.seismogram_components(isig_step, iseis, irec, icomp) =
+              output[icomp];
+        }
       });
   return;
 }

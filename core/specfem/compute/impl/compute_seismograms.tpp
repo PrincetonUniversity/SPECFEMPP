@@ -59,7 +59,7 @@ void specfem::compute::impl::compute_seismograms(
 
   using no_simd = specfem::datatype::simd<type_real, using_simd>;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
   constexpr int chunk_size = (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
@@ -122,6 +122,8 @@ void specfem::compute::impl::compute_seismograms(
 
     receivers.set_seismogram_type(iseis);
     const auto wavefield_type = seismogram_types[iseis];
+    const bool rotate = specfem::enums::is_vector_seismogram(
+        wavefield_type, dimension_tag, medium_tag);
 
     specfem::execution::for_each_level(
         "specfem::compute::compute_seismograms",
@@ -141,6 +143,12 @@ void specfem::compute::impl::compute_seismograms(
 
           specfem::assembly::load_on_device(chunk_index, field, displacement,
                                             velocity, acceleration);
+          // Components not written by the medium (e.g. the in-plane slot of
+          // SH media) must be zero, not uninitialized scratch memory
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, wavefield.span()),
+              [&](const int i) { wavefield.data()[i] = 0; });
+
           team.team_barrier();
 
           using PointTags =
@@ -160,7 +168,7 @@ void specfem::compute::impl::compute_seismograms(
               seismogram_components);
           team.team_barrier();
           specfem::assembly::store_on_device(chunk_index, seismogram_components,
-                                             receivers);
+                                             receivers, rotate);
         });
   }
 

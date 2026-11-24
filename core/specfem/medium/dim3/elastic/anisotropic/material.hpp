@@ -20,11 +20,12 @@ namespace specfem::medium_container {
  * @brief Material definition for a 3D anisotropic elastic solid.
  *
  * Stores density and the 21 independent stiffnesses of the symmetric
- * \f$6\times6\f$ Voigt matrix. Attenuating anisotropic constitutive physics is
- * intentionally outside this data-container implementation.
+ * \f$6\times6\f$ Voigt matrix. For attenuating elements these are the
+ * physical (reference-frequency) moduli; the attenuation container applies the
+ * radial shear shift once the property container is filled.
  *
  * @tparam MediumTag Physical medium type; must be elastic.
- * @tparam AttenuationTag Attenuation model; currently must be none.
+ * @tparam AttenuationTag Attenuation model.
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::attenuation_tag AttenuationTag>
@@ -34,8 +35,6 @@ struct material<
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>>
     : impl::AttenuationValues<specfem::element::dimension_tag::dim3, MediumTag,
                               AttenuationTag> {
-  static_assert(AttenuationTag == specfem::element::attenuation_tag::none,
-                "3D elastic anisotropic attenuation is not implemented");
 
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
@@ -71,6 +70,12 @@ public:
    * @param c55 Stiffness \f$c_{55}\f$.
    * @param c56 Stiffness \f$c_{56}\f$.
    * @param c66 Stiffness \f$c_{66}\f$.
+   * @param Qkappa Bulk quality factor; stored for attenuating materials but,
+   * as in globe, it does not attenuate anisotropic elements.
+   * @param Qmu Shear quality factor, used by attenuating materials. The
+   * defaults are placeholders for materials whose Q is set per GLL point.
+   * @throws std::runtime_error if an attenuating material has nonpositive
+   * Qkappa or Qmu.
    */
   material(const type_real &density, const type_real &c11, const type_real &c12,
            const type_real &c13, const type_real &c14, const type_real &c15,
@@ -79,11 +84,19 @@ public:
            const type_real &c33, const type_real &c34, const type_real &c35,
            const type_real &c36, const type_real &c44, const type_real &c45,
            const type_real &c46, const type_real &c55, const type_real &c56,
-           const type_real &c66)
+           const type_real &c66, const type_real &Qkappa = 9999.0,
+           const type_real &Qmu = 9999.0)
       : density(density), c11(c11), c12(c12), c13(c13), c14(c14), c15(c15),
         c16(c16), c22(c22), c23(c23), c24(c24), c25(c25), c26(c26), c33(c33),
         c34(c34), c35(c35), c36(c36), c44(c44), c45(c45), c46(c46), c55(c55),
-        c56(c56), c66(c66) {}
+        c56(c56), c66(c66) {
+    if constexpr (AttenuationTag ==
+                  specfem::element::attenuation_tag::constant_isotropic) {
+      const attenuation quality_factors(Qkappa, Qmu);
+      this->Qkappa = quality_factors.Qkappa;
+      this->Qmu = quality_factors.Qmu;
+    }
+  }
 
   /** @brief Construct an empty material. */
   material() = default;

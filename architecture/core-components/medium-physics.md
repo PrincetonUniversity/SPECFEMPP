@@ -49,6 +49,8 @@ High-level orchestration functions that wire together `algorithms`, `medium_phys
 | `compute_seismograms` | Sample the wavefield at receiver GLL points |
 | `initialize_mass_matrix` | Assemble the lumped mass matrix |
 
+The sampled components are rotated into the receiver frame by `store_on_device`, which uses `is_vector_seismogram` to skip scalar seismogram types.
+
 ---
 
 ← [Back to Core Components](index.md) | [Back to Index](../index.md)

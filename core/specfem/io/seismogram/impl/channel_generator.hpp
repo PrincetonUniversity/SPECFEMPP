@@ -63,15 +63,16 @@ public:
    * @param timestep Simulation time step (dt) in seconds, used to determine
    * band code
    * @param nstep_between_samples Number of timesteps between seismogram samples
-   * @param utm_mesh When true, 3-D elastic components are labeled with the
-   * geographic convention E/N/Z instead of the Cartesian X/Y/Z. Has no effect
+   * @param frame In the geographic frame (UTM or globe) 3-D elastic
+   * components are labeled E/N/Z instead of the Cartesian X/Y/Z. Has no effect
    * in 2-D.
    */
   ChannelGenerator(const type_real timestep,
                    const int nstep_between_samples = 1,
-                   const bool utm_mesh = false)
+                   const specfem::enums::coordinate_frame frame =
+                       specfem::enums::coordinate_frame::cartesian)
       : band_code(compute_band_code(timestep)), timestep(timestep),
-        nstep_between_samples_(nstep_between_samples), utm_mesh_(utm_mesh) {}
+        nstep_between_samples_(nstep_between_samples), frame_(frame) {}
 
   /**
    * @brief Returns the simulation timestep (dt) in seconds.
@@ -106,11 +107,12 @@ public:
    *
    * Overload that accepts a StationInfo object directly and derives the
    * SEED location code and component letters from the simulation dimension
-   * ("S3"/{X,Y,Z} for 3-D, "S2"/{X,Z} for 2-D).
+   * ("S3"/{X,Y,Z} for 3-D, "S2" for 2-D). 2-D vector seismograms use {X,Z};
+   * 2-D scalar seismograms (SH displacement, P-SV rotation/curl) use {Y}.
    *
    * @tparam DimensionTag Simulation dimension (dim2 or dim3).
-   * @tparam StationInfo  Type with public network_name and station_name
-   * members.
+   * @tparam StationInfo  Type with public network_name, station_name and
+   * medium members.
    * @param station_info  Station descriptor from StationIterator.
    * @param seismogram_type Wavefield type to write.
    */
@@ -119,19 +121,23 @@ public:
   get_station_filenames(const StationInfo &station_info,
                         specfem::enums::wavefield seismogram_type) {
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-      static constexpr std::array<char, 2> kLetters = { 'X', 'Z' };
       return get_station_filenames(
           station_info.network_name, station_info.station_name, "S2",
-          seismogram_type, std::span<const char>{ kLetters });
+          seismogram_type,
+          specfem::enums::is_vector_seismogram(seismogram_type, DimensionTag,
+                                               station_info.medium)
+              ? std::span<const char>{ kInPlaneComponents }
+              : std::span<const char>{ kOutOfPlaneComponent });
     } else if constexpr (DimensionTag ==
                          specfem::element::dimension_tag::dim3) {
-      // UTM-projected meshes use the geographic E/N/Z convention (X->E, Y->N,
-      // Z->Z); Cartesian meshes keep X/Y/Z. The data order is identical.
+      // The geographic frame (UTM or globe) uses E/N/Z (X->E, Y->N, Z->Z);
+      // the Cartesian frame keeps X/Y/Z. The data order is identical.
       return get_station_filenames(
           station_info.network_name, station_info.station_name, "S3",
           seismogram_type,
-          utm_mesh_ ? std::span<const char>{ kUtmElasticComponents }
-                    : std::span<const char>{ kDefaultElasticComponents });
+          frame_ == specfem::enums::coordinate_frame::geographic
+              ? std::span<const char>{ kGeographicElasticComponents }
+              : std::span<const char>{ kDefaultElasticComponents });
     } else {
       static_assert(specfem::utilities::always_false<DimensionTag>,
                     "Unsupported dimension tag for seismogram location code.");
@@ -209,15 +215,24 @@ private:
   static constexpr std::array<char, 3> kDefaultElasticComponents = { 'X', 'Y',
                                                                      'Z' };
 
-  /// 3-D elastic component letters for a UTM-projected mesh (X->E, Y->N, Z->Z).
-  static constexpr std::array<char, 3> kUtmElasticComponents = { 'E', 'N',
-                                                                 'Z' };
+  /// 3-D elastic component letters in the geographic frame (UTM or globe).
+  static constexpr std::array<char, 3> kGeographicElasticComponents = { 'E',
+                                                                        'N',
+                                                                        'Z' };
+
+  /// 2-D in-plane component letters for vector seismograms.
+  static constexpr std::array<char, 2> kInPlaneComponents = { 'X', 'Z' };
+
+  /// 2-D out-of-plane component letter for scalar seismograms.
+  static constexpr std::array<char, 1> kOutOfPlaneComponent = { 'Y' };
 
   const std::string band_code;    ///< SEED band code (L, M, B, H, C, or F)
                                   ///< determined from timestep
   type_real timestep;             ///< Simulation time step in seconds
   int nstep_between_samples_ = 1; ///< Timesteps between seismogram samples
-  bool utm_mesh_ = false;         ///< Use geographic E/N/Z labels in 3-D
+  specfem::enums::coordinate_frame frame_ =
+      specfem::enums::coordinate_frame::cartesian; ///< E/N/Z labels in 3-D if
+                                                   ///< geographic
 
   // clang-format off
   /**

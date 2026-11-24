@@ -81,6 +81,16 @@ public:
    * @return type_real z-coordinate
    */
   type_real get_Mzz() const { return Mzz; }
+  /**
+   * @brief Get the Mzx component of the moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Mxz. An asymmetric
+   * tensor (\f$ M_{xz} \neq M_{zx} \f$) drives the rotation field in 2D
+   * Cosserat media via the body couple.
+   *
+   * @return type_real Mzx component
+   */
+  type_real get_Mzx() const { return Mzx; }
 
   /**
    * @brief Construct a new moment tensor force object
@@ -91,7 +101,14 @@ public:
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
                 const specfem::simulation::field_type wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
-        Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
+        Mxz(Node["Mxz"].as<type_real>()), Mzx([&Node]() -> type_real {
+          // Optional: asymmetric tensors set Mzx; default to Mxz (symmetric).
+          if (Node["Mzx"]) {
+            return Node["Mzx"].as<type_real>();
+          }
+          return Node["Mxz"].as<type_real>();
+        }()),
+        wavefield_type(wavefield_type),
         tensor_source<specfem::element::dimension_tag::dim2>(Node, nsteps, dt) {
         };
 
@@ -106,13 +123,36 @@ public:
    * @param source_time_function pointer to source time function
    * @param wavefield_type type of wavefield
    *
+   * @note This overload builds a symmetric tensor (\f$ M_{zx} = M_{xz} \f$).
    */
   moment_tensor(
       type_real x, type_real z, const type_real Mxx, const type_real Mzz,
       const type_real Mxz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
+      : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), Mzx(Mxz), wavefield_type(wavefield_type),
+        tensor_source<specfem::element::dimension_tag::dim2>(
+            x, z, std::move(source_time_function)) {};
+
+  /**
+   * @brief Construct a new (possibly asymmetric) moment tensor source
+   *
+   * @param x x-coordinate of source
+   * @param z z-coordinate of source
+   * @param Mxx Mxx component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Mzx Mzx component of moment tensor (equals Mxz for a symmetric
+   * tensor)
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      type_real x, type_real z, const type_real Mxx, const type_real Mzz,
+      const type_real Mxz, const type_real Mzx,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), Mzx(Mzx), wavefield_type(wavefield_type),
         tensor_source<specfem::element::dimension_tag::dim2>(
             x, z, std::move(source_time_function)) {};
 
@@ -161,11 +201,13 @@ public:
    * \end{pmatrix}
    * \f]
    *
-   * **Elastic PSV-T (Cosserat)** (3×2 matrix):
+   * **Elastic PSV-T (Cosserat)** (3×2 matrix). The rotation row of the tensor
+   * is zero; the rotational forcing enters through the body couple instead
+   * (see @ref get_body_couple_vector):
    * \f[
    * \begin{pmatrix}
    * M_{xx} & M_{xz} \\
-   * M_{xz} & M_{zz} \\
+   * M_{zx} & M_{zz} \\
    * 0.0 & 0.0
    * \end{pmatrix}
    * \f]
@@ -196,6 +238,30 @@ public:
   get_source_tensor() const override;
 
   /**
+   * @brief Get the body-couple vector for the monopole source term
+   *
+   * The antisymmetric part of the moment tensor contracts (via the 2D
+   * Levi-Civita symbol) to the scalar couple \f$ M_{xz} - M_{zx} \f$, which
+   * drives the micro-rotation degree of freedom in Cosserat media. For
+   * `elastic_psv_t` this returns the 3-component vector
+   * \f$ [0, 0, M_{xz} - M_{zx}] \f$; a symmetric tensor therefore produces no
+   * rotational coupling. For all other media (which have no rotational degree
+   * of freedom) an empty view is returned.
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+   * Body-couple vector for `elastic_psv_t`, otherwise an empty view
+   */
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_body_couple_vector() const override;
+
+  /**
+   * @brief Check if the moment tensor is asymmetric (i.e., Mxz != Mzx)
+   *
+   * @return true if the moment tensor is asymmetric, false otherwise
+   */
+  bool has_monopole_contribution() const override;
+
+  /**
    * @brief Get the list of supported media for this source type
    *
    * @return std::vector<specfem::element::medium_tag> list of supported media
@@ -204,9 +270,10 @@ public:
   get_supported_media() const override;
 
 private:
-  type_real Mxx;                                  ///< Mxx for the source
-  type_real Mxz;                                  ///< Mxz for the source
-  type_real Mzz;                                  ///< Mzz for the source
+  type_real Mxx; ///< Mxx for the source
+  type_real Mxz; ///< Mxz for the source
+  type_real Mzz; ///< Mzz for the source
+  type_real Mzx; ///< Mzx for the source (defaults to Mxz: symmetric tensor)
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

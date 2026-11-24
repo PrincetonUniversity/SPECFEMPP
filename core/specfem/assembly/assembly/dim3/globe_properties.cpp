@@ -1,23 +1,51 @@
 #include "globe_properties.hpp"
 
-#include <stdexcept>
-
+#include "specfem/attenuation/quality_factor_fit.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
+#include "specfem/logger.hpp"
+#include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 
+#include <algorithm>
+#include <chrono>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-namespace specfem::assembly::dim3_impl {
+void specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(
+    const specfem::globe::ModelEvaluator::ElementProperties &values,
+    const int compute_ispec) {
+  // Full-anisotropy Gc'/Gs' are projections of the returned cij, which is
+  // stored as-is; only the transverse-isotropic path would drop them.
+  if (values.is_anisotropic) {
+    return;
+  }
+  const auto is_nonzero = [](const double value) { return value != 0.0; };
+  if (std::any_of(values.gc_prime.begin(), values.gc_prime.end(), is_nonzero) ||
+      std::any_of(values.gs_prime.begin(), values.gs_prime.end(), is_nonzero)) {
+    throw std::runtime_error(
+        "Globe evaluator returned non-zero azimuthal anisotropy "
+        "(Gc_prime/Gs_prime) for compute element " +
+        std::to_string(compute_ispec) +
+        "; azimuthal anisotropy is deferred and not yet folded into the "
+        "stored elasticity tensor");
+  }
+}
 
-void read_globe_properties(
+void specfem::assembly::dim3_impl::read_globe_properties(
     const specfem::mesh::globe3d_mesh &input_mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly) {
+  const auto start = std::chrono::steady_clock::now();
+  std::size_t oracle_calls = 0;
+
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
@@ -63,9 +91,25 @@ void read_globe_properties(
                  .get_container<Medium::elastic, Property::isotropic>()
           : nullptr;
 
-  // Catalog calls are serialized and setup-only, so this loop stays serial.
+  auto *anisotropic_attenuation =
+      has_attenuation
+          ? &assembly.attenuation
+                 .get_container<Medium::elastic, Property::anisotropic>()
+          : nullptr;
+
+  // One serial catalog call per element: the catalog retains element-scoped
+  // Moho/sediment state, so batches must stay element-sized.
   for (int compute_ispec = 0; compute_ispec < assembly.mesh.nspec;
        ++compute_ispec) {
+    const auto medium = element_types.get_medium_tag(compute_ispec);
+    const auto property = element_types.get_property_tag(compute_ispec);
+    if (!((medium == Medium::elastic && (property == Property::isotropic ||
+                                         property == Property::anisotropic)) ||
+          (medium == Medium::acoustic && property == Property::isotropic))) {
+      throw std::runtime_error(
+          "Unsupported globe material tags for compute element " +
+          std::to_string(compute_ispec));
+    }
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int iy = 0; iy < nglly; ++iy) {
         for (int ix = 0; ix < ngllx; ++ix) {
@@ -78,7 +122,6 @@ void read_globe_properties(
       }
     }
 
-    const auto property = element_types.get_property_tag(compute_ispec);
     const auto values = evaluator.evaluate_element(
         specfem::globe::to_region_code(
             element_types.get_region_tag(compute_ispec)),
@@ -87,15 +130,25 @@ void read_globe_properties(
         element_types.elem_in_crust(compute_ispec),
         element_types.elem_in_mantle(compute_ispec), xyz);
 
+    ++oracle_calls;
+
+    specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(values,
+                                                              compute_ispec);
+
     const bool tagged_anisotropic = property == Property::anisotropic;
-    if (values.is_anisotropic != tagged_anisotropic) {
+    if (values.is_anisotropic && !tagged_anisotropic) {
       throw std::runtime_error(
-          "Globe evaluator anisotropy disagrees with the database property "
-          "tag for compute element " +
+          "Globe evaluator returned full anisotropy for a database element "
+          "without the anisotropic property tag: compute element " +
           std::to_string(compute_ispec));
     }
+    const auto &spherical = assembly.mesh.h_spherical_coord;
+    if (tagged_anisotropic && !values.is_anisotropic &&
+        spherical.data() == nullptr) {
+      throw std::runtime_error(
+          "Globe anisotropic property build requires spherical coordinates");
+    }
 
-    const auto medium = element_types.get_medium_tag(compute_ispec);
     std::size_t ipoint = 0;
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int iy = 0; iy < nglly; ++iy) {
@@ -121,30 +174,54 @@ void read_globe_properties(
               throw std::runtime_error(
                   "Globe evaluator returned zero Vs for an elastic element");
             }
-            const std::size_t cij_offset = 21 * ipoint;
+            using Global = specfem::medium_physics::ElasticityTensor<
+                specfem::coordinate_systems::CartesianFrame, double>;
+            using Radial = specfem::medium_physics::ElasticityTensor<
+                specfem::coordinate_systems::GeocentricFrame, double>;
+            Global stiffness;
+            if (values.is_anisotropic) {
+              // Full anisotropy is already expressed in Cartesian axes.
+              stiffness = Global(&values.cij[21 * ipoint]);
+            } else {
+              const double theta = spherical(compute_ispec, iz, iy, ix, 1);
+              const double phi = spherical(compute_ispec, iz, iy, ix, 2);
+              const Radial radial(values.rho[ipoint], values.vpv[ipoint],
+                                  values.vph[ipoint], values.vsv[ipoint],
+                                  values.vsh[ipoint], values.eta[ipoint]);
+              stiffness = specfem::medium_physics::rotate(
+                  radial, specfem::coordinate_systems::rotation_matrix<
+                              specfem::coordinate_systems::CartesianFrame,
+                              specfem::coordinate_systems::GeocentricFrame>(
+                              theta, phi));
+            }
+
             specfem::point::properties<specfem::tags::Tags<
                 Dimension::dim3, Medium::elastic, Property::anisotropic, false>>
                 point_property(
-                    values.cij[cij_offset + 0], values.cij[cij_offset + 1],
-                    values.cij[cij_offset + 2], values.cij[cij_offset + 3],
-                    values.cij[cij_offset + 4], values.cij[cij_offset + 5],
-                    values.cij[cij_offset + 6], values.cij[cij_offset + 7],
-                    values.cij[cij_offset + 8], values.cij[cij_offset + 9],
-                    values.cij[cij_offset + 10], values.cij[cij_offset + 11],
-                    values.cij[cij_offset + 12], values.cij[cij_offset + 13],
-                    values.cij[cij_offset + 14], values.cij[cij_offset + 15],
-                    values.cij[cij_offset + 16], values.cij[cij_offset + 17],
-                    values.cij[cij_offset + 18], values.cij[cij_offset + 19],
-                    values.cij[cij_offset + 20], rho);
+                    stiffness[0], stiffness[1], stiffness[2], stiffness[3],
+                    stiffness[4], stiffness[5], stiffness[6], stiffness[7],
+                    stiffness[8], stiffness[9], stiffness[10], stiffness[11],
+                    stiffness[12], stiffness[13], stiffness[14], stiffness[15],
+                    stiffness[16], stiffness[17], stiffness[18], stiffness[19],
+                    stiffness[20], rho);
             specfem::assembly::store_on_host(index, point_property,
                                              assembly.properties);
+            if (anisotropic_attenuation != nullptr) {
+              const int i =
+                  compute_ispec -
+                  anisotropic_attenuation->element_range.begin_index();
+              anisotropic_attenuation->h_Qkappa(i, iz, iy, ix) =
+                  values.qkappa[ipoint];
+              anisotropic_attenuation->h_Qmu(i, iz, iy, ix) =
+                  values.qmu[ipoint];
+            }
           } else {
             if (vs == 0.0) {
               throw std::runtime_error(
                   "Globe evaluator returned zero Vs for an elastic element");
             }
             const type_real mu = rho * vs * vs;
-            const type_real kappa = rho * (vp * vp - (4.0 / 3.0) * vs * vs);
+            const type_real kappa = rho * vp * vp - (4.0 / 3.0) * mu;
             specfem::point::properties<specfem::tags::Tags<
                 Dimension::dim3, Medium::elastic, Property::isotropic, false>>
                 point_property(kappa, mu, rho);
@@ -166,6 +243,13 @@ void read_globe_properties(
     }
   }
 
+  const specfem::assembly::impl::AssemblyAttenuationContext attenuation_context{
+    element_types
+  };
+  // One table pair for both containers, so isotropic and anisotropic
+  // elements agree on each bucket's representative Q.
+  specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
+      quality_factor_tables;
   if (attenuation_container != nullptr) {
     using specfem::units::unit_symbols::Hz;
     const auto fc = specfem::utilities::logarithmic_center(
@@ -177,9 +261,29 @@ void read_globe_properties(
             .get_container<Medium::elastic, Property::isotropic>();
     attenuation_container->recompute(
         elastic_properties, fc, input_mesh.attenuation.f0,
-        input_mesh.attenuation.band, input_mesh.attenuation.tau_sigma);
+        input_mesh.attenuation.band, input_mesh.attenuation.tau_sigma,
+        assembly.mesh.h_spherical_coord, attenuation_context,
+        quality_factor_tables);
+  }
+  if (anisotropic_attenuation != nullptr) {
+    anisotropic_attenuation->recompute(
+        assembly.properties
+            .get_container<Medium::elastic, Property::anisotropic>(),
+        assembly.attenuation.fc, assembly.attenuation.f0,
+        assembly.attenuation.band, assembly.attenuation.tau_sigma,
+        assembly.mesh.h_spherical_coord, attenuation_context,
+        quality_factor_tables);
   }
   assembly.properties.copy_to_device();
+  Kokkos::fence();
+  const double elapsed =
+      std::chrono::duration<double>(std::chrono::steady_clock::now() - start)
+          .count();
+  specfem::Logger::debug(
+      [&](std::ostringstream &message) {
+        message << "Globe property build [rank " << specfem::MPI::get_rank()
+                << "]: " << oracle_calls << " oracle element calls, "
+                << oracle_calls * npoints << " GLL points, " << elapsed << " s";
+      },
+      false);
 }
-
-} // namespace specfem::assembly::dim3_impl

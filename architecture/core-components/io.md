@@ -32,6 +32,8 @@ The I/O layer is organized around abstract `reader` and `writer` base classes wi
 | `io::property::writer/reader` | Material property fields |
 | `io::kernel::writer` | Fréchet sensitivity kernels |
 
+Seismogram channel letters are X/Y/Z on a Cartesian mesh and E/N/Z on a UTM or globe mesh, selected from the projection by `enums::coordinate_frame`. SAC headers set CMPAZ/CMPINC for X/E, Y/N, and Z.
+
 ---
 
 ## Periodic Tasks (`specfem::periodic_tasks`)

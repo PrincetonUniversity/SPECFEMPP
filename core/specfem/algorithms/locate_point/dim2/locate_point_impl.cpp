@@ -382,6 +382,29 @@ locate_point(
                            mesh.h_control_node_coord, mesh.ngnod);
 }
 
+type_real back_projection_distance(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &target,
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &lcoord,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+        &mesh) {
+  const int ngnod = mesh.ngnod;
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
+      coorg_shifted("coorg_shifted", ngnod);
+  for (int i = 0; i < ngnod; i++) {
+    coorg_shifted(i).x =
+        mesh.h_control_node_coord(0, lcoord.ispec, i) - target.x;
+    coorg_shifted(i).z =
+        mesh.h_control_node_coord(1, lcoord.ispec, i) - target.z;
+  }
+  const auto loc = specfem::jacobian::compute_locations(
+      coorg_shifted, ngnod, lcoord.xi, lcoord.gamma);
+  return std::sqrt(loc.x * loc.x + loc.z * loc.z);
+}
+
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 locate_point(
     const specfem::point::local_coordinates<

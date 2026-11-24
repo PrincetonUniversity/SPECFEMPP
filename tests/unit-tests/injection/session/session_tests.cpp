@@ -97,7 +97,9 @@ specfem::injection::SessionOptions window_of(const int steps) {
 
 // Copy the current window back to the host through FrameBuffer::load, which
 // runs on the device execution space.
-Kokkos::View<type_real ***, Kokkos::HostSpace>
+// Host mirror of the device result; on CUDA its layout differs from a plain
+// HostSpace view, so the mirror type is spelled out rather than converted.
+Kokkos::View<type_real ***, Kokkos::DefaultExecutionSpace>::host_mirror_type
 read_window(const specfem::injection::FrameBuffer &frame) {
   const int nrows = static_cast<int>(frame.data.extent(0));
   const int nslots = static_cast<int>(frame.data.extent(1));

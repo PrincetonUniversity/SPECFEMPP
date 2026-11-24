@@ -35,20 +35,18 @@ public:
    * @param t0 Solver start time
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
-   * @param utm_mesh When true, 3-D elastic seismogram channels use the
-   * geographic E/N/Z convention instead of Cartesian X/Y/Z
+   * @param frame Geographic (UTM or globe) frame: 3-D elastic channels
+   * are labelled E/N/Z; cartesian: X/Y/Z
    */
   seismogram_writer(
       const specfem::enums::seismogram_format type,
-      const specfem::enums::elastic_wave elastic_wave,
-      const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const std::string output_folder, const type_real dt, const type_real t0,
       const int nstep_between_samples,
       std::optional<specfem::datetime::type> starttime = std::nullopt,
       const std::optional<bool> write_from_main = std::nullopt,
-      const bool utm_mesh = false)
-      : impl::ChannelGenerator(dt, nstep_between_samples, utm_mesh), type(type),
-        elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
+      const specfem::enums::coordinate_frame frame =
+          specfem::enums::coordinate_frame::cartesian)
+      : impl::ChannelGenerator(dt, nstep_between_samples, frame), type(type),
         output_folder(output_folder), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples), starttime_(starttime),
         write_from_main(write_from_main) {};
@@ -103,13 +101,6 @@ private:
                              ///< stored
   type_real dt;              ///< Time interval between subsequent timesteps
   type_real t0;              ///< Solver start time
-  specfem::enums::elastic_wave elastic_wave; ///< Type of wavefield (Writes
-                                             ///< .BXY for SH waves and .BXX,
-                                             ///< .BXZ for P-SV waves)
-  specfem::enums::electromagnetic_wave
-      electromagnetic_wave;  ///< Type of
-                             ///< electromagnetic
-                             ///< wavefield
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
   std::optional<specfem::datetime::type> starttime_; ///< Optional UTC start

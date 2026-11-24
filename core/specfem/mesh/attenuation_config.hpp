@@ -15,6 +15,12 @@ struct attenuation_config {
   Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
                Kokkos::HostSpace>
       tau_sigma;
+  /// Attenuate the bulk modulus as well as the shear modulus. Globe meshes
+  /// set this to false: SPECFEM3D_GLOBE implements Q_mu attenuation only
+  /// (compute_element_att_memory.F90) and shifts only the shear moduli to
+  /// unrelaxed (prepare_attenuation.f90), so kappa is left physical and
+  /// carries no memory variables.
+  bool bulk_attenuation = true;
 };
 
 } // namespace specfem::mesh

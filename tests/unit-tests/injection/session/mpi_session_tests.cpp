@@ -11,6 +11,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace specfem::injection_session_test {
 
@@ -20,8 +21,10 @@ constexpr int nstep = 10;
 
 // Rank 0 holds four elastic points; every other rank holds the same group
 // with no points.
-specfem::injection::InjectionPoints
-rank_points(const specfem_property property = specfem_property_isotropic) {
+specfem::injection::InjectionPoints rank_points(
+    const specfem_property property = specfem_property_isotropic,
+    const std::vector<specfem::injection::QuantityRequest> &quantities = {
+        { specfem_quantity_velocity, 3 } }) {
   const int nrows = specfem::MPI::get_rank() == 0 ? 4 : 0;
   specfem::injection::InjectionPoints points(nrows);
   for (int row = 0; row < nrows; ++row)
@@ -32,7 +35,7 @@ rank_points(const specfem_property property = specfem_property_isotropic) {
   group.count = nrows;
   group.properties =
       specfem::injection::PointGroup::properties_view("properties", nrows, 0);
-  group.quantities = { { specfem_quantity_velocity, 3 } };
+  group.quantities = quantities;
   points.groups.push_back(group);
   return points;
 }
@@ -93,5 +96,43 @@ TEST(ProviderSessionMPI, RanksMustHoldSameGroups) {
   }
   EXPECT_EQ(mock_calls().setup, 0);
 }
+
+class ProviderSessionMPIQuantities
+    : public ::testing::TestWithParam<
+          std::vector<specfem::injection::QuantityRequest>> {};
+
+// Rank 0 requests velocity with 3 components and the other ranks request the
+// parameter; the mismatch must fail setup on every rank before the plugin is
+// set up.
+TEST_P(ProviderSessionMPIQuantities, RanksMustRequestSameQuantities) {
+  reset_mock_calls();
+  specfem::injection::SessionOptions options;
+  options.window_steps = 5;
+  auto session = make_session("ok", options);
+  const auto quantities =
+      specfem::MPI::get_rank() == 0
+          ? std::vector<specfem::injection::
+                            QuantityRequest>{ { specfem_quantity_velocity, 3 } }
+          : GetParam();
+  try {
+    session.setup(rank_points(specfem_property_isotropic, quantities));
+    FAIL() << "every rank should throw";
+  } catch (const std::runtime_error &error) {
+    EXPECT_THAT(error.what(),
+                HasSubstr("every rank must hold the same groups"));
+  }
+  EXPECT_EQ(mock_calls().setup, 0);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Mismatches, ProviderSessionMPIQuantities,
+    ::testing::Values(std::vector<specfem::injection::QuantityRequest>{},
+                      std::vector<specfem::injection::QuantityRequest>{
+                          { specfem_quantity_velocity, 3 },
+                          { specfem_quantity_traction, 3 } },
+                      std::vector<specfem::injection::QuantityRequest>{
+                          { specfem_quantity_displacement, 3 } },
+                      std::vector<specfem::injection::QuantityRequest>{
+                          { specfem_quantity_velocity, 2 } }));
 
 } // namespace specfem::injection_session_test

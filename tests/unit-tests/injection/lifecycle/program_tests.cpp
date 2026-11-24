@@ -7,6 +7,7 @@
 #include "recording_method.hpp"
 #include "specfem/injection/method/registry.hpp"
 #include "specfem/program/dim3/program.hpp"
+#include "specfem/runtime_configuration/setup.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -219,41 +220,35 @@ TEST(InjectionLifecycle, StaceyRunsFromTheDefaultRegistry) {
   EXPECT_EQ(elastic.slots[1].count, 3);
 }
 
-// On a mesh with an acoustic layer over an elastic one, the acoustic injection
-// points form their own group, requesting displacement and the potential rate.
-TEST(InjectionLifecycle, StaceyServesAcousticPoints) {
+TEST(InjectionLifecycle, ForwardRunWithoutSourcesDrivesPluginEveryStep) {
   specfem::injection_session_test::reset_mock_calls();
-  // The acoustic layer spans z in [-30 km, 0]; keep the force out of it. The
-  // mock's values are large for a potential, so the step is short enough for
-  // the stability check to pass.
-  const RunDirectory directory(-45000.0, -45000.0);
-  run(directory.parameters("EightNodeAcousticElasticInjectionStacey",
-                           directory.forward(),
-                           "{method: stacey, window-steps: 4}", "1e-4"),
-      specfem::injection::default_method_registry());
+  method_record() = MethodRecord{};
+  const RunDirectory directory;
+  auto parameters = directory.parameters(
+      "EightNodeElasticInjectionStacey", directory.forward(),
+      "{method: recording, window-steps: 4}");
+  ASSERT_TRUE(parameters["parameters"].remove("sources"));
+  run(parameters, test_registry());
 
   EXPECT_EQ(mock_calls().destroy, 1);
   EXPECT_THAT(mock_calls().fill_starts, ElementsAre(0, 4, 8));
-  const auto &groups = mock_calls().groups;
-  const auto acoustic =
-      std::find_if(groups.begin(), groups.end(), [](const auto &group) {
-        return group.medium == specfem_medium_acoustic;
-      });
-  ASSERT_NE(acoustic, groups.end());
-  EXPECT_GT(acoustic->count, 0);
-  ASSERT_EQ(acoustic->slots.size(), 2u);
-  EXPECT_EQ(acoustic->slots[0].quantity, specfem_quantity_displacement);
-  EXPECT_EQ(acoustic->slots[0].offset, 0);
-  EXPECT_EQ(acoustic->slots[0].count, 3);
-  EXPECT_EQ(acoustic->slots[1].quantity, specfem_quantity_potential_rate);
-  EXPECT_EQ(acoustic->slots[1].offset, 3);
-  EXPECT_EQ(acoustic->slots[1].count, 1);
-  const auto elastic =
-      std::find_if(groups.begin(), groups.end(), [](const auto &group) {
-        return group.medium == specfem_medium_elastic;
-      });
-  ASSERT_NE(elastic, groups.end());
-  EXPECT_GT(elastic->count, 0);
+  EXPECT_EQ(method_record().setups, 1);
+}
+
+TEST(InjectionLifecycle, SourcesAreRequiredWithoutInjection) {
+  const RunDirectory directory;
+  auto parameters =
+      directory.parameters("EightNodeElasticInjectionStacey",
+                           directory.forward(), "{method: recording}");
+  ASSERT_TRUE(parameters["parameters"].remove("sources"));
+  ASSERT_TRUE(parameters["parameters"].remove("injection"));
+  try {
+    const specfem::runtime_configuration::setup setup(parameters);
+    FAIL() << "Expected the configuration to be rejected";
+  } catch (const std::runtime_error &error) {
+    EXPECT_THAT(error.what(),
+                HasSubstr("Error reading specfem source configuration"));
+  }
 }
 
 TEST(InjectionLifecycle, CombinedRunIsRejectedBeforeTheMeshRead) {

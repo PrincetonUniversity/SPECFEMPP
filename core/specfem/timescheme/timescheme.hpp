@@ -91,6 +91,15 @@ public:
   void increment_seismogram_step() { seismogram_timestep++; }
 
   /**
+   * @brief Rewind the seismogram output step to the start of the record.
+   *
+   * A solver that re-runs with the same time scheme must call this, or the
+   * counter carries over from the previous run and seismogram storage --
+   * sized `get_max_seismogram_step()` -- is written past its end.
+   */
+  void reset_seismogram_step() { seismogram_timestep = 0; }
+
+  /**
    * @brief Checks if seismogram should be computed at current timestep
    *
    * @param istep Current timestep

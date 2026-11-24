@@ -23,7 +23,7 @@ template <specfem::element::dimension_tag DimensionTag,
 struct ComputedAttenuationValues<
     DimensionTag, MediumTag,
     specfem::element::attenuation_tag::constant_isotropic,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>> {
 
   using view_type = Kokkos::View<type_real[specfem::constants::N_SLS],
                                  Kokkos::LayoutRight, Kokkos::HostSpace>;
@@ -49,27 +49,19 @@ public:
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const view_type &tau_sigma) {
 
-    this->tau_epsilon_kappa =
-        specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-            Qkappa, tau_sigma, band);
-
-    this->tau_epsilon_mu =
-        specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-            Qmu, tau_sigma, band);
-
-    this->kappa_attenuation_properties =
-        specfem::attenuation::get_attenuation_property_values<
-            specfem::constants::N_SLS>(tau_sigma, tau_epsilon_kappa);
-
-    this->mu_attenuation_properties =
-        specfem::attenuation::get_attenuation_property_values<
-            specfem::constants::N_SLS>(tau_sigma, tau_epsilon_mu);
-
-    this->kappa_scale = specfem::attenuation::get_attenuation_scale_factor<
-        specfem::constants::N_SLS>(fc, tau_epsilon_kappa, tau_sigma, Qkappa,
-                                   f0);
-    this->mu_scale = specfem::attenuation::get_attenuation_scale_factor<
-        specfem::constants::N_SLS>(fc, tau_epsilon_mu, tau_sigma, Qmu, f0);
+    // Shared with dim3/elastic/isotropic/material.hpp: one formulation for
+    // every dimension.
+    constexpr int N = specfem::constants::N_SLS;
+    const auto kappa = specfem::attenuation::fit_quality_factor<N>(
+        Qkappa, tau_sigma, band, fc, f0);
+    const auto mu = specfem::attenuation::fit_quality_factor<N>(Qmu, tau_sigma,
+                                                                band, fc, f0);
+    this->tau_epsilon_kappa = kappa.tau_eps;
+    this->tau_epsilon_mu = mu.tau_eps;
+    this->kappa_attenuation_properties = kappa.properties;
+    this->mu_attenuation_properties = mu.properties;
+    this->kappa_scale = kappa.scales.unrelaxed();
+    this->mu_scale = mu.scales.unrelaxed();
   }
 };
 
@@ -78,7 +70,7 @@ template <specfem::element::dimension_tag DimensionTag,
 struct AttenuationValues<
     DimensionTag, MediumTag,
     specfem::element::attenuation_tag::constant_isotropic,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>> {
 public:
   type_real Qkappa; ///< Attenuation factor for bulk modulus
   type_real Qmu;    ///< Attenuation factor for shear modulus
@@ -195,7 +187,7 @@ template <specfem::element::dimension_tag DimensionTag,
 struct material<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic,
     AttenuationTag,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>>
     : impl::AttenuationValues<DimensionTag, MediumTag, AttenuationTag> {
 public:
   constexpr static auto dimension_tag =
@@ -298,7 +290,7 @@ public:
       specfem::element::attenuation_tag T = AttenuationTag,
       std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
   inline specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
   get_properties() const {
     return { this->kappa, this->mu, this->density };
   }
@@ -314,7 +306,7 @@ public:
       std::enable_if_t<
           T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
   inline specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
   get_properties() const {
     return { this->kappa * attenuation::get_computed_values().kappa_scale,
              this->mu * attenuation::get_computed_values().mu_scale,

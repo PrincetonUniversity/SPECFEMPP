@@ -34,11 +34,16 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
     : time_scheme_(time_scheme), tasks_(tasks), assembly_(assembly),
       config_(config) {
 
-  if (!(config_.newmark.beta > 0)) {
+  if (config_.newmark.beta < 0) {
     throw std::runtime_error(
-        "specfem::solver::ImplicitNewmarkSolver: Newmark beta must be > 0 "
-        "(the explicit beta = 0 limit has no displacement-form operator); "
-        "use the explicit time_marching solver instead.");
+        "specfem::solver::ImplicitNewmarkSolver: Newmark beta must be "
+        "non-negative.");
+  }
+
+  if (config_.newmark.gamma < 0 || config_.newmark.gamma > 1) {
+    throw std::runtime_error(
+        "specfem::solver::ImplicitNewmarkSolver: Newmark gamma must lie in "
+        "[0, 1].");
   }
 
   // Reject out-of-scope meshes before building the dof maps and graphs: the
@@ -86,10 +91,10 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 
   const type_real beta = config_.newmark.beta;
   const type_real gamma = config_.newmark.gamma;
-  const scalar_type mass_coefficient =
-      static_cast<scalar_type>(1) / (beta * dt * dt);
-  const scalar_type damping_coefficient =
-      static_cast<scalar_type>(gamma / (beta * dt));
+
+  const scalar_type stiffness_coefficient =
+      static_cast<scalar_type>(beta * dt * dt);
+  const scalar_type damping_coefficient = static_cast<scalar_type>(gamma * dt);
 
   // ADL cannot reach an operator in specfem::linear_system when both operands
   // are a scalar and a Tpetra type, so the scaled-matrix spelling below needs
@@ -103,9 +108,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
       fe_->full_matrix_graph(), fe_->mapping());
 
   system.begin_fill();
-  system += stiffness();                                             // K
-  system += damping_coefficient * damping();                         // + c1 C
-  system += mass_coefficient * specfem::linear_system::diag(mass()); // + c2 M
+  system += stiffness_coefficient * stiffness();  // beta dt^2 K
+  system += damping_coefficient * damping();      // + gamma dt C
+  system += specfem::linear_system::diag(mass()); // + M
   system.finalize();
 
   system_operator_ = system.matrix();
@@ -136,7 +141,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 
   problem_ = Teuchos::rcp(
       new Belos::LinearProblem<scalar_type, multivector_type, operator_type>(
-          system_operator_, u_new_->rcp(), rhs_->rcp()));
+          system_operator_, a_new_->rcp(), rhs_->rcp()));
   // Right preconditioning keeps the convergence test on the true residual.
   problem_->setRightPrec(preconditioner_);
 
@@ -199,25 +204,103 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
-  constexpr auto forward = specfem::simulation::field_type::forward;
+void specfem::solver::ImplicitNewmarkSolver<Tags>::apply_predictor_phase() {
   using scalar_type = specfem::linear_system::scalar_type;
 
   const type_real dt = time_scheme_->get_timestep();
-  const type_real beta = config_.newmark.beta;
-  const type_real gamma = config_.newmark.gamma;
-  const int nstep = time_scheme_->get_max_timestep();
+  const scalar_type displacement_coefficient = static_cast<scalar_type>(
+      dt * dt * (static_cast<type_real>(0.5) - config_.newmark.beta));
+  const scalar_type velocity_coefficient =
+      static_cast<scalar_type>(dt * (1 - config_.newmark.gamma));
 
-  // Displacement-form Newmark coefficients (see the class docs).
-  const scalar_type c_a0 = static_cast<scalar_type>(1 / (beta * dt * dt));
-  const scalar_type c_a1 = static_cast<scalar_type>(1 / (beta * dt));
-  const scalar_type c_a2 = static_cast<scalar_type>(1 / (2 * beta) - 1);
-  const scalar_type c_c0 = static_cast<scalar_type>(gamma / (beta * dt));
-  const scalar_type c_c1 = static_cast<scalar_type>(gamma / beta - 1);
-  const scalar_type c_c2 =
-      static_cast<scalar_type>(dt * (gamma / (2 * beta) - 1));
-  const scalar_type c_v0 = static_cast<scalar_type>(dt * (1 - gamma));
-  const scalar_type c_v1 = static_cast<scalar_type>(dt * gamma);
+  const auto &u = *u_;
+  const auto &v = *v_;
+  const auto &a = *a_;
+  // The predictors live in u_new_ / v_new_ until the corrector updates them.
+  auto &u_pred = *u_new_;
+  auto &v_pred = *v_new_;
+
+  u_pred = u + dt * v + displacement_coefficient * a;
+  v_pred = v + velocity_coefficient * a;
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::compute_forces(
+    const int istep) {
+  const auto &u_pred = *u_new_;
+  const auto &v_pred = *v_new_;
+  auto &b = *rhs_;
+
+  // f_{n+1}: the explicit loop pairs STF(istep = n) with the state at
+  // t_{n+1}; the implicit loop must match.
+  extract_source_vector(istep, b);
+  b -= stiffness() * u_pred;
+  if (damping().getGlobalNumEntries() > 0) {
+    b -= damping() * v_pred;
+  }
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::solve(const int istep) {
+  const auto &b = *rhs_;
+  auto &a_new = *a_new_;
+
+  a_new = *a_;
+  problem_->setProblem(a_new.rcp(), b.rcp());
+  if (gmres_->solve() == Belos::Converged) {
+    return;
+  }
+
+  // Single-precision PseudoBlockGmres can abort with a "loss of accuracy"
+  // flag while the solution is fine; trust only the true residual b - A x.
+  const type_real residual_norm =
+      specfem::linear_system::norm2(b - system_operator() * a_new);
+  const type_real rhs_norm = specfem::linear_system::norm2(b);
+  if (!(residual_norm <= config_.gmres_tolerance * rhs_norm)) {
+    std::ostringstream message;
+    message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
+               "converge at step "
+            << istep << " (" << gmres_->getNumIters()
+            << " iterations, true relative residual "
+            << residual_norm / rhs_norm << ", requested "
+            << config_.gmres_tolerance << ").";
+    throw std::runtime_error(message.str());
+  }
+  std::ostringstream message;
+  message << "GMRES flagged loss of accuracy at step " << istep
+          << " but the true relative residual " << residual_norm / rhs_norm
+          << " meets the tolerance; "
+          << "continuing.";
+  specfem::Logger::info(message.str());
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::apply_corrector_phase() {
+  using scalar_type = specfem::linear_system::scalar_type;
+
+  const type_real dt = time_scheme_->get_timestep();
+  const scalar_type displacement_coefficient =
+      static_cast<scalar_type>(config_.newmark.beta * dt * dt);
+  const scalar_type velocity_coefficient =
+      static_cast<scalar_type>(config_.newmark.gamma * dt);
+
+  const auto &a_new = *a_new_;
+  auto &u_new = *u_new_;
+  auto &v_new = *v_new_;
+
+  u_new += displacement_coefficient * a_new;
+  v_new += velocity_coefficient * a_new;
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
+  constexpr auto forward = specfem::simulation::field_type::forward;
+
+  const int nstep = time_scheme_->get_max_timestep();
 
   // Named locally so that the updates below read as the equations they are.
   auto &u = *u_;
@@ -226,14 +309,15 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   auto &u_new = *u_new_;
   auto &v_new = *v_new_;
   auto &a_new = *a_new_;
-  auto &b = *rhs_;
 
   u = 0;
   v = 0;
   a = 0;
   last_step_ = 0;
+  // The sample counter lives on the time scheme and would otherwise carry
+  // over, so a re-run would write past the end of the seismogram buffer.
+  time_scheme_->reset_seismogram_step();
 
-  const bool has_damping = damping().getGlobalNumEntries() > 0;
   const bool check_steady_state = config_.steady_state_tolerance > 0;
   type_real velocity_scale = 0;
   type_real acceleration_scale = 0;
@@ -245,49 +329,10 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   for (const auto [istep, dt_step] : time_scheme_->iterate_forward()) {
     (void)dt_step;
 
-    // b = f_{n+1}: the explicit loop pairs STF(istep = n) with the state at
-    // t_{n+1}; the implicit loop must match.
-    extract_source_vector(istep, b);
-
-    b +=
-        specfem::linear_system::diag(mass()) * (c_a0 * u + c_a1 * v + c_a2 * a);
-    if (has_damping) {
-      b += damping() * (c_c0 * u + c_c1 * v + c_c2 * a);
-    }
-
-    // Warm start from u_n: near steady state GMRES converges in a few
-    // iterations.
-    u_new = u;
-    problem_->setProblem(u_new.rcp(), b.rcp());
-    if (gmres_->solve() != Belos::Converged) {
-      // Single-precision PseudoBlockGmres can abort with a
-      // "loss of accuracy" flag while the solution is fine; trust only the
-      // true residual b - A u.
-      const type_real residual_norm =
-          specfem::linear_system::norm2(b - system_operator() * u_new);
-      const type_real rhs_norm = specfem::linear_system::norm2(b);
-      if (!(residual_norm <= config_.gmres_tolerance * rhs_norm)) {
-        std::ostringstream message;
-        message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
-                   "converge at step "
-                << istep << " (" << gmres_->getNumIters()
-                << " iterations, true relative residual "
-                << residual_norm / rhs_norm << ", requested "
-                << config_.gmres_tolerance << ").";
-        throw std::runtime_error(message.str());
-      }
-      std::ostringstream message;
-      message << "GMRES flagged loss of accuracy at step " << istep
-              << " but the true relative residual " << residual_norm / rhs_norm
-              << " meets the tolerance; "
-              << "continuing.";
-      specfem::Logger::info(message.str());
-    }
-
-    // a_{n+1} = c_a0 (u_{n+1} - u_n - dt v_n) - c_a2 a_n
-    a_new = c_a0 * (u_new - u - dt * v) - c_a2 * a;
-    // v_{n+1} = v_n + dt (1 - gamma) a_n + dt gamma a_{n+1}
-    v_new = v + c_v0 * a + c_v1 * a_new;
+    apply_predictor_phase();
+    compute_forces(istep);
+    solve(istep);
+    apply_corrector_phase();
 
     bool steady = false;
     if (check_steady_state) {

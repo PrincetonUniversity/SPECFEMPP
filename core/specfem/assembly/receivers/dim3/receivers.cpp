@@ -5,14 +5,17 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
+#include "specfem/assembly/receivers/impl/broadcast_medium_tags.hpp"
 #include "specfem/element.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <array>
 #include <map>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -36,38 +39,13 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
                                                          stypes),
       specfem::assembly::receivers_impl::SeismogramIterator<
           specfem::element::dimension_tag::dim3>(
-          receivers.size(), stypes.size(), max_sig_step, dt, t0,
-          nsteps_between_samples) {
+          receivers.size(),
+          specfem::assembly::receivers_impl::SeismogramTypes(stypes),
+          max_sig_step, dt, t0, nsteps_between_samples) {
 
   // Discretization from the mesh
   this->nspec = mesh.nspec;
   const auto &element_grid = mesh.element_grid;
-
-  // Validate and populate seismogram type mapping
-  for (int isies = 0; isies < stypes.size(); ++isies) {
-    auto seis_type = stypes[isies];
-
-    if (seis_type != specfem::enums::wavefield::displacement &&
-        seis_type != specfem::enums::wavefield::velocity &&
-        seis_type != specfem::enums::wavefield::acceleration &&
-        seis_type != specfem::enums::wavefield::pressure &&
-        seis_type != specfem::enums::wavefield::rotation &&
-        seis_type != specfem::enums::wavefield::intrinsic_rotation &&
-        seis_type != specfem::enums::wavefield::curl) {
-      std::ostringstream message;
-      message << "Error reading specfem receiver configuration.(" << __FILE__
-              << ":" << __LINE__ << ")\n";
-      message << "Unknown seismogram type: "
-              << specfem::enums::to_string(seis_type) << "\n";
-      message
-          << "Valid seismogram types are: displacement, velocity, "
-          << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";
-      message << "Please check your configuration file.\n";
-      throw std::runtime_error(message.str());
-    }
-
-    seismogram_type_map[seis_type] = isies;
-  }
 
   // MPI-aware receiver location with inside-preference: prefer elements where
   // xi/eta/gamma ∈ [-1,1]; fall back to minimum distance if no rank has an
@@ -96,6 +74,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   const auto located = specfem::algorithms::locate_point(gcoords, mesh);
   const auto &local_coords = located.local;
   const auto &partition_index_selected = located.partition_index;
+  std::vector<int> medium_codes(nreceivers, -1);
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const auto receiver = receivers[ireceiver];
@@ -105,6 +84,12 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     stations_.push_back({ network_name, station_name, 0, seismogram_types_ });
     station_network_map[station_name][network_name] = ireceiver;
 
+    // Cartesian mesh frame -> local (East, North, Up) rows. Identity on a flat
+    // regional mesh; the local frame at the receiver on a globe.
+    this->set_rotation_matrix(ireceiver,
+                              specfem::assembly::local_east_north_up_basis(
+                                  receiver->get_global_coordinates(), mesh));
+
     if (partition_index_selected[ireceiver] != myrank) {
       h_elements(ireceiver) = -1;
       continue;
@@ -112,6 +97,9 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
     const auto &lcoord = local_coords[ireceiver];
     h_elements(ireceiver) = lcoord.ispec;
+    const auto medium = element_types.get_medium_tag(lcoord.ispec);
+    receiver->set_medium_tag(medium);
+    medium_codes[ireceiver] = static_cast<int>(medium);
 
     // Warn when the recovered local coordinates land outside the reference
     // element beyond a small tolerance (coordinate resolution is not exact).
@@ -150,21 +138,24 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         }
       }
     }
-
-    // Initialize rotation matrix to identity for this receiver
-    // In the future, this could be set based on surface normal or user
-    // specification
-    std::array<std::array<type_real, 3>, 3> identity_matrix = {
-      { { { 1.0, 0.0, 0.0 } }, { { 0.0, 1.0, 0.0 } }, { { 0.0, 0.0, 1.0 } } }
-    };
-    this->set_rotation_matrix(ireceiver, identity_matrix);
   }
 
   // Build per-material receiver index stores using tag_dispatch::Storage.
   this->build_index_stores(h_elements, element_types);
 
-  for (int i = 0; i < nreceivers; ++i)
+  specfem::assembly::receivers_impl::broadcast_medium_tags(medium_codes);
+
+  for (int i = 0; i < nreceivers; ++i) {
     stations_[i].partition_index = partition_index_selected[i];
+    if (medium_codes[i] < 0)
+      throw std::runtime_error("Receiver " + stations_[i].network_name + "." +
+                               stations_[i].station_name +
+                               " is not located in any medium");
+    const auto medium =
+        static_cast<specfem::element::medium_tag>(medium_codes[i]);
+    receivers[i]->set_medium_tag(medium);
+    stations_[i].medium = medium;
+  }
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     receivers[ireceiver]->set_partition_index(
@@ -174,6 +165,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
+  this->sync_rotation_matrices();
 
   return;
 }

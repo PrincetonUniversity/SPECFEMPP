@@ -177,6 +177,48 @@ public:
   get_source_tensor() const = 0;
 
   /**
+   * @brief Get the body-couple vector for monopole (non-gradient) source
+   * terms
+   *
+   * In media with rotational degrees of freedom (Cosserat), the antisymmetric
+   * part of the moment tensor drives the rotation field directly through a
+   * monopole term that multiplies the Lagrange interpolant rather than its
+   * gradient:
+   * \f[
+   * S_{c} \mathrel{+}= L(\xi_s, \gamma_s) \, b_c
+   * \f]
+   * where \f$ b \f$ is the body-couple vector returned by this getter.
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+   * Body-couple vector with ncomponents entries, or an empty view
+   * (`extent(0) == 0`) when the source has no monopole contribution
+   */
+  virtual Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_body_couple_vector() const {
+    return {};
+  }
+
+  /**
+   * @brief Indicates whether the source has a monopole contribution
+   * (non-gradient term)
+   *
+   * In media with rotational degrees of freedom (Cosserat), the antisymmetric
+   * part of the moment tensor drives the rotation field directly through a
+   * monopole term that multiplies the Lagrange interpolant rather than its
+   * gradient:
+   * \f[
+   * S_{c} \mathrel{+}= L(\xi_s, \gamma_s) \, b_c
+   * \f]
+   * where \f$ b \f$ is the body-couple vector returned by this getter.
+   *
+   * @return True if the source has a monopole contribution, false otherwise
+   */
+  virtual bool has_monopole_contribution() const {
+    return false; // Default implementation: symmetric tensor, no monopole
+                  // contribution
+  }
+
+  /**
    * @brief Get the source type
    *
    * @return source_type type of source

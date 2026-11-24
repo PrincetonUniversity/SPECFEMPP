@@ -119,16 +119,56 @@ struct globe_mesh_data {
   /** @brief Per-element metadata required by the globe material evaluator. */
   std::vector<globe_element_context> element_context;
 
-  /** @brief Surface entries belonging to the exterior acoustic free surface. */
+  /**
+   * @brief Surface entries on the free surface: the top faces of the
+   * crust/mantle elements.
+   *
+   * A **geometric surface, not a boundary condition**. The crust/mantle is
+   * elastic, and for an elastic medium traction-free is the natural condition
+   * of the weak form, so nothing needs to be applied. The list is deliberately
+   * not routed into @c mesh_dim3_base::boundaries: as an
+   * @c acoustic_free_surface it would put a zero-pressure constraint on any
+   * acoustic element that owned one of its faces. It is kept for source and
+   * receiver depth resolution, the ocean load (@ref ocean_load) and surface
+   * output. @c mesh<Globe3D>::check_consistency enforces its placement.
+   */
   globe_boundary_surface free_surface;
 
-  /** @brief Surface entries on the core-mantle boundary. */
+  /**
+   * @brief Surface entries on the core-mantle boundary.
+   *
+   * These are a **cross-check, not an input**. The CMB and ICB are internal
+   * fluid-solid interfaces, and the mesh rediscovers them rather than reading
+   * them: @c mesh_dim3_base::setup_coupled_interfaces promotes every adjacency
+   * edge whose two elements differ in medium tag to @c weakly_conforming. So
+   * nothing consumes this list to build the coupling --
+   * @c mesh<Globe3D>::check_consistency compares it against the promoted faces
+   * between crust/mantle and outer-core elements, and throws on disagreement.
+   * Without that, these fields read as dead code.
+   *
+   * Note the mesher writes **both** sides of each interface into one list:
+   * crust/mantle bottom and outer-core top here, outer-core bottom and
+   * inner-core top in @ref icb.
+   */
   globe_boundary_surface cmb;
 
-  /** @brief Surface entries on the inner-core boundary. */
+  /**
+   * @brief Surface entries on the inner-core boundary.
+   *
+   * A cross-check on the derived fluid-solid interfaces, carrying both sides of
+   * the interface. It is compared only against the promoted faces between
+   * outer-core and inner-core elements, so CMB faces recorded here are
+   * rejected. See @ref cmb.
+   */
   globe_boundary_surface icb;
 
-  /** @brief Surface entries used for ocean-load metadata. */
+  /**
+   * @brief Surface entries carrying the ocean load.
+   *
+   * Empty unless the model has oceans; otherwise a subset of
+   * @ref free_surface (the mesher currently writes the whole free surface).
+   * @c mesh<Globe3D>::check_consistency enforces both.
+   */
   globe_boundary_surface ocean_load;
 };
 

@@ -87,11 +87,14 @@ constexpr auto
 join(const specfem::linear_system::Expression<N, Left...> &left,
      const specfem::linear_system::Expression<M, Right...> &right) {
   specfem::linear_system::Expression<N + M, Left..., Right...> result{};
-  for (std::size_t i = 0; i < N; ++i) {
-    result.terms[i] = left.terms[i];
+  // Range-for rather than `i < N`: N or M is zero for operator-only operands,
+  // and nvcc warns on the always-false unsigned comparison
+  std::size_t i = 0;
+  for (const auto &term : left.terms) {
+    result.terms[i++] = term;
   }
-  for (std::size_t i = 0; i < M; ++i) {
-    result.terms[N + i] = right.terms[i];
+  for (const auto &term : right.terms) {
+    result.terms[i++] = term;
   }
   result.products = std::tuple_cat(left.products, right.products);
   return result;
@@ -112,8 +115,8 @@ constexpr auto
 scale(const specfem::linear_system::Expression<N, Products...> &expression,
       const specfem::linear_system::scalar_type alpha) {
   specfem::linear_system::Expression<N, Products...> result = expression;
-  for (std::size_t i = 0; i < N; ++i) {
-    result.terms[i].alpha *= alpha;
+  for (auto &term : result.terms) {
+    term.alpha *= alpha;
   }
   result.products = std::apply(
       [alpha](const auto &...product) {
@@ -155,9 +158,9 @@ space_of_product(const specfem::linear_system::DiagProduct<Inner> &product);
 template <std::size_t N, typename... Products>
 constexpr const specfem::linear_system::VectorSpace *
 space_of(const specfem::linear_system::Expression<N, Products...> &expression) {
-  for (std::size_t i = 0; i < N; ++i) {
-    if (expression.terms[i].space != nullptr) {
-      return expression.terms[i].space;
+  for (const auto &term : expression.terms) {
+    if (term.space != nullptr) {
+      return term.space;
     }
   }
   const specfem::linear_system::VectorSpace *found = nullptr;
@@ -195,8 +198,8 @@ template <std::size_t N, typename... Products>
 constexpr bool
 aliases(const specfem::linear_system::Expression<N, Products...> &expression,
         const specfem::linear_system::vector_type *vector) {
-  for (std::size_t i = 0; i < N; ++i) {
-    if (expression.terms[i].vector == vector) {
+  for (const auto &term : expression.terms) {
+    if (term.vector == vector) {
       return true;
     }
   }

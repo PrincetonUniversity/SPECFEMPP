@@ -236,9 +236,8 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
   switch (m) {
   case M::elastic_psv: // dim2: isotropic and anisotropic
     return a == A::none || a == A::constant_isotropic;
-  case M::elastic: // dim3: anisotropic attenuation is not implemented
-    return a == A::none || (a == A::constant_isotropic &&
-                            p == specfem::element::property_tag::isotropic);
+  case M::elastic: // dim3: isotropic and anisotropic
+    return a == A::none || a == A::constant_isotropic;
   case M::elastic_psv_t:
   case M::elastic_spin:       // Cosserat elastic: isotropic_cosserat × none
   case M::electromagnetic_te: // isotropic × none
@@ -325,8 +324,7 @@ constexpr bool is_valid_element_attenuation_combo(MaterialTagTuple t) {
     return true;
 
   // constant_isotropic only valid for mediums with an attenuation impl
-  return (m == M::elastic_psv) ||
-         (m == M::elastic && p == specfem::element::property_tag::isotropic);
+  return m == M::elastic_psv || m == M::elastic;
 }
 
 constexpr bool is_valid_full_combo(ElementTagTuple t) {

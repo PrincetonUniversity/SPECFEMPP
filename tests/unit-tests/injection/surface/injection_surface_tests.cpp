@@ -293,9 +293,10 @@ TEST_P(InjectionSurface3DTest, GroupsCarryNamedProperties) {
           }
         }
         if constexpr (TagsType::medium_tag ==
-                      specfem::element::medium_tag::acoustic)
+                      specfem::element::medium_tag::acoustic) {
           EXPECT_THAT(group.property_names,
                       ElementsAre("rho_inverse", "kappa"));
+        }
       });
 }
 

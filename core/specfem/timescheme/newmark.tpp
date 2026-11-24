@@ -20,7 +20,7 @@ int specfem::time_scheme::newmark_impl::corrector_phase_impl(
   constexpr int ncomponents =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;
@@ -74,7 +74,7 @@ int specfem::time_scheme::newmark_impl::predictor_phase_impl(
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
   const int nglob = field.template get_nglob<MediumTag>();
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;
