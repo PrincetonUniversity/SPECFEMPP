@@ -19,7 +19,7 @@ namespace medium_physics {
 
 /**
  * @brief Add SLS memory variable contributions to the elastic stress tensor
- *        for 3D elastic isotropic media with constant-Q attenuation.
+ *        for 3D elastic media with constant-Q attenuation.
  *
  * Follows SPECFEM3D convention (subtraction from stress).
  * Rzz = -(Rxx + Ryy) is not stored; its contribution is absorbed into T(2,2):
@@ -30,7 +30,8 @@ namespace medium_physics {
  *   sigma_xz -= sum_j(R_xz[j])
  *   sigma_yz -= sum_j(R_yz[j])
  *
- * @tparam Tags Element tags (dim3, elastic, isotropic, constant_isotropic)
+ * @tparam Tags Element tags (dim3, elastic, isotropic/anisotropic,
+ * constant_isotropic)
  * @param point_attenuation Per-point attenuation state (memory variables)
  * @param point_stress      Stress tensor to be modified in-place
  */
@@ -39,7 +40,9 @@ template <
     std::enable_if_t<
         Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
             Tags::medium_tag == specfem::element::medium_tag::elastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic &&
+            (Tags::property_tag == specfem::element::property_tag::isotropic ||
+             Tags::property_tag ==
+                 specfem::element::property_tag::anisotropic) &&
             Tags::attenuation_tag ==
                 specfem::element::attenuation_tag::constant_isotropic,
         int> = 0>
@@ -98,7 +101,7 @@ KOKKOS_INLINE_FUNCTION void impl_add_relaxation_to_stress(
 
 /**
  * @brief Advance SLS memory variables by one RK step for 3D elastic
- *        isotropic media.
+ *        media with isotropic shear relaxation.
  *
  * Implements Savage et al. (2010) BSSA eqs. 8-11 extended to 3D:
  *   Snp1 = symmetrised(du + dt * dv)   (Taylor-expanded displacement strain)
@@ -109,7 +112,8 @@ KOKKOS_INLINE_FUNCTION void impl_add_relaxation_to_stress(
  * Five deviatoric components (Rxx, Ryy, Rxy, Rxz, Ryz) plus Rkappa are
  * tracked. Rzz = -(Rxx+Ryy) is not stored.
  *
- * @tparam Tags Element tags (dim3, elastic, isotropic, constant_isotropic)
+ * @tparam Tags Element tags (dim3, elastic, isotropic/anisotropic,
+ * constant_isotropic)
  * @param point_attenuation Attenuation state; R and epsilon updated in-place
  * @param du   Displacement gradient (current step, from gradient pack)
  * @param dv   Velocity gradient (current step, from gradient pack)
@@ -120,7 +124,9 @@ template <
     std::enable_if_t<
         Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
             Tags::medium_tag == specfem::element::medium_tag::elastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic &&
+            (Tags::property_tag == specfem::element::property_tag::isotropic ||
+             Tags::property_tag ==
+                 specfem::element::property_tag::anisotropic) &&
             Tags::attenuation_tag ==
                 specfem::element::attenuation_tag::constant_isotropic,
         int> = 0>
@@ -247,7 +253,9 @@ template <
     std::enable_if_t<
         Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
             Tags::medium_tag == specfem::element::medium_tag::elastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic &&
+            (Tags::property_tag == specfem::element::property_tag::isotropic ||
+             Tags::property_tag ==
+                 specfem::element::property_tag::anisotropic) &&
             Tags::attenuation_tag ==
                 specfem::element::attenuation_tag::constant_isotropic,
         int> = 0>
@@ -266,7 +274,9 @@ impl_compute_attenuation(const IndexType &index,
   const auto dv = grad_pack.template get_dv<Tags>();
 
   PointAttenuationType point_attenuation;
-  specfem::assembly::load_on_device(index, attenuation, point_attenuation);
+  specfem::assembly::load_on_device<PointAttenuationType, IndexType,
+                                    Tags::property_tag>(index, attenuation,
+                                                        point_attenuation);
 
   // 1. Add memory variable contributions to stress
   impl_add_relaxation_to_stress<Tags>(point_attenuation, point_stress);
@@ -277,7 +287,9 @@ impl_compute_attenuation(const IndexType &index,
                                         attenuation.deltat);
 
   // 3. Write back updated memory variables and strain
-  specfem::assembly::store_on_device(index, attenuation, point_attenuation);
+  specfem::assembly::store_on_device<PointAttenuationType, IndexType,
+                                     Tags::property_tag>(index, attenuation,
+                                                         point_attenuation);
 }
 
 } // namespace medium_physics

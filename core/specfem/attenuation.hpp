@@ -6,6 +6,8 @@
 #include "attenuation/compute_tau_eps.hpp"
 #include "attenuation/compute_tau_sigma.hpp"
 #include "attenuation/maxwell.hpp"
+#include "attenuation/quality_factor_fit.hpp"
+#include "attenuation/quality_factor_table.hpp"
 #include "attenuation/setup.hpp"
 
 /**
