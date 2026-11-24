@@ -208,6 +208,20 @@ specfem_add_test(domain_view_tests
             Kokkos::kokkos
 )
 
+include(experimental/layout/compile_fail/tests.cmake)
+
+specfem_add_test(hierarchical_layout_tests
+  SOURCES   experimental/layout/layout_tests.cpp
+  LIBRARIES gtest_main Kokkos::kokkos
+)
+
+# Keep NDEBUG overrides isolated from all other translation units.
+specfem_add_test(hierarchical_layout_diagnostic_tests
+  SOURCES   experimental/layout/diagnostic_tests.cpp
+  LIBRARIES gtest_main Kokkos::kokkos
+  NO_UNITY
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main
