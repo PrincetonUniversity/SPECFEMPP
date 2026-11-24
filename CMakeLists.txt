@@ -315,6 +315,11 @@ add_subdirectory(core)
 # Header-only SDK for injection plugins (independent of core targets)
 add_subdirectory(sdk)
 
+# FK injection plugin. Plugins are loadable modules, so Linux and macOS only.
+if (UNIX)
+    add_subdirectory(plugins/fk-injection)
+endif()
+
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")

@@ -1,0 +1,15 @@
+# FK plugin configuration: the model of provenance/fortran/DATA/FKmodel.
+layers:
+  - elastic: {rho: 2500, vp: 2500, vs: 1250, thickness: 30000}
+  - elastic: {rho: 2700, vp: 3000, vs: 1732.051, thickness: 0}
+incidence:
+  type: P
+  back-azimuth: 30
+  take-off: 20
+  # The origin SPECFEM3D derives for this box and prints in its solver log.
+  # There's no origin-time, so FK time counts from the first step, as in SPECFEM3D.
+  origin: [0, 0, -223944.719]
+time-window:
+  frequency-max: 0.2
+  frequency-sampling: 10
+  length: 180

@@ -11,6 +11,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -34,7 +35,9 @@ constexpr int nstep = 10;
 // removed with its contents.
 class RunDirectory {
 public:
-  RunDirectory() {
+  // The source and station sit in the elastic layer of every test mesh.
+  explicit RunDirectory(const double source_z = -30000.0,
+                        const double station_z = -20000.0) {
     std::string pattern =
         (std::filesystem::temp_directory_path() / "specfempp_lifecycle_XXXXXX")
             .string();
@@ -46,7 +49,7 @@ sources:
   - force:
       x : 50000.0
       y : 40000.0
-      z : -30000.0
+      z : )" + std::to_string(source_z) + R"(
       source_surf: false
       fx : 0.0
       fy : 0.0
@@ -57,7 +60,7 @@ sources:
         f0: 0.05
 )";
     std::ofstream(path_ / "STATIONS")
-        << "STA TEST 30000.0 40000.0 0.0 -20000.0\n";
+        << "STA TEST 30000.0 40000.0 0.0 " << station_z << "\n";
   }
   ~RunDirectory() {
     std::error_code error;
@@ -69,7 +72,8 @@ sources:
   // Parameter file of a run on a test database, with an injection section.
   YAML::Node parameters(const std::string &database,
                         const std::string &simulation_mode,
-                        const std::string &injection) const {
+                        const std::string &injection,
+                        const std::string &dt = "0.1") const {
     const auto mesh =
         std::filesystem::absolute("data/dim3/" + database + "/database.bin");
     return YAML::Load(R"(parameters:
@@ -83,7 +87,8 @@ sources:
       time-marching:
         time-scheme:
           type: Newmark
-          dt: 0.1
+          dt: )" + dt +
+                      R"(
           nstep: )" + std::to_string(nstep) +
                       R"(
     simulation-mode:

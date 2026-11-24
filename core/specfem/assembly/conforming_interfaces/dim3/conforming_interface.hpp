@@ -66,7 +66,9 @@ private:
 
   static constexpr auto combinations =
       DIMENSION_SET(dim3) * CONNECTION_SET(weakly_conforming) *
-      INTERFACE_SET(elastic_acoustic, acoustic_elastic) * BOUNDARY_SET(none);
+      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet);
 
   specfem::tag_dispatch::TypedStorage<InterfaceContainerTemplateType,
                                       decltype(combinations)>

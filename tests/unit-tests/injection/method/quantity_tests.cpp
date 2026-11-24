@@ -1,7 +1,9 @@
 // Tests for quantity lists and the plugin request of a PointwiseSurfaceMethod.
 
 #include "constant_force.hpp"
+#include "specfem/injection/method/pointwise_surface_method.hpp"
 #include "specfem/injection/method/quantity_list.hpp"
+#include "specfem/injection/method/stacey_injection.hpp"
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -23,7 +25,11 @@ static_assert(specfem::injection::quantity_components<medium_tag::elastic>(
 static_assert(specfem::injection::quantity_components<medium_tag::acoustic>(
                   specfem_quantity_potential_rate) == 1);
 static_assert(specfem::injection::quantity_components<medium_tag::acoustic>(
+                  specfem_quantity_displacement) == 3);
+static_assert(specfem::injection::quantity_components<medium_tag::acoustic>(
                   specfem_quantity_velocity) == 0);
+static_assert(specfem::injection::quantity_components<medium_tag::acoustic>(
+                  specfem_quantity_traction) == 0);
 static_assert(specfem::injection::quantity_components<medium_tag::elastic_spin>(
                   specfem_quantity_velocity) == 0);
 
@@ -77,6 +83,24 @@ TEST(InjectionQuantities, RequestsFollowTheQuantityLists) {
                     { specfem_quantity_velocity, 3 } });
   expect_requests(policy(medium_tag::acoustic, property_tag::isotropic),
                   { { specfem_quantity_potential_rate, 1 } });
+}
+
+TEST(InjectionQuantities, StaceyRequestsBothMedia) {
+  const auto policy = specfem::injection::PointwiseSurfaceMethod<
+                          specfem::injection::StaceyInjection>()
+                          .quantities();
+  expect_requests(
+      policy(medium_tag::elastic, property_tag::isotropic),
+      { { specfem_quantity_velocity, 3 }, { specfem_quantity_traction, 3 } });
+  expect_requests(
+      policy(medium_tag::elastic, property_tag::anisotropic),
+      { { specfem_quantity_velocity, 3 }, { specfem_quantity_traction, 3 } });
+  expect_requests(policy(medium_tag::acoustic, property_tag::isotropic),
+                  { { specfem_quantity_displacement, 3 },
+                    { specfem_quantity_potential_rate, 1 } });
+  EXPECT_FALSE(
+      policy(medium_tag::elastic_spin, property_tag::isotropic_cosserat)
+          .has_value());
 }
 
 TEST(InjectionQuantities, SystemsWithoutComputeAreUnsupported) {

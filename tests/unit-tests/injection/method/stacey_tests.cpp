@@ -1,5 +1,7 @@
 // Tests of StaceyInjection through specfem::injection::evaluate_point: the
-// injected force (t* + Z(v*)) dS, and its pairing with Stacey's -Z(v) dS.
+// injected force (t* + Z(v*)) dS and its pairing with Stacey's -Z(v) dS at
+// elastic points, and (u*.n + chi_dot*/(rho vp)) dS and its pairing with
+// Stacey's -chi_dot dS/(rho vp) at acoustic points.
 
 #include "specfem/injection/method/point_harness.hpp"
 #include "specfem/injection/method/requirements.hpp"
@@ -23,13 +25,20 @@ static_assert(specfem::injection_impl::ComputesAt<
               StaceyInjection, medium_tag::elastic, property_tag::isotropic>);
 static_assert(specfem::injection_impl::ComputesAt<
               StaceyInjection, medium_tag::elastic, property_tag::anisotropic>);
-static_assert(!specfem::injection_impl::ComputesAt<
+static_assert(specfem::injection_impl::ComputesAt<
               StaceyInjection, medium_tag::acoustic, property_tag::isotropic>);
+static_assert(!specfem::injection_impl::ComputesAt<
+              StaceyInjection, medium_tag::elastic_spin,
+              property_tag::isotropic_cosserat>);
 
 template <property_tag PropertyTag>
 using Properties =
     typename StaceyInjection::Context<medium_tag::elastic,
                                       PropertyTag>::properties_type;
+
+using AcousticProperties =
+    StaceyInjection::Context<medium_tag::acoustic,
+                             property_tag::isotropic>::properties_type;
 
 using Vector = std::array<type_real, 3>;
 
@@ -97,6 +106,13 @@ protected:
     const type_real mu = rho * std::pow(uniform(2000, 4000), 2);
     const type_real kappa = uniform(1.5, 3) * mu;
     return { kappa, mu, rho };
+  }
+
+  /// Acoustic properties are stored as (rho_inverse, kappa)
+  AcousticProperties random_acoustic() {
+    const type_real rho = uniform(900, 1100);
+    const type_real vp = uniform(1400, 1600);
+    return { 1 / rho, rho * vp * vp };
   }
 
   // A stiffness matrix with all 21 entries set, so the Voigt averages differ
@@ -194,6 +210,80 @@ TEST_F(StaceyInjectionTest, TractionAloneIsScaledBySurfaceWeight) {
   expect_near(inject<property_tag::isotropic>(
                   random_isotropic(), random_unit_normal(), 0.25, { {}, t }),
               { t[0] / 4, t[1] / 4, t[2] / 4 });
+}
+
+/// The acoustic term at one point, in the method's slot order: displacement
+/// then potential rate.
+type_real inject_acoustic(const AcousticProperties &property,
+                          const Vector &normal, const type_real dS,
+                          const Vector &displacement,
+                          const type_real potential_rate) {
+  const auto acceleration = specfem::injection::evaluate_point<
+      StaceyInjection, medium_tag::acoustic, property_tag::isotropic>(
+      property, normal, dS,
+      { displacement[0], displacement[1], displacement[2], potential_rate });
+  return acceleration(0);
+}
+
+TEST_F(StaceyInjectionTest, AcousticTermIsNormalDisplacementPlusPotentialRate) {
+  for (int icase = 0; icase < 8; ++icase) {
+    const auto property = random_acoustic();
+    const Vector normal = random_unit_normal();
+    const type_real dS = uniform(0.1, 2);
+    const Vector u = random_vector();
+    const type_real chi_dot = uniform(-1, 1);
+    // 1 / (rho vp), written out independently of the property accessors
+    const type_real rho = 1 / property.rho_inverse();
+    const type_real vp = std::sqrt(property.kappa() / rho);
+    const type_real expected = (dot(u, normal) + chi_dot / (rho * vp)) * dS;
+    EXPECT_NEAR(inject_acoustic(property, normal, dS, u, chi_dot), expected,
+                1e-5 * std::max<type_real>(1, std::abs(expected)));
+  }
+}
+
+TEST_F(StaceyInjectionTest, AcousticZeroIncidentFieldGivesZero) {
+  EXPECT_NEAR(inject_acoustic(random_acoustic(), random_unit_normal(), 1.5,
+                              { 0, 0, 0 }, 0),
+              0, 1e-6);
+}
+
+// Stacey's absorbing term adds -chi_dot dS / (rho vp); when the total
+// potential rate equals the incident one and there is no incident
+// displacement, the boundary term is zero.
+TEST_F(StaceyInjectionTest, AcousticCancelsStaceyWhenFieldIsIncident) {
+  for (int icase = 0; icase < 4; ++icase) {
+    const auto property = random_acoustic();
+    const type_real dS = uniform(0.1, 2);
+    const type_real chi_dot = uniform(-1, 1);
+    const type_real injected = inject_acoustic(property, random_unit_normal(),
+                                               dS, { 0, 0, 0 }, chi_dot);
+    const type_real stacey = -chi_dot * property.rho_vpinverse() * dS;
+    EXPECT_NEAR(injected + stacey, 0, 1e-5 * std::abs(stacey));
+  }
+}
+
+TEST_F(StaceyInjectionTest,
+       AcousticDisplacementAloneIsNormalComponentTimesWeight) {
+  const Vector normal = random_unit_normal();
+  const Vector u = random_vector();
+  EXPECT_NEAR(inject_acoustic(random_acoustic(), normal, 0.25, u, 0),
+              dot(u, normal) / 4, 1e-6);
+}
+
+TEST_F(StaceyInjectionTest,
+       AcousticNormalDirectionFlipsOnlyTheDisplacementPart) {
+  const auto property = random_acoustic();
+  const Vector normal = random_unit_normal();
+  const Vector flipped{ -normal[0], -normal[1], -normal[2] };
+  const Vector u = random_vector();
+  const type_real chi_dot = uniform(-1, 1);
+  const type_real with_normal =
+      inject_acoustic(property, normal, 0.7, u, chi_dot);
+  const type_real with_flipped =
+      inject_acoustic(property, flipped, 0.7, u, chi_dot);
+  const type_real rate_part = chi_dot * property.rho_vpinverse() * 0.7;
+  EXPECT_NEAR(with_normal + with_flipped, 2 * rate_part,
+              1e-5 * std::abs(rate_part) + 1e-6);
 }
 
 } // namespace specfem::injection_method_test
