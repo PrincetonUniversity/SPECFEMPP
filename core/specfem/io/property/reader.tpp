@@ -1,8 +1,6 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/attenuation/quality_factor_fit.hpp"
-#include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/element_group.hpp"
 #include "specfem/io/property/reader.hpp"
@@ -48,11 +46,6 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
 
   typename InputLibrary::File file(path.string());
 
-  // One table pair for every attenuating container read here, so they agree
-  // on each bucket's representative Q and fit each bucket once.
-  specfem::attenuation::QualityFactorFitTables<specfem::constants::N_SLS>
-      quality_factor_tables;
-
   specfem::tag_dispatch::for_each(
       properties.combinations * ATTENUATION_SET(none, constant_isotropic),
       [&]<typename TagsType>() {
@@ -92,21 +85,17 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
               assembly.attenuation.template get_container<medium_tag,
                                                           property_tag>();
           // Attenuation model datasets (Qkappa/Qmu): plain host views, read
-          // verbatim. recompute then rescales the just-read physical moduli
-          // in the property container to their runtime (unrelaxed) values
-          // and rebuilds the relaxation rates.
+          // verbatim.
           for (const auto &[view_name, view] : att.get_views()) {
             group.openDataset(view_name, view).read();
           }
-          att.recompute(container, assembly.attenuation.fc,
-                        assembly.attenuation.f0, assembly.attenuation.band,
-                        assembly.attenuation.tau_sigma,
-                        assembly.mesh.h_spherical_coord,
-                        specfem::assembly::impl::AssemblyAttenuationContext{
-                            assembly.element_types },
-                        quality_factor_tables);
         }
       });
+
+  // Shift the just-read physical moduli to unrelaxed and rebuild the
+  // relaxation rates from the read Q model.
+  assembly.attenuation.recompute(properties, assembly.mesh,
+                                 assembly.element_types);
 
   std::cout << "Properties read from " << path.string() << std::endl;
 

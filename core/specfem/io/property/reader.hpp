@@ -16,8 +16,8 @@ namespace io {
  * attenuation) combination, with "kappa"/"mu" holding the physical (relaxed)
  * moduli. All property datasets are read into the property container; for
  * attenuating combinations the per-GLL Qkappa/Qmu datasets are additionally
- * read into the attenuation container, whose recompute() then rescales the
- * moduli to their runtime (unrelaxed) values and rebuilds the relaxation
+ * read into the attenuation containers, and Attenuation::recompute() rescales
+ * the moduli to their runtime (unrelaxed) values and rebuilds the relaxation
  * rates from the read model.
  *
  * @tparam InputLibrary Backend library type (HDF5, ASCII, NPY, NPZ, or ADIOS2)
