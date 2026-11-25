@@ -28,6 +28,23 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
       });
 }
 
+void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
+    recompute(
+        const specfem::assembly::properties<
+            specfem::element::dimension_tag::dim2> &properties,
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+            &mesh,
+        const specfem::assembly::element_types<
+            specfem::element::dimension_tag::dim2> &element_types) const {
+  specfem::tag_dispatch::for_each(
+      attenuation_medium_combinations, [&]<typename TagsType>() {
+        attenuation_storage.template get<TagsType>().recompute(
+            properties
+                .get_container<TagsType::medium_tag, TagsType::property_tag>(),
+            fc, f0, band, tau_sigma);
+      });
+}
+
 specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
     Attenuation(
         const specfem::mesh::attenuation_config &config, const type_real deltat,

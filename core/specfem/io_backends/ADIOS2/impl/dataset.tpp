@@ -25,7 +25,7 @@ specfem::io_backends::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
     std::enable_if_t<std::is_same_v<T, specfem::io::write>, int>)
     : data(data), DatasetBase<OpType>(io, engine, name) {
 
-  auto [shape, start, count] = this->convert_dimensions(data);
+  auto [shape, start, count] = this->convert_dimensions(data, name);
 
   // Define variable for writing
   using native_type = specfem::io_backends::impl::ADIOS2::native_type<value_type>;
@@ -43,7 +43,7 @@ specfem::io_backends::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
     std::enable_if_t<std::is_same_v<T, specfem::io::read>, int>)
     : data(data), DatasetBase<OpType>(io, engine, name) {
 
-  auto [shape, start, count] = this->convert_dimensions(data);
+  auto [shape, start, count] = this->convert_dimensions(data, name);
 
   // Inquire variable for reading
   using native_type = specfem::io_backends::impl::ADIOS2::native_type<value_type>;

@@ -18,17 +18,24 @@ specfem::io_backends::impl::NPZ::Dataset<ViewType, OpType>::Dataset(
           dims.push_back(data.extent(i));
         }
         return dims;
+      }()),
+      fortran_order([&data, &path]() {
+        const auto order =
+            specfem::io_backends::impl::require_contiguous_storage_order(data,
+                                                                         path);
+        return rank <= 1 ||
+               order == specfem::io_backends::impl::StorageOrder::column_major;
       }()) {}
 
 template <typename ViewType, typename OpType>
 void specfem::io_backends::impl::NPZ::Dataset<ViewType, OpType>::write() {
   if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
-    file.write(data.data(), dims, path);
+    file.write(data.data(), dims, path, fortran_order);
   } else if (std::is_same_v<MemSpace,
                             Kokkos::DefaultExecutionSpace::memory_space>) {
     auto host_data = Kokkos::create_mirror_view(data);
     Kokkos::deep_copy(host_data, data);
-    file.write(host_data.data(), dims, path);
+    file.write(host_data.data(), dims, path, fortran_order);
     return;
   } else {
     throw std::runtime_error("Unknown memory space");
@@ -38,11 +45,11 @@ void specfem::io_backends::impl::NPZ::Dataset<ViewType, OpType>::write() {
 template <typename ViewType, typename OpType>
 void specfem::io_backends::impl::NPZ::Dataset<ViewType, OpType>::read() {
   if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
-    file.read(data.data(), dims, path);
+    file.read(data.data(), dims, path, fortran_order);
   } else if (std::is_same_v<MemSpace,
                             Kokkos::DefaultExecutionSpace::memory_space>) {
     auto host_data = Kokkos::create_mirror_view(data);
-    file.read(host_data.data(), dims, path);
+    file.read(host_data.data(), dims, path, fortran_order);
     Kokkos::deep_copy(data, host_data);
     return;
   } else {

@@ -38,7 +38,13 @@ public:
   ///@}
 
   /**
-   * @brief Write the wavefield data to disk
+   * @brief Write the static coordinate datasets to disk
+   *
+   * For each medium with a non-empty field, writes
+   * `/Coordinates/<medium>/{X,Z}` (plus `Y` in 3D) with one value per global
+   * point, `element_indices` (global element index of each row of `mapping`),
+   * and `mapping` (row-major, shape `(n_elements, ngllz[, nglly], ngllx)`,
+   * global point index of each GLL point).
    *
    * @tparam DimensionTag Spatial dimension (dim2 or dim3)
    * @param assembly SPECFEM++ assembly

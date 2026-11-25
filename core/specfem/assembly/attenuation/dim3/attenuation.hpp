@@ -5,6 +5,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/info.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
 #include "specfem/enums.hpp"
@@ -140,6 +141,26 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma,
       const bool bulk_attenuation);
+
+  /**
+   * @brief Recompute runtime attenuation state after a model read.
+   *
+   * Shifts the just-read physical moduli in @p properties to unrelaxed in
+   * place and rebuilds the relaxation rates from the per-GLL Q stored in the
+   * attenuation containers. Host-only; the caller copies @p properties to
+   * device.
+   *
+   * @param properties Property containers holding the just-read moduli
+   * @param mesh Assembly mesh
+   * @param element_types Element types of the assembly
+   */
+  void recompute(
+      const specfem::assembly::properties<specfem::element::dimension_tag::dim3>
+          &properties,
+      const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+          &mesh,
+      const specfem::assembly::element_types<
+          specfem::element::dimension_tag::dim3> &element_types) const;
 
   /**
    * @brief Compile-time check whether (MediumTag, PropertyTag) has an

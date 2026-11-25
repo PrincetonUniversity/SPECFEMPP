@@ -29,6 +29,30 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
       });
 }
 
+void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
+    recompute(
+        const specfem::assembly::properties<
+            specfem::element::dimension_tag::dim3> &properties,
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+            &mesh,
+        const specfem::assembly::element_types<
+            specfem::element::dimension_tag::dim3> &element_types) const {
+  // One table pair for all containers, so they agree on each bucket's
+  // representative Q and fit each bucket once.
+  specfem::attenuation::QualityFactorFitTables<N_SLS> quality_factor_tables;
+  const specfem::assembly::impl::AssemblyAttenuationContext context{
+    element_types
+  };
+  specfem::tag_dispatch::for_each(
+      attenuation_medium_combinations, [&]<typename TagsType>() {
+        attenuation_storage.template get<TagsType>().recompute(
+            properties
+                .get_container<TagsType::medium_tag, TagsType::property_tag>(),
+            fc, f0, band, tau_sigma, mesh.h_spherical_coord, context,
+            quality_factor_tables);
+      });
+}
+
 specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
     Attenuation(
         const specfem::mesh::attenuation_config &config, const type_real deltat,

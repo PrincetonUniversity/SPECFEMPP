@@ -510,13 +510,8 @@ TEST_F(Assembly2D, properties_io_routines) {
     auto suffix = std::get<4>(parameters);
     auto assembly = std::get<5>(parameters);
 
-    // get current working directory
-    // Access environment variable BUILD_DIR
     std::string temp_io_directory =
-        (std::getenv("BUILD_DIR")
-             ? std::string(std::getenv("BUILD_DIR"))
-             : boost::filesystem::current_path().string()) +
-        +"/tests/unit-tests/" + "temp_properties_io";
+        boost::filesystem::current_path().string() + "/temp_properties_io";
     boost::filesystem::create_directories(temp_io_directory);
 
     try {
@@ -662,10 +657,8 @@ TEST_F(Assembly2D, AttenuationPropertiesIORoundTrip) {
     // Distinct temp directory per config so parallel ctest invocations of
     // this binary cannot collide with properties_io_routines or each other.
     const std::string temp_io_directory =
-        (std::getenv("BUILD_DIR")
-             ? std::string(std::getenv("BUILD_DIR"))
-             : boost::filesystem::current_path().string()) +
-        "/tests/unit-tests/temp_properties_attenuation_io_" + suffix;
+        boost::filesystem::current_path().string() +
+        "/temp_properties_attenuation_io_" + suffix;
     boost::filesystem::create_directories(temp_io_directory);
 
     try {

@@ -40,6 +40,25 @@ test_command=("${LAUNCHER:-srun}" --account rse ${SLURM_FLAGS}
   ctest ${CTEST_FLAGS} --output-on-failure --no-tests=error
   --output-junit junit.xml)
 
+# Jenkins cannot read more than 2 GiB of unread step output at once and then
+# reports the agent as offline forever, so cap what a command may print.
+console_limit=$((64 * 1024 * 1024))
+capped() {
+  local overflow status=0
+  overflow="$(mktemp)"
+  "$@" 2>&1 | {
+    head -c "${console_limit}"
+    tail -c 1048576 >"${overflow}"
+  } || status=$?
+  if [[ -s "${overflow}" ]]; then
+    printf '\n[cell.sh] output exceeded %d bytes, showing the last 1 MiB\n' \
+      "${console_limit}"
+    cat "${overflow}"
+  fi
+  rm -f "${overflow}"
+  return "${status}"
+}
+
 load_modules() {
   module purge
   for name in ${modules}; do
@@ -53,8 +72,8 @@ load_modules() {
 case "${action}" in
   build)
     load_modules
-    "${configure_command[@]}"
-    cmake3 --build "${build_dir}"
+    capped "${configure_command[@]}"
+    capped cmake3 --build "${build_dir}"
     ;;
   test)
     load_modules
@@ -64,7 +83,7 @@ case "${action}" in
     cd "${test_dir}"
     # ctest writes junit.xml only on exit, so keep it even when tests fail.
     status=0
-    "${test_command[@]}" || status=$?
+    capped "${test_command[@]}" || status=$?
     cp junit.xml "${junit_dir}/${CELL}.xml" || true
     exit "${status}"
     ;;
